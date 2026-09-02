@@ -1,0 +1,36 @@
+functionsDirectory = "/Users/fernandobalino/Projects/baton/sites/norte-bindery/netlify/functions"
+functionsDirectoryOrigin = "config-v1"
+plugins = []
+redirects = []
+
+[build]
+publish = "/Users/fernandobalino/Projects/baton/sites/norte-bindery"
+publishOrigin = "config"
+base = "/Users/fernandobalino/Projects/baton/sites/norte-bindery"
+functions = "/Users/fernandobalino/Projects/baton/sites/norte-bindery/netlify/functions"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[functions]
+
+[functions."*"]
+
+[[headers]]
+for = "/.well-known/*"
+
+[headers.values]
+Access-Control-Allow-Origin = "*"
+Access-Control-Allow-Methods = "GET, OPTIONS"
+Cache-Control = "no-store"

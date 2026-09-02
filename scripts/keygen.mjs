@@ -26,13 +26,15 @@ const force = process.argv.includes('--force');
 
 const SITES = [
   { dir: 'rivera-press',  name: 'Rivera Press',  kid: 'rivera-2026-09', host: 'vercel',     project: 'baton-rivera-press' },
-  { dir: 'norte-bindery', name: 'Norte Bindery', kid: 'norte-2026-09',  host: 'cloudflare', project: 'baton-norte-bindery' },
+  { dir: 'norte-bindery', name: 'Norte Bindery', kid: 'norte-2026-09',  host: 'netlify',    project: 'baton-norte-bindery' },
   { dir: 'ruta-courier',  name: 'Ruta Courier',  kid: 'ruta-2026-09',   host: 'cloudflare', project: 'baton-ruta-courier' }
 ];
 
 const secretCommand = (site) => site.host === 'vercel'
   ? 'vercel env add BATON_PRIVATE_JWK production'
-  : 'wrangler pages secret put BATON_PRIVATE_JWK --project-name ' + site.project;
+  : site.host === 'netlify'
+    ? 'netlify env:set BATON_PRIVATE_JWK "$(cat keys/' + site.dir + '.private.jwk.json)" --site <netlify site id> --context production'
+    : 'wrangler pages secret put BATON_PRIVATE_JWK --project-name ' + site.project;
 
 mkdirSync(KEYS_DIR, { recursive: true });
 const touched = [];
