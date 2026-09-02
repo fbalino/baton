@@ -2,3 +2,5 @@ node_modules/
 .DS_Store
 *.log
 e2e-shots/
+.vercel
+.env.local

@@ -4,7 +4,7 @@
 
 const PROD_HOSTS = {
   print: 'https://baton-rivera-press.vercel.app',
-  bind: 'https://baton-norte-bindery.netlify.app',
+  bind: 'https://baton-norte-bindery.pages.dev',
   deliver: 'https://baton-ruta-courier.pages.dev'
 };
 
