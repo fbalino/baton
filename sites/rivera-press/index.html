@@ -3,67 +3,234 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rivera Press — print co-op</title>
-<link rel="icon" href="data:,">
+<title>Rivera Press — fine-art print co-op, Montevideo</title>
+<meta name="description" content="A twelve-member print co-op in Montevideo. Editioned pigment prints on four papers, proofed before the press and scheduled by the day.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%239C2A21'/%3E%3Cpath d='M9 23V9h7.6c2.9 0 4.6 1.6 4.6 4.1 0 2-1.1 3.4-3 3.9L23 23h-3.4l-3.5-5.4h-3V23H9zm3.1-7.9h4c1.4 0 2.2-.7 2.2-1.9s-.8-1.9-2.2-1.9h-4v3.8z' fill='%23F6EFE4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="./style.css">
-<style>:root { --accent: #b4530a; }</style>
+<link rel="stylesheet" href="./baton-panel.css">
+<script>
+  // Read the stored theme before first paint so the page never flashes.
+  try {
+    var t = localStorage.getItem('rivera.theme');
+    if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+  } catch (e) { /* private mode: system theme only */ }
+</script>
 </head>
 <body>
-<div class="wrap">
 
-  <header class="site-head">
-    <div class="site-head__row">
-      <h1>Rivera Press</h1>
-      <span class="site-head__host" id="host-label">—</span>
+<a class="skip" href="#builder">Skip to the order builder</a>
+
+<header class="masthead">
+  <div class="masthead__inner">
+    <div class="masthead__brand">
+      <a class="wordmark" href="./">Rivera Press</a>
+      <span class="masthead__place">Fine-art print co-op · Ciudad Vieja, Montevideo</span>
     </div>
-    <p class="site-head__blurb">
-      A twelve-member print co-op. We pull archival pigment prints in two sizes and hold press time
-      by the day. Missions start here: tell us the job and we hand you a baton to carry to the
-      bindery and the courier.
-    </p>
-  </header>
+    <div class="masthead__side">
+      <span class="chip" id="host-label" title="This site's origin">—</span>
+      <button type="button" class="theme" id="theme-toggle" aria-pressed="false">
+        <span class="theme__dot" aria-hidden="true"></span>
+        <span class="theme__label" id="theme-label">Light</span>
+      </button>
+    </div>
+  </div>
+</header>
 
-  <div class="banner" id="no-webmcp" hidden>
-    <b>This browser has no WebMCP.</b>
-    The page works as an ordinary website, but it cannot grow tools for an agent. Two browsers
-    support it today: the ChatGPT desktop app's built-in browser, and Chrome 152+ launched with
-    <code>--enable-features=WebMCP</code>.
+<section class="intro">
+  <div class="intro__inner">
+    <div class="intro__text">
+      <h1>Print runs quoted, proofed and scheduled in one sitting.</h1>
+      <p class="lede">
+        Twelve of us share two pigment presses off Calle Piedras. We print six editioned sets on
+        four papers, send a proof before anything goes on the press, and hold press days one at a
+        time. A job started here can carry on to the bindery and the courier as a signed mission.
+      </p>
+      <p class="intro__facts">Presses Tuesday to Saturday · Epson P9500 and P7570 · Runs to 400 sheets</p>
+      <div class="intro__actions">
+        <a class="btn btn--primary" href="#builder">Build an order</a>
+        <a class="btn" href="#sets">See the six sets</a>
+      </div>
+    </div>
+    <div class="intro__art" id="intro-art" aria-hidden="true"></div>
+  </div>
+</section>
+
+<main class="layout">
+
+  <div class="col">
+
+    <section id="sets" class="block">
+      <div class="block__head">
+        <h2>The six sets</h2>
+        <p class="block__sub">Each set is printed to order from the original files. Editions are counted across all sizes.</p>
+      </div>
+      <div class="filterbar" id="set-filter" hidden>
+        <span id="set-filter-text">Showing every set.</span>
+        <button type="button" class="link" id="set-filter-clear">Show all six</button>
+      </div>
+      <div class="sets" id="sets-grid"></div>
+    </section>
+
+    <section id="builder" class="block">
+      <div class="block__head">
+        <h2>Order builder</h2>
+        <p class="block__sub">Pick a set and a specification. The quote below is the same one the tools return.</p>
+      </div>
+
+      <div class="builder">
+        <form class="builder__form" id="order-form" autocomplete="off">
+          <div class="field">
+            <label for="f-set">Set</label>
+            <select id="f-set" name="set"></select>
+            <p class="field__note" id="set-note"></p>
+          </div>
+
+          <div class="field">
+            <label for="f-quantity">Quantity</label>
+            <div class="qty">
+              <input type="number" id="f-quantity" name="quantity" min="1" max="400" step="1" value="40" inputmode="numeric">
+              <div class="qty__mode" role="radiogroup" aria-label="How the quantity is counted">
+                <label class="pill"><input type="radio" name="qmode" value="total" checked><span>sheets in total</span></label>
+                <label class="pill"><input type="radio" name="qmode" value="per_print"><span>copies of each print</span></label>
+              </div>
+            </div>
+            <p class="field__note" id="qty-note"></p>
+          </div>
+
+          <div class="field">
+            <span class="label">Size</span>
+            <div class="choices" id="f-size" role="radiogroup" aria-label="Print size"></div>
+          </div>
+
+          <div class="field">
+            <label for="f-paper">Paper</label>
+            <select id="f-paper" name="paper"></select>
+            <p class="field__note" id="paper-note"></p>
+          </div>
+
+          <div class="field">
+            <span class="label">Finish</span>
+            <div class="choices" id="f-finish" role="radiogroup" aria-label="Finish"></div>
+          </div>
+
+          <div class="builder__actions">
+            <button type="submit" class="btn btn--primary" id="create-order">Create the order</button>
+            <span class="field__note" id="form-msg" role="status"></span>
+          </div>
+        </form>
+
+        <aside class="quote" id="quote-card" aria-live="polite"></aside>
+      </div>
+    </section>
+
+    <section id="order" class="block">
+      <div class="block__head">
+        <h2>Your order</h2>
+        <p class="block__sub">A proof goes out with every order. The press day cannot be held until the proof is approved.</p>
+      </div>
+      <div id="order-card"></div>
+    </section>
+
+    <section id="calendar" class="block">
+      <div class="block__head">
+        <h2>Press calendar</h2>
+        <p class="block__sub">The next twenty-one days. Sunday and Monday the bays are cold, and we take no same-day work.</p>
+      </div>
+      <div class="calendar" id="press-calendar"></div>
+      <p class="legend">
+        <span class="legend__item"><i class="swatch swatch--open"></i>free</span>
+        <span class="legend__item"><i class="swatch swatch--full"></i>booked</span>
+        <span class="legend__item"><i class="swatch swatch--closed"></i>closed</span>
+        <span class="legend__item"><i class="swatch swatch--held"></i>your slot</span>
+      </p>
+      <p class="fineprint" id="calendar-msg" role="status"></p>
+    </section>
+
+    <section id="papers" class="block">
+      <div class="block__head">
+        <h2>Papers, sizes and finishes</h2>
+        <p class="block__sub">Prices are per sheet. Press setup is <b>$35</b>, waived on runs of 25 sheets or more.</p>
+      </div>
+      <div class="tablewrap">
+        <table class="catalog">
+          <thead>
+            <tr>
+              <th scope="col">Paper</th>
+              <th scope="col">Character</th>
+              <th scope="col" class="num">20 × 30</th>
+              <th scope="col" class="num">30 × 40</th>
+              <th scope="col" class="num">40 × 60</th>
+            </tr>
+          </thead>
+          <tbody id="papers-body"></tbody>
+        </table>
+      </div>
+      <ul class="finishes" id="finishes-list"></ul>
+      <p class="fineprint">
+        Turnaround: 3 days to 20 sheets, 5 days to 60, 9 beyond. A deckled edge adds two days,
+        40 × 60 adds one.
+      </p>
+    </section>
+
   </div>
 
-  <section>
-    <h2 class="section-title">Mission</h2>
-    <div id="mission-panel"></div>
-  </section>
+  <aside class="rail">
 
-  <section>
-    <h2 class="section-title">Site tools</h2>
-    <div id="site-tools" class="tools"></div>
-  </section>
+    <div class="banner" id="no-webmcp" hidden>
+      <b>This browser has no WebMCP.</b>
+      Everything on this page still works by hand. Tools appear for an agent in the ChatGPT
+      desktop browser, or in Chrome 152+ started with <code>--enable-features=WebMCP</code>.
+    </div>
 
-  <section class="card">
-    <h2 class="section-title">Papers and prices</h2>
-    <table class="catalog">
-      <thead>
-        <tr><th>Paper</th><th>Character</th><th class="num">20×30 cm</th><th class="num">30×40 cm</th></tr>
-      </thead>
-      <tbody id="papers"></tbody>
-    </table>
-    <p class="muted" style="margin:12px 0 0;font-size:14px">
-      Turnaround: 3 days up to 20 prints, 5 days up to 60, 9 days beyond.
-    </p>
-  </section>
+    <section class="block block--rail">
+      <div class="block__head"><h2>Mission</h2></div>
+      <div id="mission-panel"></div>
+    </section>
 
-  <section class="card">
-    <h2 class="section-title">House terms</h2>
-    <ul class="terms">
-      <li>Print legs only. We do not bind and we do not deliver.</li>
-      <li>Quantity and print size must be declared before we hold a press slot.</li>
-      <li>Runs up to 400 prints. Larger jobs get split across two slots.</li>
-      <li>A held slot is released if the leg is not signed within 48 hours.</li>
-    </ul>
-  </section>
+    <section class="block block--rail">
+      <div class="block__head"><h2>Site tools</h2></div>
+      <div id="site-tools" class="tools"></div>
+    </section>
 
-</div>
+    <section class="block block--rail">
+      <div class="block__head"><h2>For your agent</h2></div>
+      <div class="card agentnote">
+        <p>
+          In a browser with WebMCP this page hands your agent the tools listed above: the
+          catalogue, the quote, the order and its proof, the press calendar, and the baton that
+          carries the job onward. Ask for the job, not for the clicks.
+        </p>
+        <ul class="prompts" id="prompts"></ul>
+      </div>
+    </section>
+
+    <section class="block block--rail">
+      <div class="block__head"><h2>House terms</h2></div>
+      <div class="card">
+        <ul class="terms">
+          <li>Print legs only. We do not bind and we do not deliver.</li>
+          <li>Quantity, size and paper are declared before a press day is held.</li>
+          <li>A proof is approved before the slot, and re-issued if the specification changes.</li>
+          <li>Runs to 400 sheets. Larger jobs are split across two press days.</li>
+          <li>A held slot is released if the leg is not signed within 48 hours.</li>
+        </ul>
+      </div>
+    </section>
+
+  </aside>
+
+</main>
+
+<footer class="foot">
+  <div class="foot__inner">
+    <span>Rivera Press · a co-op of twelve printers · Ciudad Vieja, Montevideo</span>
+    <span class="muted">A fictional business built for a WebMCP demo. The prints are drawn by the page.</span>
+  </div>
+</footer>
+
 <script type="module" src="./site.js"></script>
 </body>
 </html>

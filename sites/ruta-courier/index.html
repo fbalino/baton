@@ -3,64 +3,139 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ruta Courier — city and regional delivery</title>
+<title>Ruta Courier — collections and delivery</title>
+<meta name="description" content="Four vans and a bike. Three zones, two speeds, a tracking id at booking. We collect finished work and hand it to whoever ordered it.">
 <link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap">
 <link rel="stylesheet" href="./style.css">
-<style>:root { --accent: #1d7a5f; }</style>
+<link rel="stylesheet" href="./baton-panel.css">
+<script>
+  // Set the theme before first paint so a dark reader never sees a white flash.
+  try {
+    var t = localStorage.getItem('ruta.theme');
+    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+  } catch (e) { /* private mode: follow the system setting */ }
+</script>
 </head>
 <body>
 <div class="wrap">
 
-  <header class="site-head">
-    <div class="site-head__row">
-      <h1>Ruta Courier</h1>
-      <span class="site-head__host" id="host-label">—</span>
+  <header class="masthead">
+    <div class="masthead__row">
+      <a class="wordmark" href="./">Ruta<span class="wordmark__mark"></span></a>
+      <div class="masthead__tools">
+        <span class="host" id="host-label">&mdash;</span>
+        <button type="button" class="theme" id="theme-toggle">Dark</button>
+      </div>
     </div>
-    <p class="site-head__blurb">
-      Four vans, one bike, and a rule about never leaving paper in the rain. We collect from
-      printers and binderies and hand the job to whoever ordered it. The last leg of a baton
-      usually ends here.
+    <p class="lede">
+      Four vans and one bike. We collect finished work from printers and binderies and hand it to
+      whoever ordered it, inside three zones, at two speeds. The tracking id is issued when you
+      book, not when we arrive.
     </p>
+    <dl class="figures" id="figures"></dl>
   </header>
 
   <div class="banner" id="no-webmcp" hidden>
     <b>This browser has no WebMCP.</b>
-    The page works as an ordinary website, but it cannot grow tools for an agent. Two browsers
-    support it today: the ChatGPT desktop app's built-in browser, and Chrome 152+ launched with
+    The page works as an ordinary website, but it cannot hand tools to an agent. Two browsers do
+    today: the ChatGPT desktop app's built-in browser, and Chrome 152+ started with
     <code>--enable-features=WebMCP</code>.
   </div>
 
-  <section>
-    <h2 class="section-title">Mission</h2>
+  <section class="stack" aria-labelledby="h-mission">
+    <h2 class="head" id="h-mission">The job on the van</h2>
     <div id="mission-panel"></div>
   </section>
 
-  <section>
-    <h2 class="section-title">Site tools</h2>
+  <section class="stack" aria-labelledby="h-tools">
+    <h2 class="head" id="h-tools">What this page offers an agent</h2>
     <div id="site-tools" class="tools"></div>
+    <div class="agent-note">
+      <h3>For your agent</h3>
+      <p>
+        Two tools sit here on an ordinary visit. Arrive with a baton that already carries a signed
+        print leg and the quoting, window, booking and tracking tools appear for the length of the
+        mission.
+      </p>
+      <ul class="prompts">
+        <li>&ldquo;Price this baton's last leg standard and express, then book whichever still lands before the deadline.&rdquo;</li>
+        <li>&ldquo;Book the earliest collection window the day after the bindery finishes and give me the tracking id.&rdquo;</li>
+      </ul>
+    </div>
   </section>
 
-  <section class="card">
-    <h2 class="section-title">Service and speeds</h2>
-    <table class="catalog">
-      <thead><tr><th>Speed</th><th>Transit</th><th class="num">Base</th><th class="num">Per copy</th></tr></thead>
-      <tbody id="speeds"></tbody>
-    </table>
-    <table class="catalog" style="margin-top:18px">
-      <thead><tr><th>Zone</th><th>Covers</th><th class="num">Collection cut-off</th></tr></thead>
-      <tbody id="zones"></tbody>
-    </table>
+  <section class="stack" aria-labelledby="h-rates">
+    <h2 class="head" id="h-rates">Zones and rates</h2>
+    <div class="panel">
+      <table class="grid">
+        <thead>
+          <tr>
+            <th scope="col">Zone</th>
+            <th scope="col" class="covers-col">Covers</th>
+            <th scope="col" class="num">Cut-off</th>
+            <th scope="col" class="num">Standard</th>
+            <th scope="col" class="num">Express</th>
+          </tr>
+        </thead>
+        <tbody id="rates"></tbody>
+      </table>
+      <p class="fineprint" id="rates-note"></p>
+    </div>
   </section>
 
-  <section class="card">
-    <h2 class="section-title">House terms</h2>
-    <ul class="terms">
-      <li>Delivery legs only. We collect finished work; we do not make it.</li>
-      <li>Collection is booked at least one working day ahead.</li>
-      <li>Inside the listed zones only. Outside them we say so rather than guess.</li>
-      <li>A tracking id is issued at booking, not at collection.</li>
-    </ul>
+  <section class="stack" aria-labelledby="h-windows">
+    <h2 class="head" id="h-windows">Collection windows</h2>
+    <div class="panel">
+      <p class="panel__intro" id="windows-intro"></p>
+      <ul class="windows" id="windows"></ul>
+      <p class="fineprint">Book at least one working day ahead. A window that is full is full; we will say so rather than send a van that is not there.</p>
+    </div>
   </section>
+
+  <section class="stack" aria-labelledby="h-board">
+    <h2 class="head" id="h-board">On the road</h2>
+    <div class="panel">
+      <table class="grid">
+        <thead>
+          <tr>
+            <th scope="col">Parcel</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="num">Due</th>
+          </tr>
+        </thead>
+        <tbody id="board"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="stack" aria-labelledby="h-terms">
+    <h2 class="head" id="h-terms">House terms</h2>
+    <div class="panel">
+      <ul class="terms">
+        <li>Delivery legs only. We move finished work; we do not make it.</li>
+        <li>The mission must already carry a signed print leg, and a pickup address zone.</li>
+        <li>One parcel under 25 kg. Heavier jobs are split and priced per parcel.</li>
+        <li>Collection is booked at least one working day ahead. We do not collect on Sundays.</li>
+      </ul>
+      <div class="aside">
+        <h3>What we do with a baton</h3>
+        <p>
+          We read the copy count from the legs already on the baton and work out the weight, the
+          number of parcels and the day it lands. We check that against the money left and the
+          deadline before we take the job, sign our leg with our own key, and hand back a tracking
+          id that outlives the link.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>Ruta Courier is a fictional depot built for the Baton demo. The vans are invented; the
+    signatures are real.</p>
+  </footer>
 
 </div>
 <script type="module" src="./site.js"></script>

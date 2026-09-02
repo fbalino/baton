@@ -7,7 +7,7 @@
   "jwk": {
     "kty": "EC",
     "crv": "P-256",
-    "x": "UtQaA4RJxiaGb6yzNkD9ahFdg7WFj7TDDlGt1KWZQFM",
-    "y": "1Qwqy6fhyqnqfKtjxqyPWgtNv3i2XUAraZ9-Ra98CHY"
+    "x": "P302vu--6U3VPOCpDwACj59hi1UjJQoWk5qc5ugKNpQ",
+    "y": "ewFYD1zObgi3kXTjgp61qiFvctRZmgHefk-WQ0WxmJQ"
   }
 }

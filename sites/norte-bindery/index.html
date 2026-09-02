@@ -3,64 +3,128 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Norte Bindery — hand binding</title>
+<title>Norte Bindery — hand binding for printers</title>
+<meta name="description" content="A two-bench bookbinding workshop. We bind what other people print, ten to five hundred copies at a time.">
 <link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap">
 <link rel="stylesheet" href="./style.css">
-<style>:root { --accent: #3f4fa8; }</style>
+<link rel="stylesheet" href="./baton-panel.css">
+<script>
+  // Set the theme before first paint so a dark reader never sees a white flash.
+  try {
+    var t = localStorage.getItem('norte.theme');
+    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+  } catch (e) { /* private mode: follow the system setting */ }
+</script>
 </head>
 <body>
 <div class="wrap">
 
-  <header class="site-head">
-    <div class="site-head__row">
-      <h1>Norte Bindery</h1>
-      <span class="site-head__host" id="host-label">—</span>
+  <header class="masthead">
+    <div class="masthead__row">
+      <a class="wordmark" href="./">Norte Bindery</a>
+      <div class="masthead__tools">
+        <span class="host" id="host-label">&mdash;</span>
+        <button type="button" class="theme" id="theme-toggle">Dark</button>
+      </div>
     </div>
-    <p class="site-head__blurb">
-      Two benches, three stitches, no glue we would not use on our own books. We bind what other
-      people print. Arrive with a baton and this page grows the tools to quote and sign your
-      binding leg.
+    <p class="lede">
+      Two benches on the north side of the yard. We sew, press and case in the work other people
+      print &mdash; ten copies to five hundred, no glue we would not use on our own books.
     </p>
   </header>
 
   <div class="banner" id="no-webmcp" hidden>
     <b>This browser has no WebMCP.</b>
-    The page works as an ordinary website, but it cannot grow tools for an agent. Two browsers
-    support it today: the ChatGPT desktop app's built-in browser, and Chrome 152+ launched with
+    The page works as an ordinary website, but it cannot hand tools to an agent. Two browsers do
+    today: the ChatGPT desktop app's built-in browser, and Chrome 152+ started with
     <code>--enable-features=WebMCP</code>.
   </div>
 
-  <section>
-    <h2 class="section-title">Mission</h2>
+  <section class="stack" aria-labelledby="h-mission">
+    <h2 class="head" id="h-mission">The job on the bench</h2>
     <div id="mission-panel"></div>
   </section>
 
-  <section>
-    <h2 class="section-title">Site tools</h2>
+  <section class="stack" aria-labelledby="h-tools">
+    <h2 class="head" id="h-tools">What this page offers an agent</h2>
     <div id="site-tools" class="tools"></div>
+    <div class="agent-note">
+      <h3>For your agent</h3>
+      <p>
+        Two tools sit here on an ordinary visit. Arrive with a signed print leg in the link and the
+        quoting, calendar and booking tools appear for as long as the mission is aboard.
+      </p>
+      <ul class="prompts">
+        <li>&ldquo;Quote a coptic binding with a cloth board for the baton I am carrying, check it against the budget, then hold the first free bench day.&rdquo;</li>
+        <li>&ldquo;Compare all three bindings at this quantity and tell me which one leaves the most money for the courier.&rdquo;</li>
+      </ul>
+    </div>
   </section>
 
-  <section class="card">
-    <h2 class="section-title">Bindings and covers</h2>
-    <table class="catalog">
-      <thead><tr><th>Binding</th><th>Notes</th><th class="num">Per copy</th></tr></thead>
-      <tbody id="bindings"></tbody>
-    </table>
-    <table class="catalog" style="margin-top:18px">
-      <thead><tr><th>Cover</th><th>Notes</th><th class="num">Per copy</th></tr></thead>
-      <tbody id="covers"></tbody>
-    </table>
+  <section class="stack" aria-labelledby="h-bindings">
+    <h2 class="head" id="h-bindings">Bindings</h2>
+    <div class="panel">
+      <table class="catalog">
+        <thead><tr><th scope="col">Style</th><th scope="col">How it is made</th><th scope="col" class="num">Per copy</th></tr></thead>
+        <tbody id="bindings"></tbody>
+      </table>
+    </div>
+
+    <h2 class="head">Covers</h2>
+    <div class="panel">
+      <table class="catalog">
+        <thead><tr><th scope="col">Cover</th><th scope="col">How it is made</th><th scope="col" class="num">Per copy</th></tr></thead>
+        <tbody id="covers"></tbody>
+      </table>
+      <p class="fineprint">Every quote is one binding plus one cover, times the number of copies. There is no third line.</p>
+    </div>
   </section>
 
-  <section class="card">
-    <h2 class="section-title">House terms</h2>
-    <ul class="terms">
-      <li>Binding legs only. We do not print and we do not deliver.</li>
-      <li>The mission must already carry a signed print leg before we quote.</li>
-      <li>Ten copies minimum, five hundred maximum per bench booking.</li>
-      <li>Every quote is binding plus cover; there is no third line of cost.</li>
-    </ul>
+  <section class="stack" aria-labelledby="h-bench">
+    <h2 class="head" id="h-bench">Bench diary</h2>
+    <div class="panel">
+      <p class="panel__intro">
+        Three weeks ahead, two benches a day, shut on Sundays. A day marked taken is taken: we name
+        the closest free ones rather than quietly moving your booking.
+      </p>
+      <ol class="diary" id="bench-diary"></ol>
+      <ul class="key">
+        <li><span class="dot dot--free"></span>Both benches free</li>
+        <li><span class="dot dot--half"></span>One bench left</li>
+        <li><span class="dot dot--full"></span>Taken</li>
+        <li><span class="dot dot--closed"></span>Shut</li>
+      </ul>
+    </div>
   </section>
+
+  <section class="stack" aria-labelledby="h-terms">
+    <h2 class="head" id="h-terms">House terms</h2>
+    <div class="panel">
+      <ul class="terms">
+        <li>Binding legs only. We do not print and we do not deliver.</li>
+        <li>The mission must already carry a signed print leg before we will quote.</li>
+        <li>Ten copies minimum, five hundred maximum per booking.</li>
+        <li>A bench day is held against a quoted job, never against an empty date.</li>
+      </ul>
+      <div class="aside">
+        <h3>What we do with a baton</h3>
+        <p>
+          We read the quantity from the print leg, so we never re-ask how many copies there are. We
+          price the binding against it, check the total against what is left of the budget, and sign
+          our leg with our own key. What the printer did stays theirs. What we did becomes ours, and
+          the courier can check both.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>Norte Bindery is a fictional workshop built for the Baton demo. The prices are invented; the
+    signatures are real.</p>
+  </footer>
 
 </div>
 <script type="module" src="./site.js"></script>

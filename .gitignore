@@ -4,3 +4,8 @@ node_modules/
 e2e-shots/
 .vercel
 .env.local
+
+# Private signing keys: one per site, written by scripts/keygen.mjs.
+# These never enter a site folder and never deploy. Each host gets its copy as
+# the BATON_PRIVATE_JWK secret instead.
+keys/

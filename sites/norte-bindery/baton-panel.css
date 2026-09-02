@@ -1,0 +1,323 @@
+/* Baton panel — the mission card and the tools box.
+   Copied into each site folder as baton-panel.css by scripts/sync-lib.sh, so
+   the panel is the same object on all three sites. The host page owns the rest
+   of its stylesheet and may set five properties to match its own identity:
+
+     --baton-accent   the site colour: the carry button, the current leg
+     --baton-ink      body text
+     --baton-paper    the surface the panel sits on
+     --baton-line     hairlines and borders
+     --baton-muted    secondary text
+
+   The defaults below sit in a cascade layer, so anything the host page sets on
+   :root wins no matter which stylesheet loads first. Dark follows the host's
+   data-theme attribute, and prefers-color-scheme when it has not chosen. */
+
+@layer baton-defaults {
+  :root {
+    --baton-accent: #b4530a;
+    --baton-ink: #16130f;
+    --baton-paper: #fbfaf8;
+    --baton-line: #e4dfd7;
+    --baton-muted: #8b8377;
+
+    --baton-card: #ffffff;
+    --baton-tint: color-mix(in srgb, var(--baton-accent) 7%, transparent);
+    --baton-on-accent: #ffffff;
+    --baton-ok: #1f7a45;
+    --baton-warn: #a8791d;
+    --baton-bad: #b3261e;
+    --baton-radius: 10px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --baton-accent: #f08a3c;
+      --baton-ink: #f2ede6;
+      --baton-paper: #16130f;
+      --baton-line: #342f28;
+      --baton-muted: #9c9287;
+
+      --baton-card: #1e1a15;
+      --baton-on-accent: #1b1206;
+      --baton-ok: #4cc182;
+      --baton-warn: #d9b25c;
+      --baton-bad: #ef7a72;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --baton-accent: #f08a3c;
+    --baton-ink: #f2ede6;
+    --baton-paper: #16130f;
+    --baton-line: #342f28;
+    --baton-muted: #9c9287;
+
+    --baton-card: #1e1a15;
+    --baton-on-accent: #1b1206;
+    --baton-ok: #4cc182;
+    --baton-warn: #d9b25c;
+    --baton-bad: #ef7a72;
+  }
+}
+
+/* Monospace is reserved for the two things that are genuinely machine data
+   here: tool names and money. Everything else is the page's own type.
+
+   The type is pinned rather than inherited: the panel has to look like the same
+   object on all three sites, and a host stylesheet that happens to style a class
+   name used here must not change it. */
+.baton :where(p, h2, dt, div, span, li, a, b, button),
+.tools :where(p, div, span, li) {
+  font-family: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.baton,
+.tools {
+  --baton-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--baton-ink);
+  background: var(--baton-card);
+  border: 1px solid var(--baton-line);
+  border-radius: var(--baton-radius);
+}
+
+/* ------------------------------------------------------- the baton card */
+
+.baton {
+  border-left: 4px solid var(--baton-accent);
+  padding: 18px;
+}
+.baton[data-state="empty"] { border-left-color: var(--baton-line); }
+
+.baton__title {
+  font-size: 20px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin: 0 0 5px;
+}
+.baton__id {
+  font-size: 13px;
+  color: var(--baton-muted);
+}
+.baton__hint {
+  color: var(--baton-muted);
+  margin: 4px 0 0;
+  max-width: 56ch;
+}
+
+.baton__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  margin: 16px 0 16px;
+}
+.baton__facts div { margin: 0; }
+.baton__facts dt {
+  font-size: 12px;
+  color: var(--baton-muted);
+}
+.baton .baton__facts dd {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-family: var(--baton-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.baton__facts dd.good { color: var(--baton-ok); }
+.baton__facts dd.over { color: var(--baton-bad); }
+.baton .baton__facts dd .muted {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--baton-muted);
+}
+
+/* ------------------------------------------------------ the chain strip */
+
+.strip { display: flex; gap: 4px; margin: 0 0 7px; }
+.strip__seg {
+  height: 7px;
+  flex: 1;
+  border-radius: 999px;
+  background: var(--baton-line);
+}
+.strip__seg--ok { background: var(--baton-ok); }
+.strip__seg--bad { background: var(--baton-bad); }
+.strip__seg--pending { background: var(--baton-warn); }
+
+.strip__caption {
+  font-size: 13.5px;
+  color: var(--baton-muted);
+  margin: 0 0 14px;
+}
+
+/* ------------------------------------------------------ the route strip */
+
+.legs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.leg {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--baton-line);
+  border-radius: 8px;
+  background: var(--baton-paper);
+}
+.leg--todo { opacity: 0.62; }
+.leg--here {
+  border-color: var(--baton-accent);
+  background: var(--baton-tint);
+  opacity: 1;
+}
+.leg__mark {
+  font-size: 15px;
+  line-height: 1.5;
+  width: 16px;
+  text-align: center;
+  color: var(--baton-muted);
+}
+.leg--ok .leg__mark { color: var(--baton-ok); }
+.leg--bad .leg__mark { color: var(--baton-bad); }
+.leg--here .leg__mark { color: var(--baton-accent); }
+
+.leg__main { flex: 1; min-width: 0; }
+.leg__head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.leg__role { font-weight: 600; }
+.leg__host { font-size: 13px; color: var(--baton-muted); }
+.baton .leg__cost {
+  margin-left: auto;
+  font-family: var(--baton-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+.baton .leg__cost--todo {
+  font-family: inherit;
+  color: var(--baton-muted);
+  font-size: 13px;
+}
+.leg__summary { margin-top: 2px; }
+.leg__meta { font-size: 12.5px; color: var(--baton-muted); margin-top: 3px; }
+
+.declines {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  font-size: 14px;
+  color: var(--baton-bad);
+}
+
+/* ---------------------------------------------------------- carry link */
+
+.carry {
+  display: block;
+  margin-top: 18px;
+  background: var(--baton-accent);
+  color: var(--baton-on-accent);
+  text-decoration: none;
+  font-size: 17px;
+  font-weight: 600;
+  padding: 14px 16px;
+  border-radius: 8px;
+}
+.carry:hover { filter: brightness(1.07); }
+.carry:focus-visible { outline: 2px solid var(--baton-ink); outline-offset: 2px; }
+.carry__note { font-size: 12.5px; color: var(--baton-muted); margin-top: 6px; }
+
+/* --------------------------------------------------------- confirm card */
+
+.confirm {
+  margin-top: 18px;
+  border: 2px solid var(--baton-accent);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--baton-tint);
+}
+.confirm__msg { font-size: 15px; margin: 0 0 12px; }
+.confirm__error {
+  font-size: 14px;
+  margin: 0 0 12px;
+  color: var(--baton-bad);
+}
+.confirm__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn {
+  font: inherit;
+  font-size: 15px;
+  padding: 9px 16px;
+  border-radius: 7px;
+  border: 1px solid var(--baton-line);
+  background: var(--baton-card);
+  color: var(--baton-ink);
+  cursor: pointer;
+}
+.btn:disabled { opacity: 0.55; cursor: default; }
+.btn--primary {
+  background: var(--baton-accent);
+  border-color: var(--baton-accent);
+  color: var(--baton-on-accent);
+  font-weight: 600;
+}
+
+/* ----------------------------------------------------------- debug line */
+
+.baton__debug {
+  margin: 16px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed var(--baton-line);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--baton-muted);
+  word-break: break-word;
+}
+
+/* ------------------------------------------------------------ tools box */
+
+.tools { padding: 16px 18px; }
+.tools__count { font-size: 15px; margin-bottom: 10px; }
+.tools .tools__count b {
+  color: var(--baton-accent);
+  font-family: var(--baton-mono);
+  font-size: 18px;
+}
+.tools__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--baton-line);
+  border-radius: 999px;
+  padding: 3px 5px 3px 10px;
+  background: var(--baton-paper);
+}
+.tools .tool code { font-family: var(--baton-mono); font-size: 12.5px; }
+.tool__kind {
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: var(--baton-muted);
+  background: color-mix(in srgb, var(--baton-line) 55%, transparent);
+}
+.tool__kind--write {
+  color: var(--baton-accent);
+  background: var(--baton-tint);
+}
+
+@media (max-width: 560px) {
+  .baton { padding: 16px; }
+  .baton__facts { gap: 10px 18px; }
+  .leg__cost { margin-left: 0; }
+}
