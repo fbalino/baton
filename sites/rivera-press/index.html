@@ -8,9 +8,10 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%239C2A21'/%3E%3Cpath d='M9 23V9h7.6c2.9 0 4.6 1.6 4.6 4.1 0 2-1.1 3.4-3 3.9L23 23h-3.4l-3.5-5.4h-3V23H9zm3.1-7.9h4c1.4 0 2.2-.7 2.2-1.9s-.8-1.9-2.2-1.9h-4v3.8z' fill='%23F6EFE4'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
 <link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./baton-panel.css">
+<link rel="stylesheet" href="./baton-shell.css">
 <script>
   // Read the stored theme before first paint so the page never flashes.
   try {
@@ -23,44 +24,67 @@
 
 <a class="skip" href="#builder">Skip to the order builder</a>
 
-<header class="masthead">
-  <div class="masthead__inner">
-    <div class="masthead__brand">
-      <a class="wordmark" href="./">Rivera Press</a>
-      <span class="masthead__place">Fine-art print co-op · Ciudad Vieja, Montevideo</span>
-    </div>
-    <div class="masthead__side">
-      <span class="chip" id="host-label" title="This site's origin">—</span>
-      <button type="button" class="theme" id="theme-toggle" aria-pressed="false">
-        <span class="theme__dot" aria-hidden="true"></span>
-        <span class="theme__label" id="theme-label">Light</span>
-      </button>
-    </div>
-  </div>
-</header>
+<div class="shell">
 
-<section class="intro">
-  <div class="intro__inner">
-    <div class="intro__text">
-      <h1>Print runs quoted, proofed and scheduled in one sitting.</h1>
-      <p class="lede">
-        Twelve of us share two pigment presses off Calle Piedras. We print six editioned sets on
-        four papers, send a proof before anything goes on the press, and hold press days one at a
-        time. A job started here can carry on to the bindery and the courier as a signed mission.
-      </p>
-      <p class="intro__facts">Presses Tuesday to Saturday · Epson P9500 and P7570 · Runs to 400 sheets</p>
-      <div class="intro__actions">
-        <a class="btn btn--primary" href="#builder">Build an order</a>
-        <a class="btn" href="#sets">See the six sets</a>
+  <aside class="side" aria-label="Your agent and the mission">
+
+    <div class="side__brand">
+      <a class="side__name" href="./">Rivera Press</a>
+      <p class="side__place">Fine-art print co-op · Montevideo</p>
+      <div class="side__row">
+        <span class="side__host" id="host-label" title="This site's origin">—</span>
+        <button type="button" class="side__theme" id="theme-toggle" aria-pressed="false">
+          <span id="theme-label">Light</span>
+        </button>
       </div>
     </div>
-    <div class="intro__art" id="intro-art" aria-hidden="true"></div>
-  </div>
-</section>
 
-<main class="layout">
+    <section id="mission-panel" class="side__mission" aria-label="The mission on this page"></section>
 
-  <div class="col">
+    <section id="site-tools" class="side__tools" aria-label="Site tools"></section>
+
+    <section class="side__agent" aria-label="For your agent">
+      <h2 class="side__heading">For your agent</h2>
+      <p class="side__note">
+        If your browser has WebMCP, your agent can use the same tools we use behind the counter: the
+        catalogue, the quote, the order and its proof, and the press calendar. Tell it what you want
+        printed and it comes back with a price and a press day.
+      </p>
+      <ul class="prompts" id="prompts"></ul>
+    </section>
+
+  </aside>
+
+  <main class="main">
+
+    <div class="banner" id="no-webmcp" hidden>
+      <b>This browser has no WebMCP.</b>
+      Everything here still works by hand. An agent gets the tools in the ChatGPT desktop browser,
+      or in Chrome 149 and newer with <code>chrome://flags/#enable-webmcp-testing</code> turned on.
+    </div>
+
+    <section class="hero">
+      <div class="hero__frame print" id="hero-frame">
+        <img class="print__img hero__img" id="hero-image"
+             src="./assets/generated/press-hero.webp"
+             width="1600" height="1067" decoding="async"
+             data-set="cerro_signals"
+             alt="The Rivera Press press room: two pigment presses and drying racks of prints.">
+      </div>
+      <div class="hero__text">
+        <h1>We print editions to order on two pigment presses in Ciudad Vieja.</h1>
+        <p class="lede">
+          Twelve printers share the presses off Calle Piedras. We keep six editioned sets on file and
+          print them on four papers, in runs up to 400 sheets. A proof goes out before the press is
+          loaded, and press days are held one at a time.
+        </p>
+        <p class="hero__facts">Presses run Tuesday to Saturday · Epson P9500 and P7570 · Runs to 400 sheets</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="#builder">Build an order</a>
+          <a class="btn" href="#sets">See the six sets</a>
+        </div>
+      </div>
+    </section>
 
     <section id="sets" class="block">
       <div class="block__head">
@@ -77,7 +101,7 @@
     <section id="builder" class="block">
       <div class="block__head">
         <h2>Order builder</h2>
-        <p class="block__sub">Pick a set and a specification. The quote below is the same one the tools return.</p>
+        <p class="block__sub">Pick a set and a specification. The price here is the price the tools quote.</p>
       </div>
 
       <div class="builder">
@@ -175,61 +199,28 @@
       </p>
     </section>
 
-  </div>
-
-  <aside class="rail">
-
-    <div class="banner" id="no-webmcp" hidden>
-      <b>This browser has no WebMCP.</b>
-      Everything on this page still works by hand. Tools appear for an agent in the ChatGPT
-      desktop browser, or in Chrome 149 or newer with <code>chrome://flags/#enable-webmcp-testing</code> enabled.
-    </div>
-
-    <section class="block block--rail">
-      <div class="block__head"><h2>Mission</h2></div>
-      <div id="mission-panel"></div>
-    </section>
-
-    <section class="block block--rail">
-      <div class="block__head"><h2>Site tools</h2></div>
-      <div id="site-tools" class="tools"></div>
-    </section>
-
-    <section class="block block--rail">
-      <div class="block__head"><h2>For your agent</h2></div>
-      <div class="card agentnote">
-        <p>
-          In a browser with WebMCP this page hands your agent the tools listed above: the
-          catalogue, the quote, the order and its proof, the press calendar, and the baton that
-          carries the job onward. Ask for the job, not for the clicks.
-        </p>
-        <ul class="prompts" id="prompts"></ul>
+    <section id="terms" class="block">
+      <div class="block__head">
+        <h2>House terms</h2>
+        <p class="block__sub">These apply the same way to an order placed by a person and one placed by an agent.</p>
       </div>
+      <ul class="terms">
+        <li>Print legs only. We do not bind and we do not deliver.</li>
+        <li>Quantity, size and paper are declared before a press day is held.</li>
+        <li>A proof is approved before the slot, and re-issued if the specification changes.</li>
+        <li>Runs to 400 sheets. Larger jobs are split across two press days.</li>
+        <li>A held slot is released if the leg is not signed within 48 hours.</li>
+      </ul>
     </section>
 
-    <section class="block block--rail">
-      <div class="block__head"><h2>House terms</h2></div>
-      <div class="card">
-        <ul class="terms">
-          <li>Print legs only. We do not bind and we do not deliver.</li>
-          <li>Quantity, size and paper are declared before a press day is held.</li>
-          <li>A proof is approved before the slot, and re-issued if the specification changes.</li>
-          <li>Runs to 400 sheets. Larger jobs are split across two press days.</li>
-          <li>A held slot is released if the leg is not signed within 48 hours.</li>
-        </ul>
-      </div>
-    </section>
+    <footer class="foot">
+      <span>Rivera Press · twelve printers · Ciudad Vieja, Montevideo</span>
+      <span class="muted">A fictional business built for a WebMCP demo. The prints and the press room are generated images.</span>
+    </footer>
 
-  </aside>
+  </main>
 
-</main>
-
-<footer class="foot">
-  <div class="foot__inner">
-    <span>Rivera Press · a co-op of twelve printers · Ciudad Vieja, Montevideo</span>
-    <span class="muted">A fictional business built for a WebMCP demo. The prints are drawn by the page.</span>
-  </div>
-</footer>
+</div>
 
 <script type="module" src="./site.js"></script>
 </body>

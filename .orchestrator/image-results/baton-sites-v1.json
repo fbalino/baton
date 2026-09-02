@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "job_id": "baton-sites-v1",
+  "status": "completed",
+  "manifest": "/Users/fernandobalino/Projects/baton/.orchestrator/image-jobs/baton-sites-v1.md",
+  "manifest_sha256": "4edbd97fe4d8165b08a13c867dfe7ca3500f0041525c00d1c63f1ce53d48aba7",
+  "project_root": "/Users/fernandobalino/Projects/baton",
+  "codex_session_id": "01a0631b-e67f-7073-a928-8168ca6894b8",
+  "outputs": [
+    {
+      "id": "press-hero",
+      "path": "sites/rivera-press/assets/generated/press-hero.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2201081,
+      "format": "png",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "set-cerro-signals",
+      "path": "sites/rivera-press/assets/generated/set-cerro-signals.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2113221,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "set-rambla-nocturne",
+      "path": "sites/rivera-press/assets/generated/set-rambla-nocturne.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2089494,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "set-salt-field",
+      "path": "sites/rivera-press/assets/generated/set-salt-field.png",
+      "required": true,
+      "exists": true,
+      "bytes": 1921014,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "set-palermo-grid",
+      "path": "sites/rivera-press/assets/generated/set-palermo-grid.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2204009,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "set-winter-ferry",
+      "path": "sites/rivera-press/assets/generated/set-winter-ferry.png",
+      "required": true,
+      "exists": true,
+      "bytes": 1940906,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "set-marea-baja",
+      "path": "sites/rivera-press/assets/generated/set-marea-baja.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2291867,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "bindery-hero",
+      "path": "sites/norte-bindery/assets/generated/bindery-hero.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2406772,
+      "format": "png",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "courier-hero",
+      "path": "sites/ruta-courier/assets/generated/courier-hero.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2474041,
+      "format": "png",
+      "width": 1536,
+      "height": 1024
+    }
+  ],
+  "worker": {
+    "status": "completed",
+    "provider": "codex",
+    "session_id": "01a0631b-e67f-7073-a928-8168ca6894b8",
+    "auth_mode": "chatgpt",
+    "subscription_first": true,
+    "result": {
+      "status": "completed",
+      "summary": "Generated all nine images using the built-in image-generation capability and the manifest\u2019s prompt set and shared visual direction.",
+      "artifacts": [
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/press-hero.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/set-cerro-signals.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/set-rambla-nocturne.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/set-salt-field.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/set-palermo-grid.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/set-winter-ferry.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/set-marea-baja.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/bindery-hero.png",
+        "/Users/fernandobalino/Projects/baton/sites/ruta-courier/assets/generated/courier-hero.png"
+      ],
+      "changed_files": [
+        "sites/rivera-press/assets/generated/press-hero.png",
+        "sites/rivera-press/assets/generated/set-cerro-signals.png",
+        "sites/rivera-press/assets/generated/set-rambla-nocturne.png",
+        "sites/rivera-press/assets/generated/set-salt-field.png",
+        "sites/rivera-press/assets/generated/set-palermo-grid.png",
+        "sites/rivera-press/assets/generated/set-winter-ferry.png",
+        "sites/rivera-press/assets/generated/set-marea-baja.png",
+        "sites/norte-bindery/assets/generated/bindery-hero.png",
+        "sites/ruta-courier/assets/generated/courier-hero.png"
+      ],
+      "commands_run": [
+        "Verified the manifest SHA-256",
+        "Generated nine distinct assets with built-in image generation",
+        "Placed assets at the declared paths and normalized dimensions",
+        "Opened and visually inspected every final image",
+        "Verified PNG formats, pixel dimensions, and the unchanged manifest hash"
+      ],
+      "verification": "All files are valid PNGs. The three heroes are exactly 1536\u00d71024; all six print cards are exactly 1024\u00d71280. Visual inspection confirmed: press-hero is a natural, crop-safe print studio without people or text; all six cards read as physical matte prints on textured paper and follow their specified compositions and palettes; bindery-hero centers the finishing press and contains no faces or text; courier-hero keeps the unbranded van left of center with no visible plate, people, or text. No visible logos or watermarks were found. The manifest remains unchanged at SHA-256 4edbd97fe4d8165b08a13c867dfe7ca3500f0041525c00d1c63f1ce53d48aba7.",
+      "needs_user": false,
+      "next_action": "None."
+    },
+    "usage": {
+      "input_tokens": 790491,
+      "cached_input_tokens": 650496,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 8145,
+      "reasoning_output_tokens": 1288
+    },
+    "event_errors": [
+      "Skill descriptions were shortened to fit the skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest.",
+      "Falling back from WebSockets to HTTPS transport. stream disconnected before completion: websocket closed by server before response.completed"
+    ],
+    "returncode": 0
+  },
+  "created_at": "2026-09-02T17:23:06.361264+00:00"
+}

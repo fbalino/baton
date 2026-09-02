@@ -1,4 +1,4 @@
-// Rivera Press — the shop's catalogue, prices, press calendar and print artwork.
+// Rivera Press — the shop's catalogue, prices, press calendar and print pictures.
 //
 // Pure data and pure functions. No DOM, no imports, no side effects, so both the
 // page and the WebMCP tools price a run from exactly the same numbers.
@@ -364,11 +364,19 @@ export function searchCatalog(query) {
 
 /* ------------------------------------------------------------------- prints */
 
-// Each set is drawn, not photographed: one small deterministic composition per
-// set, in that set's own two or three inks on its own ground.
+// Every set is photographed: one picture of the print lying on a table. The
+// files are the source of truth for what the page shows.
+
+export function setImage(set) {
+  return './assets/generated/set-' + String(set.id).replace(/_/g, '-') + '.webp';
+}
+
+// The drawn composition below is the fallback, used only when a photograph is
+// missing: one small deterministic drawing per set, in that set's own two or
+// three inks on its own ground. It fills its frame the way the photograph does.
 
 function svg(inner, label) {
-  return '<svg class="print__svg" viewBox="0 0 300 400" role="img" aria-label="' +
+  return '<svg class="print__svg" viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" role="img" aria-label="' +
     String(label).replace(/"/g, '') + '" xmlns="http://www.w3.org/2000/svg">' + inner + '</svg>';
 }
 

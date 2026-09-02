@@ -11,7 +11,7 @@ import {
   PAPERS, SIZES, SIZE_LABELS, FINISHES, SETS,
   SETUP_USD, SETUP_WAIVED_AT, MAX_RUN, CALENDAR_DAYS,
   findPaper, findSet, findFinish,
-  quoteRun, searchCatalog, setArt,
+  quoteRun, searchCatalog, setArt, setImage,
   pressDays, pressDay, freeDays, nearestFreeDays,
   todayISO, addDays, isDate, usd
 } from './data.js';
@@ -25,6 +25,35 @@ const stable = (v) => v === null || typeof v !== 'object'
   : Array.isArray(v)
     ? '[' + v.map(stable).join(',') + ']'
     : '{' + Object.keys(v).filter((k) => v[k] !== undefined).sort().map((k) => JSON.stringify(k) + ':' + stable(v[k])).join(',') + '}';
+
+/* ---------------------------------------------------------------- prints */
+
+// A print on the page is a photograph. If the file is missing the drawn
+// composition takes its place in the same frame, so nothing shows as broken.
+
+function printFrame(set, { className = '', eager = false, width = 1000, height = 1250 } = {}) {
+  return '<div class="print ' + className + '">' +
+    '<img class="print__img" src="' + setImage(set) + '"' +
+    ' width="' + width + '" height="' + height + '"' +
+    ' alt="' + esc(set.name + ', a print from the set on the studio table') + '"' +
+    (eager ? '' : ' loading="lazy"') + ' decoding="async" data-set="' + set.id + '">' +
+    '</div>';
+}
+
+function drawInstead(img) {
+  const set = findSet(img.dataset.set);
+  if (!set || !img.parentNode) return;
+  img.outerHTML = setArt(set);
+}
+
+function wirePrints(root) {
+  for (const img of (root || document).querySelectorAll('img.print__img')) {
+    if (img.dataset.wired) continue;
+    img.dataset.wired = '1';
+    if (img.complete && img.naturalWidth === 0) { drawInstead(img); continue; }
+    img.addEventListener('error', () => drawInstead(img), { once: true });
+  }
+}
 
 /* ----------------------------------------------------------------- state */
 
@@ -283,7 +312,7 @@ paintTheme();
 
 /* one-time content */
 
-el('intro-art').innerHTML = setArt(SETS[0]);
+wirePrints(el('hero-frame'));
 
 el('papers-body').innerHTML = PAPERS.map((p) =>
   '<tr><td class="paper__name">' + esc(p.name) + '</td><td class="muted">' + esc(p.character) + '</td>' +
@@ -304,27 +333,28 @@ const PROMPTS = [
     addDays(todayISO(), 18) + ' and carry it to the bindery.'
 ];
 
-el('prompts').innerHTML = PROMPTS.map((p, i) =>
-  '<li><q>' + esc(p) + '</q><button type="button" class="copy" data-prompt="' + i + '">Copy</button></li>'
+el('prompts').innerHTML = PROMPTS.map((p) =>
+  '<li class="prompt"><span class="prompt__text">' + esc(p) + '</span>' +
+  '<button type="button" class="prompt__copy" data-copy="' + esc(p) + '">Copy</button></li>'
 ).join('');
 
 el('prompts').addEventListener('click', async (e) => {
-  const btn = e.target.closest('.copy');
+  const btn = e.target.closest('.prompt__copy');
   if (!btn) return;
-  const text = PROMPTS[Number(btn.dataset.prompt)];
   try {
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(btn.dataset.copy);
     btn.textContent = 'Copied';
+    btn.dataset.copied = '';
   } catch {
     btn.textContent = 'Select it';
   }
-  setTimeout(() => { btn.textContent = 'Copy'; }, 1600);
+  setTimeout(() => { btn.textContent = 'Copy'; delete btn.dataset.copied; }, 1600);
 });
 
 /* form skeleton */
 
 el('f-set').innerHTML =
-  SETS.map((s) => '<option value="' + s.id + '">' + esc(s.name) + ' — ' + s.prints + ' prints</option>').join('') +
+  SETS.map((s) => '<option value="' + s.id + '">' + esc(s.name) + ' · ' + s.prints + ' prints</option>').join('') +
   '<option value="">Loose sheets, my own files</option>';
 
 el('f-paper').innerHTML = PAPERS.map((p) =>
@@ -438,7 +468,7 @@ function renderSets() {
     const from = quoteRun({ quantity: s.prints, size: '20x30', paper: s.paper, finish: 'matte' });
     return [
       '<article class="setcard' + (state.form.set === s.id ? ' setcard--picked' : '') + '">',
-      '  <div class="setcard__art">' + setArt(s) + '</div>',
+      '  <div class="setcard__art">' + printFrame(s, { className: 'setcard__print' }) + '</div>',
       '  <div class="setcard__body">',
       '    <div class="setcard__name">' + esc(s.name) + '</div>',
       '    <div class="setcard__meta">' + s.prints + ' prints · edition of ' + s.edition + ' · ' + esc(s.colour) + '</div>',
@@ -451,6 +481,8 @@ function renderSets() {
       '</article>'
     ].join('');
   }).join('');
+
+  wirePrints(el('sets-grid'));
 
   const bar = el('set-filter');
   if (state.filter) {
@@ -471,7 +503,7 @@ function renderCalendar() {
     return [
       '<button type="button" class="' + cls + '" data-date="' + d.date + '" data-state="' + d.state + '"',
       d.state === 'open' || isHeld ? '' : ' aria-disabled="true"',
-      ' title="' + esc(d.date + ' — ' + d.note) + '">',
+      ' title="' + esc(d.date + ' · ' + d.note) + '">',
       '<span class="day__dow">' + esc(d.weekday) + '</span>',
       '<span class="day__num">' + esc(d.label.split(' ')[1]) + '</span>',
       '<span class="day__state">' + label + '</span>',
@@ -481,10 +513,13 @@ function renderCalendar() {
   el('calendar-msg').textContent = state.message;
 }
 
+let lastOrderShown = null;
+
 function renderOrder() {
   const order = activeOrder();
   const box = el('order-card');
   if (!order) {
+    lastOrderShown = null;
     box.innerHTML = '<div class="empty">No order open. Build a specification above and create one, ' +
       'or ask your agent to run <code>create_order</code>.</div>';
     return;
@@ -500,8 +535,11 @@ function renderOrder() {
         ' (' + esc(STATUS_LABEL[statusOf(o)].toLowerCase()) + ')').join(', ') + '</p>'
     : '';
 
+  const arriving = order.id !== lastOrderShown;
+  lastOrderShown = order.id;
+
   box.innerHTML = [
-    '<div class="order">',
+    '<div class="order' + (arriving ? ' order--new' : '') + '">',
     '  <div class="order__head">',
     '    <div><span class="order__id">' + esc(order.id) + '</span> · ' + esc(order.set) + '</div>',
     '    <div><span class="status status--' + (st === 'slot_held' ? 'ok' : st === 'proof_approved' ? 'ok' : 'wait') + '">' +
@@ -513,7 +551,7 @@ function renderOrder() {
     '        <div class="proof__sheet">',
     '          <i class="proof__mark proof__mark--tl"></i><i class="proof__mark proof__mark--tr"></i>',
     '          <i class="proof__mark proof__mark--bl"></i><i class="proof__mark proof__mark--br"></i>',
-             setArt(set),
+             printFrame(set, { className: 'proof__art' }),
     '        </div>',
     '        <div class="proof__caption">' + esc(order.proof.id) + ' · ' + esc(SIZE_LABELS[order.size]) + ' · ' +
              esc(approved ? 'approved ' + order.proof.approved_at.slice(0, 10) : 'awaiting approval') + '</div>',
@@ -541,6 +579,8 @@ function renderOrder() {
     '</div>',
     otherRow
   ].join('');
+
+  wirePrints(box);
 }
 
 function renderAll() {
@@ -635,7 +675,7 @@ el('press-calendar').addEventListener('click', (e) => {
   const date = btn.dataset.date;
   const day = pressDay(date);
   const order = activeOrder();
-  if (!order) { state.message = 'Open an order first — a press day is held against an order.'; renderCalendar(); return; }
+  if (!order) { state.message = 'A press day is held against an order. Open one first.'; renderCalendar(); return; }
   if (!order.proof.approved_at) { state.message = 'Approve proof ' + order.proof.id + ' before holding a press day.'; renderCalendar(); return; }
   if (!day || day.state !== 'open') {
     const near = nearestFreeDays(date);
@@ -663,7 +703,7 @@ const baton = mountBaton({
     max_quantity: MAX_RUN,
     notes: 'Print legs only. Quantity, size and paper are declared, a proof is approved, and then a press day is held.'
   },
-  emptyHint: 'Missions begin at Rivera Press. Ask your agent to run baton_start — the baton appears here, ' +
+  emptyHint: 'Missions begin at Rivera Press. Ask your agent to run baton_start. The baton appears here, ' +
     'then travels to the bindery and the courier with every leg signed.',
   panel: el('mission-panel'),
   toolsBox: el('site-tools')
@@ -939,7 +979,7 @@ baton.registerAlways((signal, register) => {
       const c = await confirmAndApply({
         toolName: 'approve_proof',
         input: callInput,
-        message: 'Rivera Press: approve proof ' + order.proof.id + ' for ' + order.id + ' — ' +
+        message: 'Rivera Press: approve proof ' + order.proof.id + ' for ' + order.id + ', ' +
           order.quantity + ' sheets of ' + order.set + ', ' + SIZE_LABELS[order.size] + ' on ' + order.paper + '?',
         apply: () => {
           approveProof(order);
@@ -1058,7 +1098,7 @@ baton.registerAlways((signal, register) => {
       const c = await confirmAndApply({
         toolName: 'reserve_print_slot',
         input: callInput,
-        message: 'Rivera Press: hold the press on ' + input.date + ' for ' + order.id + ' — ' +
+        message: 'Rivera Press: hold the press on ' + input.date + ' for ' + order.id + ', ' +
           order.quantity + ' sheets, ' + usd(order.quote.total_usd) + '?',
         apply: () => {
           holdSlot(order, input.date);

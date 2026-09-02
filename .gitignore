@@ -9,3 +9,6 @@ e2e-shots/
 # These never enter a site folder and never deploy. Each host gets its copy as
 # the BATON_PRIVATE_JWK secret instead.
 keys/
+
+# Codex image originals (large PNGs); the sites ship the .webp derivatives
+.orchestrator/image-results/originals/

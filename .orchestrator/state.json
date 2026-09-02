@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "controller": "claude-code",
+  "project": {
+    "name": "Baton",
+    "root": "/Users/fernandobalino/Projects/baton",
+    "goal": "Design pass on the three Baton sites with generated images",
+    "status": "intake",
+    "phase": "reconnaissance"
+  },
+  "budget": {
+    "mode": "subscription_only",
+    "api_approved": false,
+    "provider": null,
+    "model": null,
+    "cap_usd": 0,
+    "approved_at": null,
+    "enforced_by": null
+  },
+  "workers": {},
+  "image_jobs": [],
+  "image_results": [],
+  "manifests": [],
+  "artifacts": [],
+  "open_decisions": [],
+  "verification": {
+    "git_status": null,
+    "build": null,
+    "tests": null,
+    "browser": null,
+    "visual_review": null
+  },
+  "updated_at": "2026-09-02T17:10:04.376074+00:00"
+}
+

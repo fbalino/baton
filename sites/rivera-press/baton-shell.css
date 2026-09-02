@@ -1,0 +1,314 @@
+/* Baton shell — the two-column frame every Baton site adopts.
+   Copied into each site folder by scripts/sync-lib.sh next to baton-panel.css,
+   so the sidebar is the same object on all three sites.
+
+   The markup contract, exactly:
+
+     <body>
+       <div class="shell">
+         <aside class="side" aria-label="Your agent and the mission">
+           <div class="side__brand">…</div>
+           <section id="mission-panel" class="side__mission"></section>
+           <section id="site-tools"    class="side__tools"></section>
+           <section class="side__agent">…</section>
+         </aside>
+         <main class="main">…</main>
+       </div>
+     </body>
+
+   The sidebar is always visible: it sticks to the top of the viewport, is one
+   viewport tall, and scrolls on its own. The business content lives in .main
+   and is the site's own business — this file only gives it a width and padding.
+
+   Link it after the site's own stylesheet and next to baton-panel.css:
+
+     <link rel="stylesheet" href="./style.css">
+     <link rel="stylesheet" href="./baton-panel.css">
+     <link rel="stylesheet" href="./baton-shell.css">
+
+   Everything here sits in the same cascade layer baton-panel.css uses, so any
+   value a site sets on :root wins whatever order the files load in.
+
+   Colour and type come from the --baton-*, --font-sans and --font-mono
+   properties declared in baton-panel.css; the two files always travel together. */
+
+@layer baton-defaults {
+
+  :root {
+    /* Geometry a site may tune. */
+    --side-width: 372px;
+    --side-pad: 22px;
+    --side-gap: 18px;
+    --side-bg: var(--baton-card);
+
+    --main-max: 1040px;
+    --main-pad-x: 44px;
+    --main-pad-y: 40px;
+
+    /* The single-column breakpoint is 960px. Media queries cannot read a
+       custom property, so it is written out below rather than tokenised. */
+  }
+
+  html { scrollbar-gutter: stable; }
+  body { margin: 0; }
+
+}
+
+/* ------------------------------------------------------------------ frame */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--side-width) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+/* height + position:sticky is what pins the column: the explicit height beats
+   the grid's stretch, and the grid area stays as tall as the main column, so
+   the sidebar has somewhere to stick. */
+.side {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  box-sizing: border-box;
+  padding: var(--side-pad);
+  display: flex;
+  flex-direction: column;
+  gap: var(--side-gap);
+  background: var(--side-bg);
+  border-right: 1px solid var(--baton-line);
+  color: var(--baton-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.side > * { margin: 0; min-width: 0; }
+
+.main {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  max-width: calc(var(--main-max) + var(--main-pad-x) * 2);
+  padding: var(--main-pad-y) var(--main-pad-x);
+}
+
+/* ---------------------------------------------------------------- rhythm */
+
+/* Each section after the brand opens with a hairline, so the column reads as
+   one stack rather than four cards. No eyebrows, no uppercase, no mono. */
+.side__mission,
+.side__tools,
+.side__agent {
+  border-top: 1px solid var(--baton-line);
+  padding-top: var(--side-gap);
+}
+
+.side__heading {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--baton-muted);
+  margin: 0 0 10px;
+}
+
+/* ----------------------------------------------------------------- brand */
+
+.side__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.side__name {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.014em;
+  color: var(--baton-ink);
+  text-decoration: none;
+}
+.side__name:focus-visible { outline: 2px solid var(--baton-accent); outline-offset: 3px; border-radius: 4px; }
+
+.side__place {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--baton-muted);
+}
+
+.side__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.side__host {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--baton-muted);
+  border: 1px solid var(--baton-line);
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+.side__theme {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--baton-ink);
+  background: transparent;
+  border: 1px solid var(--baton-line);
+  border-radius: 999px;
+  padding: 6px 11px;
+  margin-left: auto;
+  cursor: pointer;
+  transition:
+    color 160ms var(--baton-ease),
+    border-color 160ms var(--baton-ease),
+    background-color 160ms var(--baton-ease),
+    transform 160ms var(--baton-ease);
+}
+.side__theme:active { transform: scale(0.97); }
+.side__theme:focus-visible { outline: 2px solid var(--baton-accent); outline-offset: 2px; }
+
+/* ---------------------------------------------------------------- banner */
+
+.side__banner {
+  border: 1px solid var(--baton-line);
+  border-radius: 10px;
+  background: var(--baton-soft);
+  padding: 10px 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--baton-muted);
+}
+.side__banner b { color: var(--baton-ink); font-weight: 600; }
+.side__banner code { font-family: var(--font-mono); font-size: 12px; }
+
+/* ------------------------------------------------------- for your agent */
+
+.side__note {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--baton-muted);
+  margin: 0 0 10px;
+}
+
+.prompts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prompt {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 9px 9px 11px;
+  border: 1px solid var(--baton-line);
+  border-radius: 10px;
+  background: var(--baton-paper);
+}
+
+.prompt__text {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--baton-ink);
+}
+
+.prompt__copy {
+  flex: none;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--baton-muted);
+  background: var(--baton-card);
+  border: 1px solid var(--baton-line);
+  border-radius: 999px;
+  padding: 5px 9px;
+  cursor: pointer;
+  transition:
+    color 160ms var(--baton-ease),
+    border-color 160ms var(--baton-ease),
+    background-color 160ms var(--baton-ease),
+    transform 160ms var(--baton-ease);
+}
+.prompt__copy:active { transform: scale(0.97); }
+.prompt__copy:focus-visible { outline: 2px solid var(--baton-accent); outline-offset: 2px; }
+/* The site sets data-copied on the button after writing to the clipboard. */
+.prompt__copy[data-copied] {
+  color: var(--baton-ok);
+  border-color: color-mix(in srgb, var(--baton-ok) 40%, var(--baton-line));
+}
+
+/* ----------------------------------------------------------------- hover */
+
+@media (hover: hover) and (pointer: fine) {
+  .side__theme:hover { border-color: var(--baton-muted); }
+  .prompt__copy:hover { color: var(--baton-ink); border-color: var(--baton-muted); }
+  .prompt__copy[data-copied]:hover { color: var(--baton-ok); }
+}
+
+/* ------------------------------------------------------------ one column */
+
+@media (max-width: 959.98px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+
+  .side {
+    position: static;
+    height: auto;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--baton-line);
+    padding: 24px var(--side-pad) 30px;
+  }
+
+  /* The panel is drawn for a column. Stacked, it keeps that column rather
+     than stretching the goal, the figures and the carry button across the
+     whole page. */
+  .side > * {
+    width: 100%;
+    max-width: 560px;
+    margin-inline: auto;
+  }
+
+  .main {
+    max-width: none;
+    padding: 28px 20px 44px;
+  }
+}
+
+@media (max-width: 560px) {
+  .side { padding: 18px 16px; }
+}
+
+/* -------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .side__theme,
+  .prompt__copy {
+    transition-property: color, border-color, background-color;
+  }
+  .side__theme:active,
+  .prompt__copy:active { transform: none; }
+}
