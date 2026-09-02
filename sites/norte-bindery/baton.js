@@ -775,7 +775,12 @@ export function mountBaton(siteConfig) {
     debug('document.modelContext.registerTool is missing — no tools registered');
   } else {
     registerAlwaysOnTools();
-    document.modelContext.addEventListener('toolchange', () => { refreshToolsBox(); });
+    // Current WebMCP implementations do not all expose the optional
+    // `toolchange` event. Tools still register synchronously, so the page can
+    // work without live tool-list updates in those browsers.
+    if (typeof document.modelContext.addEventListener === 'function') {
+      document.modelContext.addEventListener('toolchange', () => { refreshToolsBox(); });
+    }
     render();
     refreshToolsBox();
     debug('WebMCP ready on ' + location.origin);
