@@ -359,10 +359,20 @@ export function mountBaton(siteConfig) {
   const alwaysAborts = []; // kept so their signals stay alive for the page's life
   let siteAbort = null;
 
-  /* ---- panel skeleton (built once; the confirm card must survive renders) */
+  /* ---- panel skeleton (built once; the confirm card must survive renders)
+
+     The chain strip is part of the skeleton on purpose. Its segments are kept
+     and their data-state is updated, so a segment turning green is a CSS
+     transition on one element rather than a fresh element on every render. */
   panel.innerHTML = [
     '<div class="baton" data-state="empty">',
+    '  <h2 class="side__heading">Mission</h2>',
     '  <div class="baton__body"></div>',
+    '  <div class="baton__chain" hidden>',
+    '    <div class="strip" aria-label="signature chain"></div>',
+    '    <div class="strip__caption"></div>',
+    '  </div>',
+    '  <div class="baton__route"></div>',
     '  <div class="baton__carry" hidden></div>',
     '  <div class="baton__confirm" hidden></div>',
     '  <div class="baton__debug">debug: waiting</div>',
@@ -370,9 +380,22 @@ export function mountBaton(siteConfig) {
   ].join('\n');
   const root = panel.querySelector('.baton');
   const bodyEl = panel.querySelector('.baton__body');
+  const chainEl = panel.querySelector('.baton__chain');
+  const stripEl = panel.querySelector('.strip');
+  const captionEl = panel.querySelector('.strip__caption');
+  const routeEl = panel.querySelector('.baton__route');
   const carryEl = panel.querySelector('.baton__carry');
   const confirmEl = panel.querySelector('.baton__confirm');
   const debugEl = panel.querySelector('.baton__debug');
+
+  // Set on the frame after the first paint. Until it is there the panel lands
+  // on its final state without moving, so arriving at a page with a mission
+  // already signed does not replay animations that belong to events. The
+  // timeout is the backstop for a tab that opens in the background, where
+  // requestAnimationFrame does not run.
+  const markMounted = () => { root.dataset.mounted = ''; };
+  requestAnimationFrame(markMounted);
+  setTimeout(markMounted, 150);
 
   function debug(text) {
     debugEl.textContent = 'debug: ' + text;
@@ -410,13 +433,37 @@ export function mountBaton(siteConfig) {
 
   /* -------------------------------------------------------------- render */
 
+  // The strip is updated in place: segments are only rebuilt when the route
+  // length changes, so turning green is a transition on a live element.
+  function syncStrip() {
+    const n = mission.route.length;
+    if (stripEl.childElementCount !== n) {
+      stripEl.innerHTML = mission.route
+        .map(() => '<span class="strip__seg" data-state="todo"><i class="strip__fill"></i></span>')
+        .join('');
+    }
+    mission.route.forEach((stop, i) => {
+      const seg = stripEl.children[i];
+      if (!seg) return;
+      const leg = mission.legs[i];
+      const v = chain?.legs?.[i];
+      const state = !leg ? 'todo' : v ? (v.ok ? 'ok' : 'bad') : 'pending';
+      if (seg.dataset.state !== state) seg.dataset.state = state;
+      const title = stop.role + ' · ' + host(stop.url);
+      if (seg.title !== title) seg.title = title;
+    });
+  }
+
   function render() {
     root.dataset.state = mission ? 'aboard' : 'empty';
     if (!mission) {
       bodyEl.innerHTML =
-        '<h2 class="baton__title">No mission aboard</h2>' +
         '<p class="baton__hint">' + esc(cfg.emptyHint || 'This site is waiting for a baton. A mission arrives in the link.') + '</p>';
+      chainEl.hidden = true;
+      routeEl.innerHTML = '';
       carryEl.hidden = true;
+      carryEl.innerHTML = '';
+      delete carryEl.dataset.url;
       return;
     }
     const s = missionSummary(mission);
@@ -441,45 +488,53 @@ export function mountBaton(siteConfig) {
       ].join('');
     }).join('');
 
-    const strip = mission.route.map((stop, i) => {
-      const leg = mission.legs[i];
-      const v = chain?.legs?.[i];
-      const state = !leg ? 'todo' : v ? (v.ok ? 'ok' : 'bad') : 'pending';
-      return '<span class="strip__seg strip__seg--' + state + '" title="' + esc(stop.role + ' · ' + host(stop.url)) + '"></span>';
-    }).join('');
-
     const declined = (mission.declined || []).map((d) =>
       '<li class="declined">' + esc(host(d.origin)) + ' declined the <b>' + esc(d.role) + '</b> leg: ' + esc(d.reason) + '</li>'
     ).join('');
 
+    const days = s.days_to_deadline;
+    const away = days === 0 ? 'today' : days > 0 ? days + ' days from today' : Math.abs(days) + ' days ago';
+
     bodyEl.innerHTML = [
-      '<h2 class="baton__title">' + esc(mission.goal) + '</h2>',
-      '<div class="baton__id">Baton ' + esc(mission.id) + ' · ' + s.legs_done + ' of ' + s.legs_total + ' legs signed</div>',
+      '<h3 class="baton__goal">' + esc(mission.goal) + '</h3>',
+      '<div class="baton__id">Baton <b>' + esc(mission.id) + '</b> · ' + s.legs_done + ' of ' + s.legs_total + ' legs signed</div>',
       '<dl class="baton__facts">',
-      '  <div><dt>Quantity</dt><dd>' + esc(s.quantity) + '</dd></div>',
-      '  <div><dt>Budget</dt><dd>' + money(s.budget_usd) + '</dd></div>',
-      '  <div><dt>Spent</dt><dd>' + money(s.spent_usd) + '</dd></div>',
-      '  <div><dt>Remaining</dt><dd class="' + (s.remaining_usd < 0 ? 'over' : 'good') + '">' + money(s.remaining_usd) + '</dd></div>',
-      '  <div><dt>Deadline</dt><dd>' + esc(s.deadline) + ' <span class="muted">(' + s.days_to_deadline + ' days)</span></dd></div>',
+      '  <div class="fact"><dt>Quantity</dt><dd>' + esc(s.quantity) + '</dd></div>',
+      '  <div class="fact"><dt>Budget</dt><dd>' + money(s.budget_usd) + '</dd></div>',
+      '  <div class="fact"><dt>Spent</dt><dd>' + money(s.spent_usd) + '</dd></div>',
+      '  <div class="fact"><dt>Remaining</dt><dd class="' + (s.remaining_usd < 0 ? 'over' : 'good') + '">' + money(s.remaining_usd) + '</dd></div>',
       '</dl>',
-      '<div class="strip" aria-label="signature chain">' + strip + '</div>',
-      '<div class="strip__caption">' + (chain
-        ? (mission.legs.length === 0 ? 'No legs signed yet.'
-          : chain.ok ? 'Every signed leg checks out against the site that signed it.'
-          : 'Chain broken — ' + esc(chain.legs.find((l) => !l.ok)?.reason || 'spent total does not match the legs') + '.')
-        : 'Checking signatures…') + '</div>',
+      '<p class="baton__deadline">Deadline <b>' + esc(s.deadline) + '</b> · ' + esc(away) + '</p>'
+    ].join('\n');
+
+    chainEl.hidden = false;
+    syncStrip();
+    captionEl.textContent = chain
+      ? (mission.legs.length === 0 ? 'No legs signed yet.'
+        : chain.ok ? 'Every signed leg checks out against the site that signed it.'
+        : 'Chain broken — ' + (chain.legs.find((l) => !l.ok)?.reason || 'spent total does not match the legs') + '.')
+      : 'Checking signatures…';
+
+    routeEl.innerHTML = [
       '<ol class="legs">' + rows + '</ol>',
       declined ? '<ul class="declines">' + declined + '</ul>' : '',
       tamperLinks()
     ].join('\n');
 
+    // Rebuilt only when the destination changes, so the link's entrance plays
+    // once — when baton_mint produces it — and not on every re-render.
     if (carryLink) {
       carryEl.hidden = false;
-      carryEl.innerHTML =
-        '<a class="carry" href="' + esc(carryLink.url) + '">Carry this to ' + esc(carryLink.label) + ' →</a>' +
-        '<div class="carry__note">Opens ' + esc(host(carryLink.url)) + ' with the mission in the link.</div>';
+      if (carryEl.dataset.url !== carryLink.url) {
+        carryEl.dataset.url = carryLink.url;
+        carryEl.innerHTML =
+          '<a class="carry" href="' + esc(carryLink.url) + '">Carry this to ' + esc(carryLink.label) + ' →</a>' +
+          '<div class="carry__note">Opens ' + esc(host(carryLink.url)) + ' with the mission in the link.</div>';
+      }
     } else {
       carryEl.hidden = true;
+      carryEl.innerHTML = '';
+      delete carryEl.dataset.url;
     }
   }
 
@@ -541,17 +596,23 @@ export function mountBaton(siteConfig) {
     confirmEl.innerHTML = '';
   }
 
+  // The .confirm element is created once per proposal and then repainted in
+  // place, so its entrance plays when the card goes up and not again when the
+  // buttons go busy or an error is added.
   function paintConfirmCard(message, { busy = false, error = null } = {}) {
     confirmEl.hidden = false;
-    confirmEl.innerHTML = [
-      '<div class="confirm">',
-      '  <p class="confirm__msg">' + esc(message) + '</p>',
-      error ? '  <p class="confirm__error">' + esc(error) + '</p>' : '',
-      '  <div class="confirm__actions">',
-      '    <button type="button" class="btn btn--primary" data-baton-confirm' + (busy ? ' disabled' : '') + '>' +
-           (busy ? 'Working…' : 'Confirm') + '</button>',
-      '    <button type="button" class="btn" data-baton-cancel' + (busy ? ' disabled' : '') + '>Cancel</button>',
-      '  </div>',
+    let card = confirmEl.querySelector('.confirm');
+    if (!card) {
+      confirmEl.innerHTML = '<div class="confirm"></div>';
+      card = confirmEl.querySelector('.confirm');
+    }
+    card.innerHTML = [
+      '<p class="confirm__msg">' + esc(message) + '</p>',
+      error ? '<p class="confirm__error">' + esc(error) + '</p>' : '',
+      '<div class="confirm__actions">',
+      '  <button type="button" class="btn btn--primary" data-baton-confirm' + (busy ? ' disabled' : '') + '>' +
+         (busy ? 'Working…' : 'Confirm') + '</button>',
+      '  <button type="button" class="btn" data-baton-cancel' + (busy ? ' disabled' : '') + '>Cancel</button>',
       '</div>'
     ].filter(Boolean).join('\n');
   }
@@ -747,10 +808,42 @@ export function mountBaton(siteConfig) {
     refreshToolsBox();
   }
 
-  async function refreshToolsBox() {
+  const TOOLS_HEADING = '<h2 class="side__heading">Site tools</h2>';
+
+  // register() is called once per tool, so registering the six common tools
+  // asks for six repaints in the same task. Coalesce them into one: without
+  // this the last repaint overwrites the chips before they have entered.
+  let toolsQueued = null;
+  function refreshToolsBox() {
+    if (toolsQueued) return toolsQueued;
+    toolsQueued = new Promise((resolve) => {
+      setTimeout(() => {
+        toolsQueued = null;
+        paintToolsBox().then(resolve, resolve);
+      }, 0);
+    });
+    return toolsQueued;
+  }
+
+  function toolChip(name, kind, enterIndex) {
+    const li = document.createElement('li');
+    li.className = enterIndex === null ? 'tool' : 'tool is-entering';
+    li.dataset.tool = name;
+    li.dataset.kind = kind;
+    // 24ms between chips: enough to read as a sequence, too short to wait for.
+    if (enterIndex !== null) li.style.setProperty('--enter-delay', enterIndex * 24 + 'ms');
+    li.innerHTML = '<code class="tool__name">' + esc(name) + '</code>' +
+      '<span class="tool__kind tool__kind--' + kind + '">' + kind + '</span>';
+    return li;
+  }
+
+  // The list is reconciled, not rebuilt. A chip that is already on screen is
+  // left alone, so a redundant repaint — a toolchange event, a re-verify —
+  // cannot wipe a chip that is halfway through its entrance.
+  async function paintToolsBox() {
     if (!toolsBox) return;
     if (!hasWebMCP) {
-      toolsBox.innerHTML = '<div class="tools__count">No WebMCP in this browser</div>';
+      toolsBox.innerHTML = TOOLS_HEADING + '<div class="tools__count">No WebMCP in this browser</div>';
       return;
     }
     let tools = null;
@@ -760,18 +853,44 @@ export function mountBaton(siteConfig) {
       tools = null;
     }
     if (!Array.isArray(tools)) tools = [...registry.values()];
-    const items = tools
+
+    let list = toolsBox.querySelector('.tools__list');
+    if (!list) {
+      toolsBox.innerHTML = TOOLS_HEADING + '<div class="tools__count"></div><ul class="tools__list"></ul>';
+      list = toolsBox.querySelector('.tools__list');
+    }
+    toolsBox.querySelector('.tools__count').innerHTML =
+      '<b>' + tools.length + '</b> site tool' + (tools.length === 1 ? '' : 's') + ' registered right now';
+
+    const want = new Map(tools
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
-      .map((t) => {
-        const ro = t.annotations?.readOnlyHint;
-        return '<li class="tool"><code>' + esc(t.name) + '</code><span class="tool__kind tool__kind--' + (ro ? 'read' : 'write') + '">' +
-          (ro ? 'read' : 'write') + '</span></li>';
-      })
-      .join('');
-    toolsBox.innerHTML =
-      '<div class="tools__count"><b>' + tools.length + '</b> site tool' + (tools.length === 1 ? '' : 's') + ' registered right now</div>' +
-      '<ul class="tools__list">' + items + '</ul>';
+      .map((t) => [t.name, t.annotations?.readOnlyHint ? 'read' : 'write']));
+
+    for (const li of [...list.children]) if (!want.has(li.dataset.tool)) li.remove();
+
+    let entering = 0;
+    let i = 0;
+    for (const [name, kind] of want) {
+      const at = list.children[i];
+      if (at && at.dataset.tool === name) {
+        if (at.dataset.kind !== kind) at.replaceWith(toolChip(name, kind, null));
+        i++;
+        continue;
+      }
+      list.insertBefore(toolChip(name, kind, entering++), at || null);
+      i++;
+    }
+
+    if (entering) {
+      // Two frames: one for the browser to resolve the entering style, one to
+      // release it so the transition has something to run from. The timeout is
+      // the backstop for a background tab, where frames do not come.
+      const release = () => list.querySelectorAll('.tool.is-entering')
+        .forEach((el) => el.classList.remove('is-entering'));
+      requestAnimationFrame(() => requestAnimationFrame(release));
+      setTimeout(release, 150);
+    }
   }
 
   /* --------------------------------------------------------- common tools */
@@ -1042,7 +1161,7 @@ export function mountBaton(siteConfig) {
 
   if (!hasWebMCP) {
     render();
-    if (toolsBox) toolsBox.innerHTML = '<div class="tools__count">No WebMCP in this browser</div>';
+    if (toolsBox) toolsBox.innerHTML = TOOLS_HEADING + '<div class="tools__count">No WebMCP in this browser</div>';
     debug('document.modelContext.registerTool is missing — no tools registered');
   } else {
     try {

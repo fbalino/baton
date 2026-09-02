@@ -1,44 +1,68 @@
-/* Baton panel — the mission card and the tools box.
-   Copied into each site folder as baton-panel.css by scripts/sync-lib.sh, so
-   the panel is the same object on all three sites. The host page owns the rest
-   of its stylesheet and may set five properties to match its own identity:
+/* Baton panel — the mission card and the tools box, as they sit in the sidebar.
+   Copied into each site folder by scripts/sync-lib.sh together with
+   baton-shell.css, so the panel is the same object on all three sites.
 
-     --baton-accent   the site colour: the carry button, the current leg
-     --baton-ink      body text
-     --baton-paper    the surface the panel sits on
-     --baton-line     hairlines and borders
-     --baton-muted    secondary text
+   There are no left accent borders anywhere in here. Structure is carried by
+   hairlines and surface tone, which is what the rest of a sidebar is made of.
 
-   The defaults below sit in a cascade layer, so anything the host page sets on
-   :root wins no matter which stylesheet loads first. Dark follows the host's
-   data-theme attribute, and prefers-color-scheme when it has not chosen. */
+   The host page owns the rest of its stylesheet and may set:
+
+     --baton-accent     the site colour: the carry button, the current leg
+     --baton-ink        body text
+     --baton-paper      the recessed surface (quiet rows, prompt cards)
+     --baton-line       hairlines and borders
+     --baton-muted      secondary text
+     --baton-card       the raised surface the sidebar sits on
+     --baton-on-accent  text on the accent
+     --baton-ok / --baton-warn / --baton-bad
+     --baton-radius
+     --font-sans        every word in the panel
+     --font-mono        money, tool names, the debug line
+
+   The defaults sit in a cascade layer, so anything the host page sets on :root
+   wins no matter which stylesheet loads first. Dark follows the host's
+   data-theme attribute, and prefers-color-scheme when it has not chosen.
+
+   Type: Geist for prose, Geist Mono for the figures. The @import below means a
+   site gets both without adding anything to its own <head>; a site that
+   prefers its own faces simply sets --font-sans and --font-mono. */
+
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap');
 
 @layer baton-defaults {
   :root {
+    --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
     --baton-accent: #b4530a;
     --baton-ink: #16130f;
-    --baton-paper: #fbfaf8;
+    --baton-paper: #f7f5f1;
     --baton-line: #e4dfd7;
-    --baton-muted: #8b8377;
+    --baton-muted: #7c7467;
 
     --baton-card: #ffffff;
-    --baton-tint: color-mix(in srgb, var(--baton-accent) 7%, transparent);
+    --baton-tint: color-mix(in srgb, var(--baton-accent) 8%, transparent);
+    --baton-soft: color-mix(in srgb, var(--baton-line) 38%, transparent);
     --baton-on-accent: #ffffff;
     --baton-ok: #1f7a45;
     --baton-warn: #a8791d;
     --baton-bad: #b3261e;
     --baton-radius: 10px;
+
+    /* One entrance curve for the whole system: strong ease-out, nothing over
+       220ms, and only transform and opacity ever move. */
+    --baton-ease: cubic-bezier(0.23, 1, 0.32, 1);
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --baton-accent: #f08a3c;
       --baton-ink: #f2ede6;
-      --baton-paper: #16130f;
+      --baton-paper: #100e0b;
       --baton-line: #342f28;
       --baton-muted: #9c9287;
 
-      --baton-card: #1e1a15;
+      --baton-card: #1a1712;
       --baton-on-accent: #1b1206;
       --baton-ok: #4cc182;
       --baton-warn: #d9b25c;
@@ -49,11 +73,11 @@
   :root[data-theme="dark"] {
     --baton-accent: #f08a3c;
     --baton-ink: #f2ede6;
-    --baton-paper: #16130f;
+    --baton-paper: #100e0b;
     --baton-line: #342f28;
     --baton-muted: #9c9287;
 
-    --baton-card: #1e1a15;
+    --baton-card: #1a1712;
     --baton-on-accent: #1b1206;
     --baton-ok: #4cc182;
     --baton-warn: #d9b25c;
@@ -61,98 +85,171 @@
   }
 }
 
-/* Monospace is reserved for the two things that are genuinely machine data
-   here: tool names and money. Everything else is the page's own type.
+/* --------------------------------------------------------------- the type
 
-   The type is pinned rather than inherited: the panel has to look like the same
-   object on all three sites, and a host stylesheet that happens to style a class
-   name used here must not change it. */
-.baton :where(p, h2, dt, div, span, li, a, b, button),
-.tools :where(p, div, span, li) {
+   Pinned rather than inherited: the panel has to look like the same object on
+   all three sites, and a host stylesheet that happens to style a class name
+   used here must not change it. Mono is reserved for the two things that are
+   genuinely machine data — money and tool names — plus the debug line. */
+
+.baton,
+.side__tools,
+.tools {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--baton-ink);
+  font-variant-ligatures: none;
+}
+
+.baton :where(h2, h3, p, div, span, li, a, b, i, dt, dd, dl, ol, ul, button, code),
+.side__tools :where(h2, p, div, span, li, ul, code),
+.tools :where(h2, p, div, span, li, ul, code) {
   font-family: inherit;
   text-transform: none;
   letter-spacing: normal;
 }
 
+/* The panel and the tools box carry no chrome of their own: baton-shell.css
+   frames them as sections of the sidebar. */
 .baton,
+.side__tools,
 .tools {
-  --baton-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+/* --------------------------------------------------------- the mission card */
+
+.baton__goal {
+  font-family: var(--font-sans);
+  font-size: 15.5px;
+  font-weight: 500;
+  line-height: 1.38;
+  letter-spacing: -0.008em;
   color: var(--baton-ink);
-  background: var(--baton-card);
-  border: 1px solid var(--baton-line);
-  border-radius: var(--baton-radius);
-}
-
-/* ------------------------------------------------------- the baton card */
-
-.baton {
-  border-left: 4px solid var(--baton-accent);
-  padding: 18px;
-}
-.baton[data-state="empty"] { border-left-color: var(--baton-line); }
-
-.baton__title {
-  font-size: 20px;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
   margin: 0 0 5px;
-}
-.baton__id {
-  font-size: 13px;
-  color: var(--baton-muted);
-}
-.baton__hint {
-  color: var(--baton-muted);
-  margin: 4px 0 0;
-  max-width: 56ch;
+  text-wrap: pretty;
 }
 
-.baton__facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 26px;
-  margin: 16px 0 16px;
-}
-.baton__facts div { margin: 0; }
-.baton__facts dt {
-  font-size: 12px;
+.baton__id {
+  font-size: 12.5px;
+  line-height: 1.45;
   color: var(--baton-muted);
 }
-.baton .baton__facts dd {
-  margin: 2px 0 0;
-  font-size: 17px;
-  font-family: var(--baton-mono);
+.baton .baton__id b {
+  font-family: var(--font-mono);
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
-.baton__facts dd.good { color: var(--baton-ok); }
-.baton__facts dd.over { color: var(--baton-bad); }
-.baton .baton__facts dd .muted {
-  font-family: inherit;
+
+.baton__hint {
   font-size: 13px;
+  line-height: 1.5;
+  color: var(--baton-muted);
+  margin: 0;
+  max-width: 46ch;
+}
+
+/* ------------------------------------------------------------ the figures */
+
+/* Four cells, hairline-ruled by the 1px gap showing the grid's own colour. */
+.baton__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 14px 0 12px;
+  background: var(--baton-line);
+  border: 1px solid var(--baton-line);
+  border-radius: var(--baton-radius);
+  overflow: hidden;
+}
+.baton .baton__facts .fact {
+  margin: 0;
+  padding: 8px 11px 9px;
+  background: var(--baton-card);
+}
+.baton .baton__facts dt {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.3;
   color: var(--baton-muted);
 }
-
-/* ------------------------------------------------------ the chain strip */
-
-.strip { display: flex; gap: 4px; margin: 0 0 7px; }
-.strip__seg {
-  height: 7px;
-  flex: 1;
-  border-radius: 999px;
-  background: var(--baton-line);
+.baton .baton__facts dd {
+  margin: 3px 0 0;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
-.strip__seg--ok { background: var(--baton-ok); }
-.strip__seg--bad { background: var(--baton-bad); }
-.strip__seg--pending { background: var(--baton-warn); }
+.baton .baton__facts dd.good { color: var(--baton-ok); }
+.baton .baton__facts dd.over { color: var(--baton-bad); }
 
-.strip__caption {
-  font-size: 13.5px;
+.baton__deadline {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.45;
   color: var(--baton-muted);
   margin: 0 0 14px;
 }
+.baton .baton__deadline b {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--baton-ink);
+}
 
-/* ------------------------------------------------------ the route strip */
+/* ------------------------------------------------------- the chain strip */
+
+.baton__chain { margin: 0 0 13px; }
+
+.strip {
+  display: flex;
+  gap: 4px;
+}
+
+.strip__seg {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--baton-soft);
+  overflow: hidden;
+}
+
+/* A segment fills from the left when its leg verifies. Transform only, so the
+   browser never lays the strip out twice. */
+.strip__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--baton-ok);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 220ms var(--baton-ease), background-color 160ms linear;
+}
+.strip__seg[data-state="ok"] .strip__fill { transform: scaleX(1); }
+.strip__seg[data-state="pending"] .strip__fill { transform: scaleX(1); background: var(--baton-warn); }
+.strip__seg[data-state="bad"] .strip__fill { transform: scaleX(1); background: var(--baton-bad); }
+
+/* A chain that was already signed when the page opened is a fact, not an
+   event: the first paint lands on its final state without moving. */
+.baton:not([data-mounted]) .strip__fill { transition-duration: 0ms; }
+
+.strip__caption {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--baton-muted);
+  margin: 8px 0 0;
+  text-wrap: pretty;
+}
+
+/* -------------------------------------------------------------- the legs */
 
 .legs {
   list-style: none;
@@ -160,27 +257,34 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
+
 .leg {
   display: flex;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--baton-line);
-  border-radius: 8px;
-  background: var(--baton-paper);
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--baton-radius);
+  background: var(--baton-soft);
 }
-.leg--todo { opacity: 0.62; }
+.leg--todo {
+  background: none;
+  border-color: var(--baton-line);
+  color: var(--baton-muted);
+}
 .leg--here {
-  border-color: var(--baton-accent);
   background: var(--baton-tint);
-  opacity: 1;
+  border-color: color-mix(in srgb, var(--baton-accent) 32%, transparent);
+  color: var(--baton-ink);
 }
+
 .leg__mark {
-  font-size: 15px;
-  line-height: 1.5;
-  width: 16px;
+  flex: none;
+  width: 13px;
   text-align: center;
+  font-size: 12.5px;
+  line-height: 1.55;
   color: var(--baton-muted);
 }
 .leg--ok .leg__mark { color: var(--baton-ok); }
@@ -188,140 +292,308 @@
 .leg--here .leg__mark { color: var(--baton-accent); }
 
 .leg__main { flex: 1; min-width: 0; }
-.leg__head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.leg__role { font-weight: 600; }
-.leg__host { font-size: 13px; color: var(--baton-muted); }
+
+.leg__head {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.leg__role { font-size: 13px; font-weight: 500; }
+.leg__host { font-size: 12px; color: var(--baton-muted); }
+
 .baton .leg__cost {
   margin-left: auto;
-  font-family: var(--baton-mono);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
   font-variant-numeric: tabular-nums;
-  font-size: 14px;
+  letter-spacing: -0.01em;
 }
 .baton .leg__cost--todo {
-  font-family: inherit;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: normal;
   color: var(--baton-muted);
-  font-size: 13px;
 }
-.leg__summary { margin-top: 2px; }
-.leg__meta { font-size: 12.5px; color: var(--baton-muted); margin-top: 3px; }
+
+.leg__summary {
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin-top: 2px;
+  text-wrap: pretty;
+}
+.leg__meta {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--baton-muted);
+  margin-top: 2px;
+}
+
+/* ---------------------------------------------------------- the declines */
 
 .declines {
   list-style: none;
-  margin: 12px 0 0;
+  margin: 10px 0 0;
   padding: 0;
-  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.declined {
+  font-size: 12.5px;
+  line-height: 1.45;
   color: var(--baton-bad);
+  background: color-mix(in srgb, var(--baton-bad) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--baton-bad) 24%, transparent);
+  border-radius: var(--baton-radius);
+  padding: 8px 10px;
 }
 
-/* ---------------------------------------------------------- carry link */
+/* ------------------------------------------------------- the tamper link */
+
+.tamper { margin-top: 11px; }
+.tamper__link {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--baton-muted);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 160ms var(--baton-ease);
+}
+.tamper__link:focus-visible { outline: 2px solid var(--baton-accent); outline-offset: 2px; border-radius: 3px; }
+
+/* ---------------------------------------------------------- the carry link
+
+   The one prominent button in the sidebar: full width, accent, and the only
+   thing in the column that asks to be pressed. */
+
+.baton__carry { margin-top: 16px; }
 
 .carry {
   display: block;
-  margin-top: 18px;
+  box-sizing: border-box;
+  width: 100%;
+  text-align: center;
   background: var(--baton-accent);
   color: var(--baton-on-accent);
   text-decoration: none;
-  font-size: 17px;
+  font-family: var(--font-sans);
+  font-size: 14.5px;
   font-weight: 600;
-  padding: 14px 16px;
-  border-radius: 8px;
+  line-height: 1.35;
+  letter-spacing: -0.006em;
+  padding: 12px 14px;
+  border-radius: var(--baton-radius);
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 200ms var(--baton-ease), transform 160ms var(--baton-ease);
 }
-.carry:hover { filter: brightness(1.07); }
+.carry:active { transform: translateY(0) scale(0.97); }
 .carry:focus-visible { outline: 2px solid var(--baton-ink); outline-offset: 2px; }
-.carry__note { font-size: 12.5px; color: var(--baton-muted); margin-top: 6px; }
 
-/* --------------------------------------------------------- confirm card */
+@starting-style {
+  .carry { opacity: 0; transform: translateY(4px) scale(0.97); }
+}
+
+.carry__note {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--baton-muted);
+  margin-top: 6px;
+}
+
+/* -------------------------------------------------------- the confirm card */
+
+.baton__confirm { margin-top: 16px; }
 
 .confirm {
-  margin-top: 18px;
-  border: 2px solid var(--baton-accent);
-  border-radius: 8px;
-  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--baton-accent) 42%, var(--baton-line));
+  border-radius: var(--baton-radius);
   background: var(--baton-tint);
+  padding: 12px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 200ms var(--baton-ease), transform 200ms var(--baton-ease);
 }
-.confirm__msg { font-size: 15px; margin: 0 0 12px; }
+
+@starting-style {
+  .confirm { opacity: 0; transform: translateY(4px); }
+}
+
+.confirm__msg {
+  font-size: 13.5px;
+  line-height: 1.48;
+  margin: 0 0 10px;
+  text-wrap: pretty;
+}
 .confirm__error {
-  font-size: 14px;
-  margin: 0 0 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin: 0 0 10px;
   color: var(--baton-bad);
 }
-.confirm__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.confirm__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
-.btn {
-  font: inherit;
-  font-size: 15px;
-  padding: 9px 16px;
-  border-radius: 7px;
+.baton .btn {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 9px 15px;
+  border-radius: var(--baton-radius);
   border: 1px solid var(--baton-line);
   background: var(--baton-card);
   color: var(--baton-ink);
   cursor: pointer;
+  transform: scale(1);
+  transition:
+    background-color 160ms var(--baton-ease),
+    border-color 160ms var(--baton-ease),
+    opacity 160ms var(--baton-ease),
+    transform 160ms var(--baton-ease);
 }
-.btn:disabled { opacity: 0.55; cursor: default; }
-.btn--primary {
+.baton .btn:active:not(:disabled) { transform: scale(0.97); }
+.baton .btn:disabled { opacity: 0.55; cursor: default; }
+.baton .btn:focus-visible { outline: 2px solid var(--baton-accent); outline-offset: 2px; }
+.baton .btn--primary {
   background: var(--baton-accent);
   border-color: var(--baton-accent);
   color: var(--baton-on-accent);
   font-weight: 600;
 }
 
-/* ----------------------------------------------------------- debug line */
+/* --------------------------------------------------------- the debug line */
 
-.baton__debug {
-  margin: 16px 0 0;
+.baton .baton__debug {
+  margin: 15px 0 0;
   padding-top: 10px;
-  border-top: 1px dashed var(--baton-line);
+  border-top: 1px solid var(--baton-line);
+  font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.5;
   color: var(--baton-muted);
   word-break: break-word;
 }
 
-/* ------------------------------------------------------------ tools box */
+/* ----------------------------------------------------------- the tools box */
 
-.tools { padding: 16px 18px; }
-.tools__count { font-size: 15px; margin-bottom: 10px; }
-.tools .tools__count b {
-  color: var(--baton-accent);
-  font-family: var(--baton-mono);
-  font-size: 18px;
+.tools__count {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--baton-muted);
+  margin: 0 0 9px;
 }
+.side__tools .tools__count b,
+.tools .tools__count b {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--baton-ink);
+}
+
 .tools__list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
+  /* A site with nineteen tools would otherwise push everything below it out
+     of a one-viewport sidebar. The list bounds itself instead. */
+  max-height: 34dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
+
+/* A chip enters once, the first time its tool is registered. The lib puts
+   .is-entering and a --enter-delay on new names only, then drops the class on
+   the next frame; a re-render of a name already on screen does not move. */
 .tool {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   border: 1px solid var(--baton-line);
   border-radius: 999px;
-  padding: 3px 5px 3px 10px;
-  background: var(--baton-paper);
+  padding: 3px 4px 3px 9px;
+  background: var(--baton-card);
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 200ms var(--baton-ease) var(--enter-delay, 0ms),
+    transform 200ms var(--baton-ease) var(--enter-delay, 0ms);
 }
-.tools .tool code { font-family: var(--baton-mono); font-size: 12.5px; }
-.tool__kind {
-  font-size: 11px;
+.tool.is-entering {
+  opacity: 0;
+  transform: translateY(3px) scale(0.97);
+}
+
+.side__tools .tool__name,
+.tools .tool__name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: -0.012em;
+  color: var(--baton-ink);
+}
+
+/* Plain sans, because "read" and "write" are words, not data. */
+.side__tools .tool__kind,
+.tools .tool__kind {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 500;
   border-radius: 999px;
-  padding: 2px 8px;
+  padding: 4px 8px;
   color: var(--baton-muted);
-  background: color-mix(in srgb, var(--baton-line) 55%, transparent);
+  background: var(--baton-soft);
 }
-.tool__kind--write {
+.side__tools .tool__kind--write,
+.tools .tool__kind--write {
   color: var(--baton-accent);
   background: var(--baton-tint);
 }
 
-@media (max-width: 560px) {
-  .baton { padding: 16px; }
-  .baton__facts { gap: 10px 18px; }
-  .leg__cost { margin-left: 0; }
+/* ----------------------------------------------------------------- hover */
+
+@media (hover: hover) and (pointer: fine) {
+  .tamper__link:hover { color: var(--baton-accent); }
+  .carry:hover { opacity: 0.92; }
+  .baton .btn:hover:not(:disabled) { border-color: var(--baton-muted); }
+  .baton .btn--primary:hover:not(:disabled) { opacity: 0.92; border-color: var(--baton-accent); }
 }
 
-.tamper { margin-top: 10px; font-size: 12.5px; }
-.tamper__link { color: var(--baton-muted); text-decoration: underline; text-underline-offset: 3px; }
-.tamper__link:hover, .tamper__link:focus-visible { color: var(--baton-accent); }
+/* -------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .carry,
+  .confirm,
+  .tool {
+    transition-property: opacity;
+  }
+  .carry:active,
+  .baton .btn:active:not(:disabled) { transform: none; }
+  .tool.is-entering { transform: none; }
+
+  @starting-style {
+    .carry { transform: none; }
+    .confirm { transform: none; }
+  }
+
+  /* The strip still tells you which leg turned green; it just fades. */
+  .strip__fill {
+    transform: scaleX(1);
+    opacity: 0;
+    transition: opacity 200ms linear, background-color 160ms linear;
+  }
+  .strip__seg[data-state="ok"] .strip__fill,
+  .strip__seg[data-state="pending"] .strip__fill,
+  .strip__seg[data-state="bad"] .strip__fill { opacity: 1; }
+}

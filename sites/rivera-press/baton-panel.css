@@ -163,7 +163,7 @@
   margin: 14px 0 12px;
   background: var(--baton-line);
   border: 1px solid var(--baton-line);
-  border-radius: 9px;
+  border-radius: var(--baton-radius);
   overflow: hidden;
 }
 .baton .baton__facts .fact {
@@ -265,7 +265,7 @@
   gap: 9px;
   padding: 8px 10px;
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: var(--baton-radius);
   background: var(--baton-soft);
 }
 .leg--todo {
@@ -345,7 +345,7 @@
   color: var(--baton-bad);
   background: color-mix(in srgb, var(--baton-bad) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--baton-bad) 24%, transparent);
-  border-radius: 9px;
+  border-radius: var(--baton-radius);
   padding: 8px 10px;
 }
 
@@ -384,7 +384,7 @@
   line-height: 1.35;
   letter-spacing: -0.006em;
   padding: 12px 14px;
-  border-radius: 9px;
+  border-radius: var(--baton-radius);
   opacity: 1;
   transform: translateY(0) scale(1);
   transition: opacity 200ms var(--baton-ease), transform 160ms var(--baton-ease);
@@ -409,7 +409,7 @@
 
 .confirm {
   border: 1px solid color-mix(in srgb, var(--baton-accent) 42%, var(--baton-line));
-  border-radius: 10px;
+  border-radius: var(--baton-radius);
   background: var(--baton-tint);
   padding: 12px;
   opacity: 1;
@@ -445,7 +445,7 @@
   font-weight: 500;
   line-height: 1.2;
   padding: 9px 15px;
-  border-radius: 8px;
+  border-radius: var(--baton-radius);
   border: 1px solid var(--baton-line);
   background: var(--baton-card);
   color: var(--baton-ink);
@@ -505,6 +505,12 @@
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+  /* A site with nineteen tools would otherwise push everything below it out
+     of a one-viewport sidebar. The list bounds itself instead. */
+  max-height: 34dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 /* A chip enters once, the first time its tool is registered. The lib puts
