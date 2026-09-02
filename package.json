@@ -1,0 +1,14 @@
+{
+  "name": "baton",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A mission that travels with a person across three independent websites, each growing the WebMCP tools its leg needs.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "sync": "bash scripts/sync-lib.sh",
+    "keys": "node scripts/keygen.mjs",
+    "e2e": "node scripts/e2e.mjs"
+  }
+}

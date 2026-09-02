@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Norte Bindery — hand binding</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./style.css">
+<style>:root { --accent: #3f4fa8; }</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="site-head">
+    <div class="site-head__row">
+      <h1>Norte Bindery</h1>
+      <span class="site-head__host" id="host-label">—</span>
+    </div>
+    <p class="site-head__blurb">
+      Two benches, three stitches, no glue we would not use on our own books. We bind what other
+      people print. Arrive with a baton and this page grows the tools to quote and sign your
+      binding leg.
+    </p>
+  </header>
+
+  <div class="banner" id="no-webmcp" hidden>
+    <b>This browser has no WebMCP.</b>
+    The page works as an ordinary website, but it cannot grow tools for an agent. Two browsers
+    support it today: the ChatGPT desktop app's built-in browser, and Chrome 152+ launched with
+    <code>--enable-features=WebMCP</code>.
+  </div>
+
+  <section>
+    <h2 class="section-title">Mission</h2>
+    <div id="mission-panel"></div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Site tools</h2>
+    <div id="site-tools" class="tools"></div>
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">Bindings and covers</h2>
+    <table class="catalog">
+      <thead><tr><th>Binding</th><th>Notes</th><th class="num">Per copy</th></tr></thead>
+      <tbody id="bindings"></tbody>
+    </table>
+    <table class="catalog" style="margin-top:18px">
+      <thead><tr><th>Cover</th><th>Notes</th><th class="num">Per copy</th></tr></thead>
+      <tbody id="covers"></tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">House terms</h2>
+    <ul class="terms">
+      <li>Binding legs only. We do not print and we do not deliver.</li>
+      <li>The mission must already carry a signed print leg before we quote.</li>
+      <li>Ten copies minimum, five hundred maximum per bench booking.</li>
+      <li>Every quote is binding plus cover; there is no third line of cost.</li>
+    </ul>
+  </section>
+
+</div>
+<script type="module" src="./site.js"></script>
+</body>
+</html>

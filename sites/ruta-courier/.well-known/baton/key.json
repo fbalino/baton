@@ -1,0 +1,13 @@
+{
+  "kid": "ruta-2026-09",
+  "site": "Ruta Courier",
+  "alg": "ES256",
+  "use": "baton-leg-signature",
+  "created": "2026-09-02",
+  "jwk": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "ou_FmhZwsXhWpw2Q4p_kTrxHrUCdX2UnCUvzSxJ9XzM",
+    "y": "BoWaRdbxLx2LRWSJDu4O0Gz5G0g7P4G3Id7o6umwU9A"
+  }
+}

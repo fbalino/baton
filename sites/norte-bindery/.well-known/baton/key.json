@@ -1,0 +1,13 @@
+{
+  "kid": "norte-2026-09",
+  "site": "Norte Bindery",
+  "alg": "ES256",
+  "use": "baton-leg-signature",
+  "created": "2026-09-02",
+  "jwk": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "b68mN92O3Ms0abOsl80kGRopttkQ7U0zKH3msn-F0eg",
+    "y": "7ZCVcQ7TKTAkTUwatVFld3AHC1LZ-RIgOQCbRI3zjFA"
+  }
+}

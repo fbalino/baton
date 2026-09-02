@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruta Courier — city and regional delivery</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./style.css">
+<style>:root { --accent: #1d7a5f; }</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="site-head">
+    <div class="site-head__row">
+      <h1>Ruta Courier</h1>
+      <span class="site-head__host" id="host-label">—</span>
+    </div>
+    <p class="site-head__blurb">
+      Four vans, one bike, and a rule about never leaving paper in the rain. We collect from
+      printers and binderies and hand the job to whoever ordered it. The last leg of a baton
+      usually ends here.
+    </p>
+  </header>
+
+  <div class="banner" id="no-webmcp" hidden>
+    <b>This browser has no WebMCP.</b>
+    The page works as an ordinary website, but it cannot grow tools for an agent. Two browsers
+    support it today: the ChatGPT desktop app's built-in browser, and Chrome 152+ launched with
+    <code>--enable-features=WebMCP</code>.
+  </div>
+
+  <section>
+    <h2 class="section-title">Mission</h2>
+    <div id="mission-panel"></div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Site tools</h2>
+    <div id="site-tools" class="tools"></div>
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">Service and speeds</h2>
+    <table class="catalog">
+      <thead><tr><th>Speed</th><th>Transit</th><th class="num">Base</th><th class="num">Per copy</th></tr></thead>
+      <tbody id="speeds"></tbody>
+    </table>
+    <table class="catalog" style="margin-top:18px">
+      <thead><tr><th>Zone</th><th>Covers</th><th class="num">Collection cut-off</th></tr></thead>
+      <tbody id="zones"></tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">House terms</h2>
+    <ul class="terms">
+      <li>Delivery legs only. We collect finished work; we do not make it.</li>
+      <li>Collection is booked at least one working day ahead.</li>
+      <li>Inside the listed zones only. Outside them we say so rather than guess.</li>
+      <li>A tracking id is issued at booking, not at collection.</li>
+    </ul>
+  </section>
+
+</div>
+<script type="module" src="./site.js"></script>
+</body>
+</html>

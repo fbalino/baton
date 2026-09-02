@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rivera Press — print co-op</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./style.css">
+<style>:root { --accent: #b4530a; }</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="site-head">
+    <div class="site-head__row">
+      <h1>Rivera Press</h1>
+      <span class="site-head__host" id="host-label">—</span>
+    </div>
+    <p class="site-head__blurb">
+      A twelve-member print co-op. We pull archival pigment prints in two sizes and hold press time
+      by the day. Missions start here: tell us the job and we hand you a baton to carry to the
+      bindery and the courier.
+    </p>
+  </header>
+
+  <div class="banner" id="no-webmcp" hidden>
+    <b>This browser has no WebMCP.</b>
+    The page works as an ordinary website, but it cannot grow tools for an agent. Two browsers
+    support it today: the ChatGPT desktop app's built-in browser, and Chrome 152+ launched with
+    <code>--enable-features=WebMCP</code>.
+  </div>
+
+  <section>
+    <h2 class="section-title">Mission</h2>
+    <div id="mission-panel"></div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Site tools</h2>
+    <div id="site-tools" class="tools"></div>
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">Papers and prices</h2>
+    <table class="catalog">
+      <thead>
+        <tr><th>Paper</th><th>Character</th><th class="num">20×30 cm</th><th class="num">30×40 cm</th></tr>
+      </thead>
+      <tbody id="papers"></tbody>
+    </table>
+    <p class="muted" style="margin:12px 0 0;font-size:14px">
+      Turnaround: 3 days up to 20 prints, 5 days up to 60, 9 days beyond.
+    </p>
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">House terms</h2>
+    <ul class="terms">
+      <li>Print legs only. We do not bind and we do not deliver.</li>
+      <li>Quantity and print size must be declared before we hold a press slot.</li>
+      <li>Runs up to 400 prints. Larger jobs get split across two slots.</li>
+      <li>A held slot is released if the leg is not signed within 48 hours.</li>
+    </ul>
+  </section>
+
+</div>
+<script type="module" src="./site.js"></script>
+</body>
+</html>

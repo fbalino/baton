@@ -1,0 +1,6 @@
+# Netlify and Cloudflare Pages both read this file from the publish root.
+# Any origin must be able to fetch this site's public key to check its signatures.
+/.well-known/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Cache-Control: no-store

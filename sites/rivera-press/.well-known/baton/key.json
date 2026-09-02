@@ -1,0 +1,13 @@
+{
+  "kid": "rivera-2026-09",
+  "site": "Rivera Press",
+  "alg": "ES256",
+  "use": "baton-leg-signature",
+  "created": "2026-09-02",
+  "jwk": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "UtQaA4RJxiaGb6yzNkD9ahFdg7WFj7TDDlGt1KWZQFM",
+    "y": "1Qwqy6fhyqnqfKtjxqyPWgtNv3i2XUAraZ9-Ra98CHY"
+  }
+}
