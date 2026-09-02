@@ -100,9 +100,10 @@ runs long, cut words, not shots.
 
 **2:26 to 2:46 (20s)**
 
-- **Screen:** Fernando pastes a prepared link into the address bar. It is the same mission with the
-  budget rewritten from $600 to $900. Nothing else is changed.
-- **Types:** nothing in chat. Paste, then Enter.
+- **Screen:** Fernando clicks the small link under the legs on the page, "See what happens if
+  someone raises the budget to $900 in the link". It opens the same mission with the budget
+  rewritten. Nothing else is changed.
+- **Types:** nothing in chat. One click.
 - **Says:** "Here is the same job, with the budget raised in the link by hand. The page believes the
   number, because it is only a number. The signatures do not."
 - **On screen to catch:** the chain strip going red, and the line saying the mission was edited after
@@ -132,8 +133,8 @@ runs long, cut words, not shots.
 **Before rolling**
 
 - All three sites deployed and warm: open each one once so the first request is not a cold start.
-- The tampered link already copied, ready to paste at beat 10. Build it by decoding the `#baton=`
-  fragment from a finished run, raising `budget_usd` to 900, and re-encoding it.
+- Nothing to prepare for beat 10: the tamper link is on the page under the legs once the chain is
+  verified, and "Restore the signed copy" appears after it.
 - The prompt text for beats 2, 3, 4, 6, 7, 8, 9 in a notes window, so nothing is typed wrong on
   camera. Paste, do not type live.
 - The chat scrolled to the top of a fresh conversation.

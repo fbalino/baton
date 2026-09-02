@@ -469,7 +469,8 @@ export function mountBaton(siteConfig) {
           : 'Chain broken — ' + esc(chain.legs.find((l) => !l.ok)?.reason || 'spent total does not match the legs') + '.')
         : 'Checking signatures…') + '</div>',
       '<ol class="legs">' + rows + '</ol>',
-      declined ? '<ul class="declines">' + declined + '</ul>' : ''
+      declined ? '<ul class="declines">' + declined + '</ul>' : '',
+      tamperLinks()
     ].join('\n');
 
     if (carryLink) {
@@ -481,6 +482,32 @@ export function mountBaton(siteConfig) {
       carryEl.hidden = true;
     }
   }
+
+  // Person-only page control for the demo: open a copy of this mission with the
+  // budget raised, so anyone can watch every signature fail, and a way back.
+  const TAMPER_KEY = 'baton.tamper.original';
+  function tamperLinks() {
+    if (!mission || mission.legs.length === 0 || !chain) return '';
+    const here = location.pathname + location.search;
+    if (chain.ok) {
+      const copy = JSON.parse(JSON.stringify(mission));
+      const raised = Math.max(900, Math.round((copy.constraints.budget_usd || 0) * 1.5));
+      copy.constraints.budget_usd = raised;
+      let href = '';
+      try { href = here + '#baton=' + encodeMission(copy); } catch (e) { return ''; }
+      return '<div class="tamper"><a class="tamper__link" href="' + esc(href) + '" data-tamper="' + esc(encodeMission(mission)) + '">' +
+        'See what happens if someone raises the budget to ' + money(raised) + ' in the link</a></div>';
+    }
+    let original = null;
+    try { original = sessionStorage.getItem(TAMPER_KEY); } catch (e) { original = null; }
+    if (!original) return '';
+    return '<div class="tamper"><a class="tamper__link" href="' + esc(here + '#baton=' + original) + '">Restore the signed copy</a></div>';
+  }
+  panel.addEventListener('click', (ev) => {
+    const a = ev.target.closest('a.tamper__link[data-tamper]');
+    if (!a) return;
+    try { sessionStorage.setItem(TAMPER_KEY, a.getAttribute('data-tamper')); } catch (e) { /* ignore */ }
+  });
 
   /* --------------------------------------------------- confirm-and-apply */
 

@@ -321,3 +321,7 @@
   .baton__facts { gap: 10px 18px; }
   .leg__cost { margin-left: 0; }
 }
+
+.tamper { margin-top: 10px; font-size: 12.5px; }
+.tamper__link { color: var(--baton-muted); text-decoration: underline; text-underline-offset: 3px; }
+.tamper__link:hover, .tamper__link:focus-visible { color: var(--baton-accent); }

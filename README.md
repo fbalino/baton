@@ -56,9 +56,11 @@ The walkthrough, typed into the ChatGPT desktop app with its built-in browser op
    Three legs, each checked against the public key published by the origin that signed it. $594 of
    the $600 budget.
 
-To break the chain by hand, decode the `#baton=` fragment, raise `budget_usd`, re-encode it and open
-that link. Every leg goes red, because the mission header is signed into all of them.
-`node scripts/e2e.mjs` does this at the end of its run.
+To break the chain, click the small link under the legs, "See what happens if someone raises the
+budget in the link". It opens a copy of the same mission with `budget_usd` rewritten and nothing
+else touched. Every leg goes red, because the mission header is signed into all of them, and a
+"Restore the signed copy" link brings the real one back. `node scripts/e2e.mjs` does the same edit
+by hand at the end of its run.
 
 ## How to test
 

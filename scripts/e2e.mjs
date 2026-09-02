@@ -363,6 +363,22 @@ try {
   r = await call(page, 'baton_mint');
   check('there is nowhere left to carry it', r.done === true);
 
+  /* --------------------------------------------------------- tamper link */
+  step('Tamper link — the page offers a one-click copy with the budget raised');
+  const tamperHref = await page.$eval('a.tamper__link', (a) => a.getAttribute('href')).catch(() => null);
+  check('the panel shows the tamper link once the chain is green', typeof tamperHref === 'string' && tamperHref.includes('#baton='));
+  await page.click('a.tamper__link');
+  await sleep(1200);
+  r = await call(page, 'baton_verify');
+  check('one click breaks every signature', r.chain_ok === false && r.legs?.every((l) => !l.ok) === true);
+  const restoreText = await page.$eval('a.tamper__link', (a) => a.textContent.trim()).catch(() => '(none)');
+  check('a restore link appears', /restore/i.test(restoreText), restoreText);
+  await shot(page, 'tamper link clicked, chain red, restore offered');
+  await page.click('a.tamper__link');
+  await sleep(1200);
+  r = await call(page, 'baton_verify');
+  check('restore brings the signed copy back', r.chain_ok === true, JSON.stringify(r.legs?.map((l) => l.ok)));
+
   /* --------------------------------------------------------------- tamper */
   step('Tamper — raise the budget inside the URL fragment');
   const stored = await page.evaluate(() => sessionStorage.getItem('baton.mission'));
