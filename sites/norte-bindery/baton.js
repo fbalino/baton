@@ -25,6 +25,12 @@
 //     the click — see confirmAndApply
 //   - executeTool() returns the JSON string of whatever execute() returned,
 //     so every tool here returns a compact plain object
+//
+// Confirmation policy. One tap per site. Only the signature — baton_complete_leg,
+// which is also the money — and baton_decline go through confirmAndApply. Every
+// other write applies at once and returns its result, because a held slot is
+// provisional until the leg is signed. Every tool result carries a `next` line
+// so the agent keeps moving instead of stopping to ask.
 
 export const BATON_VERSION = 1;
 export const ROLES = ['print', 'bind', 'deliver'];
@@ -343,6 +349,21 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 const host = (u) => { try { return new URL(u).host; } catch { return String(u); } };
 const money = (n) => '$' + round2(n).toFixed(2);
 
+/* ------------------------------------------------------------------- next */
+
+// Every tool answers with a `next` line: one plain sentence telling the agent
+// what to do now, so a model carries on in the same turn instead of stopping to
+// report. These two tables put the next stop in the words a person would use.
+const ROLE_SITE = { print: 'print shop', bind: 'bindery', deliver: 'courier' };
+const ROLE_WORK = { print: 'the print run', bind: 'the binding', deliver: 'the delivery' };
+
+const siteWord = (role) => ROLE_SITE[role] || role + ' site';
+const workWord = (role) => ROLE_WORK[role] || 'the ' + role + ' leg';
+
+// The backstop, so no tool can ship without a next line. Meaningful tools set
+// their own; this only catches the paths nobody wrote a sentence for.
+const DEFAULT_NEXT = 'Read this result and carry on with the leg; baton_inspect shows where the mission stands.';
+
 /* ------------------------------------------------------------- mountBaton */
 
 export function mountBaton(siteConfig) {
@@ -417,6 +438,28 @@ export function mountBaton(siteConfig) {
     } catch { return null; }
   }
 
+  /* ---- the progress line for this site's own leg ------------------------
+     A short sentence the site writes at every step — the order it opened, the
+     proof it approved, the day it is holding — shown under the "this site" row
+     of the route so a person can see the leg being assembled before anything is
+     signed. It lives in sessionStorage beside the mission, so a reload keeps it,
+     and it is cleared the moment the leg is signed and the summary takes over. */
+
+  const legStatusKey = 'baton.leg.status';
+  let legStatus = '';
+  try { legStatus = sessionStorage.getItem(legStatusKey) || ''; } catch { legStatus = ''; }
+
+  function setLegStatus(text) {
+    const line = text == null ? '' : String(text).trim();
+    legStatus = line;
+    try {
+      if (line) sessionStorage.setItem(legStatusKey, line);
+      else sessionStorage.removeItem(legStatusKey);
+    } catch { /* private mode: memory only */ }
+    render();
+    return line;
+  }
+
   /* --------------------------------------------------------- verification */
 
   let chain = null;
@@ -480,7 +523,8 @@ export function mountBaton(siteConfig) {
         '    <div class="leg__head"><b class="leg__role">' + esc(stop.role) + '</b> <span class="leg__host">' + esc(host(stop.url)) + '</span>' +
              (leg ? '<span class="leg__cost">' + money(leg.cost_usd) + '</span>'
                   : '<span class="leg__cost leg__cost--todo">' + (hereNow ? 'this site' : 'waiting') + '</span>') + '</div>',
-        leg ? '    <div class="leg__summary">' + esc(leg.summary) + '</div>' : '',
+        leg ? '    <div class="leg__summary">' + esc(leg.summary) + '</div>'
+            : hereNow && legStatus ? '    <div class="leg__status">' + esc(legStatus) + '</div>' : '',
         leg ? '    <div class="leg__meta">signed by ' + esc(leg.kid) + ' · ' + esc(String(leg.completed_at).slice(0, 16).replace('T', ' ')) +
               (v ? ' · ' + esc(v.ok ? 'signature verified' : v.reason) : ' · checking…') + '</div>' : '',
         '  </div>',
@@ -584,11 +628,11 @@ export function mountBaton(siteConfig) {
   const confirmKey = (toolName, input) => toolName + ':' + canonicalize(input ?? {});
 
   const pendingText = (toolName) =>
-    'Ask the operator to click Confirm on the page, then call ' + toolName +
-    ' again with the same input (or baton_inspect) to see the result.';
+    'Ask the operator to tap Confirm on the page (the card says what will be signed and for how much), ' +
+    'then call ' + toolName + ' again with the same input.';
 
   const cancelledText = (toolName) =>
-    'The operator clicked Cancel on the page. Ask what to change, then call ' + toolName +
+    'The operator tapped Cancel on the page. Ask what to change, then call ' + toolName +
     ' again with the corrected input.';
 
   function hideConfirmCard() {
@@ -782,8 +826,28 @@ export function mountBaton(siteConfig) {
   // browsers whose modelContext has no getTools() or toolchange event.
   const registry = new Map();
 
-  function register(def, signal) {
+  // Every result leaves with a next line. A tool that writes its own keeps it;
+  // this only fills the paths — mostly refusals — nobody wrote a sentence for,
+  // so an agent never reads a result that does not say what to do now.
+  function withNext(definition) {
+    const run = definition.execute;
+    if (typeof run !== 'function') return definition;
+    return {
+      ...definition,
+      execute: async (input, client) => {
+        const out = await run(input, client);
+        if (out && typeof out === 'object' && !Array.isArray(out) &&
+            (typeof out.next !== 'string' || !out.next.trim())) {
+          return { ...out, next: DEFAULT_NEXT };
+        }
+        return out;
+      }
+    };
+  }
+
+  function register(rawDef, signal) {
     if (!hasWebMCP) return; // ordinary browser: the page still works, it just grows no tools
+    const def = withNext(rawDef);
     registry.set(def.name, def);
     if (signal) signal.addEventListener('abort', () => { registry.delete(def.name); refreshToolsBox(); }, { once: true });
     let result;
@@ -900,6 +964,16 @@ export function mountBaton(siteConfig) {
     commonAbort = new AbortController();
     const signal = commonAbort.signal;
 
+    // What the agent should do next given where the mission stands right now.
+    const hereNext = () => {
+      const stop = nextStop(mission);
+      if (!stop) return 'Every leg is signed. Call baton_verify to check every signature.';
+      if (stop.role === cfg.role) {
+        return 'This site signs the ' + stop.role + ' leg: finish the work for it here, then call baton_complete_leg — the operator taps Confirm once on the page.';
+      }
+      return 'This mission is waiting for the ' + stop.role + ' leg at ' + host(stop.url) + '. Call baton_mint to carry it there.';
+    };
+
     register({
       name: 'baton_inspect',
       description: 'Read the whole mission travelling with this person: goal, constraints, route, the legs signed so far and by whom, money spent and left, and days to the deadline.',
@@ -914,7 +988,8 @@ export function mountBaton(siteConfig) {
           index: l.index, origin: l.origin, role: l.role, summary: l.summary,
           cost_usd: l.cost_usd, evidence: l.evidence, completed_at: l.completed_at, signed_by: l.kid
         })),
-        declined: mission.declined || []
+        declined: mission.declined || [],
+        next: hereNext()
       })
     }, signal);
 
@@ -930,7 +1005,16 @@ export function mountBaton(siteConfig) {
         additionalProperties: false
       },
       annotations: { readOnlyHint: true },
-      execute: async (input) => ({ ok: true, ...checkAction(mission, input || {}) })
+      execute: async (input) => {
+        const result = checkAction(mission, input || {});
+        return {
+          ok: true,
+          ...result,
+          next: result.allowed
+            ? 'This fits the mission. Go ahead with the step you were checking.'
+            : 'This breaks a constraint. Pick a cheaper or earlier option and check that instead.'
+        };
+      }
     }, signal);
 
     register({
@@ -940,7 +1024,14 @@ export function mountBaton(siteConfig) {
       annotations: { readOnlyHint: true },
       execute: async () => {
         const result = await verifyAndRender();
-        return { ok: true, chain_ok: result.ok, ...result };
+        return {
+          ok: true,
+          chain_ok: result.ok,
+          ...result,
+          next: result.ok
+            ? 'Every signature checks out. ' + hereNext()
+            : 'The chain does not verify. Tell the operator which leg failed and why, and sign nothing more on this mission.'
+        };
       }
     }, signal);
 
@@ -966,16 +1057,35 @@ export function mountBaton(siteConfig) {
         if (seen.status === 'cancelled') return { ok: false, status: 'cancelled', next: seen.next };
 
         const expected = mission.route[mission.legs.length];
-        if (!expected) return { ok: false, error: 'every leg of this mission is already signed' };
+        if (!expected) {
+          return {
+            ok: false,
+            error: 'every leg of this mission is already signed',
+            next: 'Call baton_verify to check every signature.'
+          };
+        }
         if (expected.role !== cfg.role) {
-          return { ok: false, error: 'this mission is waiting for the ' + expected.role + ' leg at ' + host(expected.url) + ', not for ' + cfg.siteName };
+          return {
+            ok: false,
+            error: 'this mission is waiting for the ' + expected.role + ' leg at ' + host(expected.url) + ', not for ' + cfg.siteName,
+            next: 'Call baton_mint to carry the mission to the ' + siteWord(expected.role) + ' and finish that leg there.'
+          };
         }
         if (mission.legs.some((l) => l.origin === location.origin)) {
-          return { ok: false, error: cfg.siteName + ' has already signed a leg on this mission' };
+          return {
+            ok: false,
+            error: cfg.siteName + ' has already signed a leg on this mission',
+            next: 'Call baton_mint to carry the mission on.'
+          };
         }
         const check = checkAction(mission, { cost_usd: input.cost_usd });
         if (!check.allowed) {
-          return { ok: false, error: 'blocked by the mission constraints', check };
+          return {
+            ok: false,
+            error: 'blocked by the mission constraints',
+            check,
+            next: 'Find a cheaper option for this leg, then call baton_complete_leg again with the lower cost.'
+          };
         }
 
         const outcome = await confirmAndApply({
@@ -999,10 +1109,15 @@ export function mountBaton(siteConfig) {
             const signed = await signLegWith(mission, legWithoutSig, prevSig, cfg);
             mission.legs.push({ ...legWithoutSig, sig: signed.sig });
             mission.spent_usd = round2(mission.legs.reduce((a, l) => a + (Number(l.cost_usd) || 0), 0));
+            setLegStatus(''); // the signed row shows the summary from here on
+            const stop = nextStop(mission);
             return {
               leg: { ...legWithoutSig, sig: signed.sig.slice(0, 12) + '…' },
               signed_in: signed.signed_in,
-              mission: missionSummary(mission)
+              mission: missionSummary(mission),
+              next: stop
+                ? 'Leg signed. Call baton_mint to carry the mission to the ' + siteWord(stop.role) + '.'
+                : 'Leg signed and the route is finished. Call baton_verify to check every signature.'
             };
           }
         });
@@ -1013,20 +1128,51 @@ export function mountBaton(siteConfig) {
 
     register({
       name: 'baton_mint',
-      description: 'Produce the link that carries this mission to the next site on the route, and show it on the page as a big "Carry this to …" link for the operator to click.',
-      inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+      description: 'Carry this mission to the next site on the route: the link is returned, shown on the page as a "Carry this to …" link, and the browser follows it itself a moment later so the agent can keep working on the next site. Pass stay:true to get the link without moving.',
+      inputSchema: {
+        type: 'object',
+        properties: { stay: { type: 'boolean', description: 'Return the link without navigating' } },
+        additionalProperties: false
+      },
       annotations: { readOnlyHint: false },
-      execute: async () => {
+      execute: async (input) => {
         const stop = nextStop(mission);
         if (!stop) {
           carryLink = null;
           render();
-          return { ok: true, done: true, mission: missionSummary(mission), note: 'The route is finished. Nothing left to carry.' };
+          return {
+            ok: true,
+            done: true,
+            mission: missionSummary(mission),
+            note: 'The route is finished. Nothing left to carry.',
+            next: 'Route complete. Call baton_verify to check every signature.'
+          };
         }
         const url = missionLink(stop.url, mission);
         carryLink = { url, label: stop.role + ' at ' + host(stop.url) };
         render();
-        return { ok: true, done: false, next_role: stop.role, next_url: url, mission: missionSummary(mission) };
+
+        // The page takes itself to the next site. The mission is in the link, so
+        // nothing is lost, and the agent finds the next leg's tools already
+        // registered instead of asking the person to click.
+        const stay = input?.stay === true;
+        if (!stay) {
+          debug('carrying the mission to ' + host(stop.url) + ' — the page moves in 1.5s');
+          setTimeout(() => {
+            try { location.assign(url); } catch (e) { debug('could not follow the carry link: ' + ((e && e.message) || e)); }
+          }, 1500);
+        }
+        return {
+          ok: true,
+          done: false,
+          next_role: stop.role,
+          next_url: url,
+          navigating: !stay,
+          mission: missionSummary(mission),
+          next: stay
+            ? 'The link is ready and the page has not moved. Give the operator the "Carry this to ' + stop.role + '" link on the page, or call baton_mint again without stay.'
+            : 'The browser is moving to ' + host(stop.url) + ' now. Continue there: call baton_inspect first, then quote ' + workWord(stop.role) + '.'
+        };
       }
     }, signal);
 
@@ -1059,7 +1205,12 @@ export function mountBaton(siteConfig) {
             };
             mission.declined = mission.declined || [];
             mission.declined.push(marker);
-            return { declined: marker, mission: missionSummary(mission) };
+            return {
+              declined: marker,
+              mission: missionSummary(mission),
+              next: 'The refusal is recorded on the mission. Tell the operator why ' + cfg.siteName +
+                ' turned the leg down and ask whether to try another site or stop here.'
+            };
           }
         });
         if (outcome.status === 'confirmed') return { ok: true, ...outcome.result };
@@ -1093,7 +1244,18 @@ export function mountBaton(siteConfig) {
       description: 'The conditions ' + cfg.siteName + ' publishes for taking a leg of a mission: which roles it accepts, what it needs declared, and its limits.',
       inputSchema: { type: 'object', properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: true },
-      execute: async () => ({ ok: true, site: cfg.siteName, origin: location.origin, role: cfg.role, ...cfg.houseTerms })
+      execute: async () => ({
+        ok: true,
+        site: cfg.siteName,
+        origin: location.origin,
+        role: cfg.role,
+        ...cfg.houseTerms,
+        next: mission
+          ? 'Terms read. Do the work for the ' + cfg.role + ' leg here, then call baton_complete_leg.'
+          : 'Terms read. ' + (cfg.role === 'print'
+              ? 'Quote the run and call baton_start to put a mission on this page.'
+              : 'This site needs a mission in the link before its leg tools appear.')
+      })
     }, ac.signal);
   }
 
@@ -1119,6 +1281,7 @@ export function mountBaton(siteConfig) {
     mission = null;
     carryLink = null;
     chain = null;
+    setLegStatus('');
     applied.clear();
     cancelled.clear();
     if (pendingConfirm) pendingConfirm.supersede();
@@ -1138,6 +1301,10 @@ export function mountBaton(siteConfig) {
     clearMission,
     render,
     debug,
+    // A short progress line for this site's leg, shown under its row in the
+    // route while the leg is being put together. Pass '' or null to clear it.
+    setLegStatus,
+    get legStatus() { return legStatus; },
     // The confirmation contract site tools use.
     confirmAndApply,
     peekConfirm,

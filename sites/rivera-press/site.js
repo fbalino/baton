@@ -20,11 +20,6 @@ import {
 
 const el = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const stable = (v) => v === null || typeof v !== 'object'
-  ? JSON.stringify(v ?? null)
-  : Array.isArray(v)
-    ? '[' + v.map(stable).join(',') + ']'
-    : '{' + Object.keys(v).filter((k) => v[k] !== undefined).sort().map((k) => JSON.stringify(k) + ':' + stable(v[k])).join(',') + '}';
 
 /* ---------------------------------------------------------------- prints */
 
@@ -621,6 +616,7 @@ el('order-form').addEventListener('submit', (e) => {
   el('form-msg').textContent = 'Order ' + made.order.id + ' opened. Proof ' + made.order.proof.id + ' is ready to review.';
   state.message = '';
   renderAll();
+  showLegStatus(made.order);
   refreshTools();
   el('order').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
@@ -645,6 +641,7 @@ el('order-card').addEventListener('click', (e) => {
     approveProof(order);
     state.message = 'Proof approved. Pick a free press day below.';
     renderAll();
+    showLegStatus(order);
     return;
   }
   if (e.target.closest('#edit-order')) {
@@ -663,6 +660,7 @@ el('order-card').addEventListener('click', (e) => {
     state.message = '';
     save();
     renderAll();
+    showLegStatus(activeOrder());
     return;
   }
   const show = e.target.closest('[data-show-order]');
@@ -687,6 +685,7 @@ el('press-calendar').addEventListener('click', (e) => {
   holdSlot(order, date);
   state.message = 'Press day ' + date + ' held for ' + order.id + ' (' + order.slot.slot_id + ').';
   renderAll();
+  showLegStatus(order);
 });
 
 /* ------------------------------------------------------------ the baton */
@@ -715,37 +714,46 @@ function refreshTools() {
   try { baton.refreshToolsBox(); } catch { /* nothing registered */ }
 }
 
-/* Confirmation for consequential tools.
-   The library owns this. Until its confirmAndApply lands, the same contract is
-   kept here on top of confirmInPage: the first call shows the card and returns
-   pending, and the call repeated after the operator clicks Confirm applies the
-   change once and caches the result under that exact input. */
-const appliedCalls = new Map();
-const callKey = (toolName, input) => toolName + ':' + stable(input ?? {});
+/* Confirmation policy — one tap per site.
+   The operator taps Confirm once here, for baton_complete_leg: the signature,
+   which is also the money. Approving a proof and holding a press day apply the
+   moment the agent asks for them, because both are provisional: the house terms
+   release a held day if the leg is not signed within 48 hours. So the agent
+   quotes, opens, approves and holds without stopping, and the person is asked
+   once, at the point where it counts. */
 
-async function confirmAndApply(spec, client) {
-  if (typeof baton.confirmAndApply === 'function') return baton.confirmAndApply({ ...spec, client });
-  const key = callKey(spec.toolName, spec.input);
-  if (appliedCalls.has(key)) return { status: 'confirmed', result: appliedCalls.get(key) };
-  const c = await baton.confirmInPage(client, spec.message, spec.toolName, spec.input);
-  if (c.status === 'confirmed') {
-    const result = await spec.apply();
-    appliedCalls.set(key, result);
-    return { status: 'confirmed', result };
-  }
-  const blocked = baton.needsConfirm(c, spec.toolName);
-  return { status: c.status, next: blocked.next };
+/* The line the mission panel shows under Rivera's row while the leg is built. */
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const shortDay = (iso) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso));
+  return m ? Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1] : String(iso);
+};
+
+function legStatusLine(order) {
+  if (!order) return '';
+  const bits = ['Order ' + order.id];
+  if (order.proof.approved_at) bits.push('proof approved');
+  else bits.push(usd(order.quote.total_usd), 'proof ' + order.proof.id + ' waiting');
+  if (order.slot) bits.push('press day ' + shortDay(order.slot.date) + ' held');
+  else if (order.proof.approved_at) bits.push('press day to hold');
+  if (order.slot && order.proof.approved_at) bits.push('ready to sign');
+  return bits.join(' · ');
 }
 
-// Read the answer to a call that is already on the page before running any
-// guard, so a second call after Confirm returns the stored result instead of
-// tripping over a state the click itself has just changed.
-function peekConfirm(toolName, input) {
-  if (typeof baton.peekConfirm === 'function') return baton.peekConfirm(toolName, input);
-  const key = callKey(toolName, input);
-  return appliedCalls.has(key)
-    ? { status: 'confirmed', result: appliedCalls.get(key) }
-    : { status: 'none' };
+function showLegStatus(order) {
+  try {
+    const m = baton.mission;
+    if (m && m.legs.some((l) => l.origin === location.origin)) return; // signed: the summary speaks now
+    baton.setLegStatus(legStatusLine(order));
+  } catch { /* older library, or no panel */ }
+}
+
+// What the agent should do next with the order in front of it.
+function orderNext(order) {
+  if (!order.proof.approved_at) return 'Call approve_proof for ' + order.id + '.';
+  if (!order.slot) return 'Hold a press day with reserve_print_slot; list_press_days has the free ones.';
+  return 'Call prepare_print_leg, then baton_complete_leg to sign the print leg.';
 }
 
 /* ----------------------------------------------------------- site tools */
@@ -769,6 +777,7 @@ baton.registerAlways((signal, register) => {
         note: s.note,
         set_price_20x30_matte_usd: quoteRun({ quantity: s.prints, size: '20x30', paper: s.paper, finish: 'matte' }).total_usd
       })),
+      next: 'Pick a set, then price the run with quote_run using quantity, size and paper.',
       page: pageNow()
     })
   }, signal);
@@ -787,6 +796,7 @@ baton.registerAlways((signal, register) => {
       setup_usd: SETUP_USD,
       setup_waived_from_sheets: SETUP_WAIVED_AT,
       max_run_sheets: MAX_RUN,
+      next: 'Use quote_run with quantity, size and paper.',
       page: pageNow()
     })
   }, signal);
@@ -812,6 +822,9 @@ baton.registerAlways((signal, register) => {
         sets: found.sets,
         papers: found.papers,
         finishes: found.finishes,
+        next: found.sets.length
+          ? 'Price one of the matches with quote_run.'
+          : 'Nothing matched. Try another word, or call list_sets for all six.',
         page: found.sets.length
           ? 'The set list on the page is filtered to ' + found.sets.map((s) => s.name).join(', ') + '. ' + pageNow()
           : 'No set matched, so the page still shows all six. ' + pageNow()
@@ -837,7 +850,7 @@ baton.registerAlways((signal, register) => {
     annotations: { readOnlyHint: true },
     execute: async (input) => {
       const q = quoteRun(input);
-      if (!q.ok) return { ...q, page: pageNow() };
+      if (!q.ok) return { ...q, next: 'Fix the specification and call quote_run again; list_papers has the sizes and papers.', page: pageNow() };
       Object.assign(state.form, {
         set: q.set_id || '', quantity: q.quantity, qmode: 'total',
         size: q.size, paper: q.paper_id, finish: q.finish_id
@@ -848,6 +861,9 @@ baton.registerAlways((signal, register) => {
       renderSets();
       return {
         ...q,
+        next: activeOrder()
+          ? 'Apply it to the open order with update_order, or open a new one with create_order.'
+          : 'Open the order with create_order using the same specification.',
         page: 'The order builder now shows ' + q.quantity + ' sheets, ' + q.size_label + ', ' + q.paper +
           ', ' + q.finish.toLowerCase() + ', total ' + usd(q.total_usd) + '. ' +
           (activeOrder() ? 'The open order is unchanged.' : 'No order opened yet.')
@@ -873,13 +889,15 @@ baton.registerAlways((signal, register) => {
     annotations: { readOnlyHint: false },
     execute: async (input) => {
       const made = makeOrder(input);
-      if (!made.ok) return { ...made, page: pageNow() };
+      if (!made.ok) return { ...made, next: 'Fix the specification and call create_order again.', page: pageNow() };
       state.message = '';
       renderAll();
+      showLegStatus(made.order);
       return {
         ok: true,
         order: orderView(made.order),
-        next: 'The proof has to be approved with approve_proof before reserve_print_slot will hold a press day.',
+        next: 'Order ' + made.order.id + ' is open and proof ' + made.order.proof.id +
+          ' is issued. Call approve_proof, then reserve_print_slot to hold a press day.',
         page: pageNow()
       };
     }
@@ -897,13 +915,22 @@ baton.registerAlways((signal, register) => {
     execute: async (input) => {
       const order = input && input.order_id ? orderById(input.order_id) : activeOrder();
       if (!order) {
-        return { ok: false, error: 'no such order', open_orders: state.orders.map((o) => o.id), page: pageNow() };
+        return {
+          ok: false,
+          error: 'no such order',
+          open_orders: state.orders.map((o) => o.id),
+          next: state.orders.length
+            ? 'Call get_order again with one of the open order ids.'
+            : 'Open an order first with create_order.',
+          page: pageNow()
+        };
       }
       return {
         ok: true,
         order: orderView(order),
         leg_evidence: legEvidence(order),
         suggested_leg_summary: legSummary(order),
+        next: orderNext(order),
         page: pageNow()
       };
     }
@@ -926,23 +953,40 @@ baton.registerAlways((signal, register) => {
     annotations: { readOnlyHint: false },
     execute: async (input) => {
       const order = input && input.order_id ? orderById(input.order_id) : activeOrder();
-      if (!order) return { ok: false, error: 'no such order', open_orders: state.orders.map((o) => o.id), page: pageNow() };
+      if (!order) {
+        return {
+          ok: false,
+          error: 'no such order',
+          open_orders: state.orders.map((o) => o.id),
+          next: 'Open an order with create_order, or pass one of the open order ids.',
+          page: pageNow()
+        };
+      }
       const changes = {};
       for (const k of ['quantity', 'size', 'paper', 'finish']) if (input[k] !== undefined) changes[k] = input[k];
       if (Object.keys(changes).length === 0) {
-        return { ok: false, error: 'nothing to change — pass at least one of quantity, size, paper or finish', page: pageNow() };
+        return {
+          ok: false,
+          error: 'nothing to change — pass at least one of quantity, size, paper or finish',
+          next: 'Call update_order again with the field you want changed.',
+          page: pageNow()
+        };
       }
       const res = requote(order, changes);
-      if (!res.ok) return { ...res, page: pageNow() };
+      if (!res.ok) return { ...res, next: 'Fix the new specification and call update_order again.', page: pageNow() };
       state.activeId = order.id;
       state.message = res.slot_released ? 'The press day was released because the specification changed.' : state.message;
       renderAll();
+      showLegStatus(order);
       return {
         ok: true,
         changed: res.changed,
         proof_reissued: res.reproofed,
         slot_released: !!res.slot_released,
         order: orderView(order),
+        next: res.changed
+          ? 'The quote is redone and proof ' + order.proof.id + ' re-issued. ' + orderNext(order)
+          : orderNext(order),
         page: pageNow()
       };
     }
@@ -950,53 +994,49 @@ baton.registerAlways((signal, register) => {
 
   register({
     name: 'approve_proof',
-    description: 'Approve the proof on an order so a press day can be held. The operator has to click Confirm on the page; call it again with the same order after they do.',
+    description: 'Approve the proof on an order so a press day can be held. Applies straight away and returns the order; nothing is charged until the leg is signed.',
     inputSchema: {
       type: 'object',
       properties: { order_id: { type: 'string', description: 'Order id. The order on the page if left out.' } },
       additionalProperties: false
     },
     annotations: { readOnlyHint: false },
-    execute: async (input, client) => {
+    execute: async (input) => {
       const order = input && input.order_id ? orderById(input.order_id) : activeOrder();
-      if (!order) return { ok: false, error: 'no such order', open_orders: state.orders.map((o) => o.id), page: pageNow() };
-
-      const callInput = { order_id: order.id };
-      const seen = peekConfirm('approve_proof', callInput);
-      if (seen.status === 'confirmed') {
+      if (!order) {
         return {
-          ok: true, status: 'confirmed', order: seen.result,
-          free_days: freeDays().slice(0, 5).map((d) => d.date),
-          next: 'Hold one of the free days with reserve_print_slot.',
+          ok: false,
+          error: 'no such order',
+          open_orders: state.orders.map((o) => o.id),
+          next: 'Open an order with create_order, or pass one of the open order ids.',
           page: pageNow()
         };
       }
-      if (seen.status === 'cancelled') return { ok: false, status: 'cancelled', next: seen.next, page: pageNow() };
+
+      const free = freeDays().slice(0, 5).map((d) => d.date);
+      const nextLine = 'Proof approved. Hold a press day with reserve_print_slot' +
+        (free[0] ? ' — ' + free[0] + ' is the first free one.' : '.');
+
       if (order.proof.approved_at) {
-        return { ok: true, already: true, order: orderView(order), page: pageNow() };
+        return {
+          ok: true, already: true, order: orderView(order), free_days: free,
+          next: order.slot
+            ? 'The press day is already held until the leg is signed. Call prepare_print_leg, then baton_complete_leg.'
+            : nextLine,
+          page: pageNow()
+        };
       }
 
-      const c = await confirmAndApply({
-        toolName: 'approve_proof',
-        input: callInput,
-        message: 'Rivera Press: approve proof ' + order.proof.id + ' for ' + order.id + ', ' +
-          order.quantity + ' sheets of ' + order.set + ', ' + SIZE_LABELS[order.size] + ' on ' + order.paper + '?',
-        apply: () => {
-          approveProof(order);
-          state.message = 'Proof approved. Pick a free press day.';
-          renderAll();
-          return orderView(order);
-        }
-      }, client);
-      if (c.status !== 'confirmed') {
-        return { ok: false, status: c.status, next: c.next, page: pageNow() };
-      }
+      approveProof(order);
+      state.message = 'Proof approved. Pick a free press day.';
+      renderAll();
+      showLegStatus(order);
       return {
         ok: true,
-        status: 'confirmed',
-        order: c.result,
-        free_days: freeDays().slice(0, 5).map((d) => d.date),
-        next: 'Hold one of the free days with reserve_print_slot.',
+        approved: true,
+        order: orderView(order),
+        free_days: free,
+        next: nextLine,
         page: pageNow()
       };
     }
@@ -1020,6 +1060,7 @@ baton.registerAlways((signal, register) => {
         days_shown: CALENDAR_DAYS,
         free_count: all.filter((d) => d.state === 'open').length,
         days: days.map((d) => ({ date: d.date, weekday: d.weekday, state: d.state, note: d.note })),
+        next: 'Hold one of the free days with reserve_print_slot.',
         page: pageNow()
       };
     }
@@ -1027,7 +1068,7 @@ baton.registerAlways((signal, register) => {
 
   register({
     name: 'reserve_print_slot',
-    description: 'Hold a press day for an order whose proof is approved. Full and closed days are refused with the nearest free ones. The operator has to click Confirm on the page; call it again with the same input after they do.',
+    description: 'Hold a press day for an order whose proof is approved. The hold applies straight away and stands until the leg is signed; the house terms release it after 48 hours if no leg is signed. Full and closed days are refused with the nearest free ones.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1038,31 +1079,20 @@ baton.registerAlways((signal, register) => {
       additionalProperties: false
     },
     annotations: { readOnlyHint: false },
-    execute: async (input, client) => {
-      if (!isDate(input.date)) return { ok: false, error: 'date must look like YYYY-MM-DD', page: pageNow() };
+    execute: async (input) => {
+      if (!isDate(input.date)) {
+        return { ok: false, error: 'date must look like YYYY-MM-DD', next: 'Call list_press_days and pass one of its dates.', page: pageNow() };
+      }
       const order = input.order_id ? orderById(input.order_id) : activeOrder();
       if (!order) {
         return {
           ok: false,
           error: 'a press day is held against an order — open one with create_order first',
           open_orders: state.orders.map((o) => o.id),
+          next: 'Call create_order, then reserve_print_slot again.',
           page: pageNow()
         };
       }
-
-      const callInput = { order_id: order.id, date: input.date };
-      const seen = peekConfirm('reserve_print_slot', callInput);
-      if (seen.status === 'confirmed') {
-        return {
-          ok: true, status: 'confirmed',
-          slot: seen.result.order.press_slot,
-          order: seen.result.order,
-          evidence: seen.result.evidence,
-          next: 'Start or continue the mission, then sign this leg with baton_complete_leg using this evidence.',
-          page: pageNow()
-        };
-      }
-      if (seen.status === 'cancelled') return { ok: false, status: 'cancelled', next: seen.next, page: pageNow() };
 
       if (!order.proof.approved_at) {
         return {
@@ -1092,31 +1122,30 @@ baton.registerAlways((signal, register) => {
       if (baton.mission) {
         const check = baton.checkAction({ cost_usd: order.quote.total_usd, date: input.date });
         if (!check.allowed) {
-          return { ok: false, error: 'blocked by the mission constraints', check, page: pageNow() };
+          return {
+            ok: false,
+            error: 'blocked by the mission constraints',
+            check,
+            next: 'Pick an earlier day or a cheaper specification, then call reserve_print_slot again.',
+            page: pageNow()
+          };
         }
       }
-      const c = await confirmAndApply({
-        toolName: 'reserve_print_slot',
-        input: callInput,
-        message: 'Rivera Press: hold the press on ' + input.date + ' for ' + order.id + ', ' +
-          order.quantity + ' sheets, ' + usd(order.quote.total_usd) + '?',
-        apply: () => {
-          holdSlot(order, input.date);
-          state.message = 'Press day ' + input.date + ' held for ' + order.id + '.';
-          renderAll();
-          return { order: orderView(order), evidence: legEvidence(order) };
-        }
-      }, client);
-      if (c.status !== 'confirmed') {
-        return { ok: false, status: c.status, next: c.next, page: pageNow() };
-      }
+
+      holdSlot(order, input.date);
+      state.message = 'Press day ' + input.date + ' held for ' + order.id + '.';
+      renderAll();
+      showLegStatus(order);
       return {
         ok: true,
-        status: 'confirmed',
-        slot: c.result.order.press_slot,
-        order: c.result.order,
-        evidence: c.result.evidence,
-        next: 'Start or continue the mission, then sign this leg with baton_complete_leg using this evidence.',
+        held: true,
+        slot: orderView(order).press_slot,
+        holds_until: 'the leg is signed',
+        order: orderView(order),
+        evidence: legEvidence(order),
+        next: baton.mission
+          ? 'Press day held until the leg is signed. Call prepare_print_leg, then baton_complete_leg.'
+          : 'Press day held until the leg is signed. Call baton_start to put a mission on this page, then baton_complete_leg.',
         page: pageNow()
       };
     }
@@ -1141,19 +1170,28 @@ baton.registerAlways((signal, register) => {
     execute: async (input) => {
       const current = baton.mission;
       if (current && current.legs.length > 0) {
-        return { ok: false, error: 'a mission with signed legs is already aboard (' + current.id + '); finish or drop it first', page: pageNow() };
+        return {
+          ok: false,
+          error: 'a mission with signed legs is already aboard (' + current.id + '); finish or drop it first',
+          next: 'Call baton_inspect to see where that mission stands, then baton_mint to carry it on.',
+          page: pageNow()
+        };
       }
-      if (!isDate(input.deadline)) return { ok: false, error: 'deadline must look like YYYY-MM-DD', page: pageNow() };
+      if (!isDate(input.deadline)) {
+        return { ok: false, error: 'deadline must look like YYYY-MM-DD', next: 'Call baton_start again with the deadline as YYYY-MM-DD.', page: pageNow() };
+      }
 
       let order = null;
       if (input.order_id) {
         order = orderById(input.order_id);
-        if (!order) return { ok: false, error: 'no such order', open_orders: state.orders.map((o) => o.id), page: pageNow() };
+        if (!order) {
+          return { ok: false, error: 'no such order', open_orders: state.orders.map((o) => o.id), next: 'Open an order with create_order, then call baton_start again.', page: pageNow() };
+        }
         state.activeId = order.id;
       }
       const quantity = order ? order.quantity : Math.trunc(Number(input.quantity));
       if (!Number.isFinite(quantity) || quantity < 1) {
-        return { ok: false, error: 'pass a quantity, or an order_id to take it from', page: pageNow() };
+        return { ok: false, error: 'pass a quantity, or an order_id to take it from', next: 'Call baton_start again with a quantity or an order_id.', page: pageNow() };
       }
       const mission = newMission({
         goal: input.goal,
@@ -1163,14 +1201,16 @@ baton.registerAlways((signal, register) => {
         route: ROUTE
       });
       const set = await baton.setMission(mission, { source: 'baton_start' });
-      if (!set.ok) return { ok: false, error: set.reason, page: pageNow() };
+      if (!set.ok) return { ok: false, error: set.reason, next: 'Fix the goal, budget, deadline or quantity and call baton_start again.', page: pageNow() };
       renderAll();
+      showLegStatus(order || activeOrder());
       return {
         ok: true,
         mission: { id: mission.id, goal: mission.goal, constraints: mission.constraints, route: mission.route },
         quantity_from: order ? order.id : 'the call',
         order: order ? orderView(order) : null,
         note: 'The baton is on the page and the common baton tools are registered.',
+        next: 'Quote the run, open the order, approve the proof and hold a press day, then call baton_complete_leg to sign the print leg; the operator taps Confirm once on the page.',
         page: pageNow()
       };
     }
@@ -1191,7 +1231,7 @@ baton.registerWhenMissionAboard((signal, register) => {
     annotations: { readOnlyHint: true },
     execute: async (input) => {
       const order = input && input.order_id ? orderById(input.order_id) : activeOrder();
-      if (!order) return { ok: false, error: 'no order is open on the page', page: pageNow() };
+      if (!order) return { ok: false, error: 'no order is open on the page', next: 'Call create_order first.', page: pageNow() };
       const evidence = legEvidence(order);
       const check = baton.checkAction({ cost_usd: order.quote.total_usd, date: order.slot ? order.slot.date : undefined });
       const missing = [];
@@ -1207,8 +1247,8 @@ baton.registerWhenMissionAboard((signal, register) => {
           evidence
         },
         next: missing.length === 0 && check.allowed
-          ? 'Call baton_complete_leg with complete_leg_input, then baton_mint to carry the baton to the bindery.'
-          : 'Clear the blocking items first.',
+          ? 'Call baton_complete_leg with complete_leg_input — the operator taps Confirm once on the page — then baton_mint to carry the mission to the bindery.'
+          : 'Clear the blocking items above, then call prepare_print_leg again.',
         page: pageNow()
       };
     }
@@ -1219,3 +1259,4 @@ baton.registerWhenMissionAboard((signal, register) => {
 
 restore();
 renderAll();
+showLegStatus(activeOrder());

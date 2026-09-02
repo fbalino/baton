@@ -3,7 +3,7 @@
 // Signing happens on this origin's server (the library POSTs /api/sign); no
 // private key ships to the browser any more.
 
-import { mountBaton, canonicalize, round2, todayISO } from './baton.js';
+import { mountBaton, round2, todayISO } from './baton.js';
 import { SITE } from './config.js';
 import {
   ZONES, SPEEDS, DEPOT, CHECKPOINTS,
@@ -176,46 +176,27 @@ function defaultPickupDate() {
 drawWindows(defaultPickupDate());
 drawBoard();
 
-/* ---- confirm gate -------------------------------------------------------
-   The library owns confirmAndApply/peekConfirm. Until that version is synced
-   into this folder, the same semantics run locally on top of confirmInPage:
-   first call shows the card and returns pending, the operator clicks Confirm,
-   the second call applies the work once and caches the result. */
+/* ---- confirmation policy — one tap at Ruta ------------------------------
+   The operator taps Confirm once, for baton_complete_leg: the signature, which
+   is also the money. Booking the van applies as soon as the agent asks for it
+   and stands until the leg is signed, so the last leg is quoted, booked and
+   signed in one run. */
 
-const gate = (() => {
-  if (typeof baton.confirmAndApply === 'function' && typeof baton.peekConfirm === 'function') {
-    return {
-      confirmAndApply: (args) => baton.confirmAndApply(args),
-      peekConfirm: (toolName, input) => baton.peekConfirm(toolName, input)
-    };
-  }
-  const done = new Map();
-  const dropped = new Map();
-  const keyOf = (toolName, input) => toolName + ':' + canonicalize(input ?? {});
-  return {
-    peekConfirm(toolName, input) {
-      const key = keyOf(toolName, input);
-      if (done.has(key)) return { status: 'confirmed', result: done.get(key) };
-      if (dropped.has(key)) return { status: 'cancelled', next: dropped.get(key) };
-      return { status: 'none' };
-    },
-    async confirmAndApply({ toolName, input, message, apply, client }) {
-      const key = keyOf(toolName, input);
-      if (done.has(key)) return { status: 'confirmed', result: done.get(key) };
-      const asked = await baton.confirmInPage(client, message, toolName, input);
-      if (asked.status === 'confirmed') {
-        const result = await apply();
-        done.set(key, result);
-        dropped.delete(key);
-        await baton.refreshToolsBox();
-        return { status: 'confirmed', result };
-      }
-      const blocked = baton.needsConfirm(asked, toolName);
-      if (asked.status === 'cancelled') dropped.set(key, blocked.next);
-      return { status: asked.status, next: blocked.next };
-    }
-  };
-})();
+/* The line the mission panel shows under Ruta's row while the leg is built. */
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const shortDay = (iso) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso));
+  return m ? Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1] : String(iso);
+};
+
+function showLegStatus(line) {
+  try {
+    const m = baton.mission;
+    if (m && m.legs.some((l) => l.origin === location.origin)) return; // signed: the summary speaks now
+    baton.setLegStatus(line);
+  } catch { /* older library, or no panel */ }
+}
 
 /* ------------------------------------------- always on: one plain read tool */
 
@@ -234,7 +215,10 @@ baton.registerAlways((signal, register) => {
       speeds: SPEEDS.map((s) => ({ id: s.id, transit_days: s.transit_days })),
       max_parcel_kg: DEPOT.max_parcel_kg,
       booking_notice_days: DEPOT.booking_notice_days,
-      note: 'Pricing a delivery needs a mission aboard. Arrive with a baton in the link and the rest of the tools appear.'
+      note: 'Pricing a delivery needs a mission aboard. Arrive with a baton in the link and the rest of the tools appear.',
+      next: baton.mission
+        ? 'Call quote_delivery_for_mission with a speed.'
+        : 'This site needs a baton in the link before it can quote. Open the carry link from the bindery.'
     })
   }, signal);
 });
@@ -259,10 +243,14 @@ baton.registerWhenMissionAboard((signal, register) => {
     annotations: { readOnlyHint: true },
     execute: async (input) => {
       const speed = findSpeed(input?.speed);
-      if (!speed) return { ok: false, error: 'speed must be standard or express', choices: SPEEDS.map((s) => s.id) };
+      if (!speed) {
+        return { ok: false, error: 'speed must be standard or express', choices: SPEEDS.map((s) => s.id), next: 'Call quote_delivery_for_mission again with speed standard or express.' };
+      }
       const zoneAssumed = !input?.zone;
       const zone = findZone(input?.zone || 'city');
-      if (!zone) return { ok: false, error: 'no such zone', choices: ZONES.map((z) => z.id) };
+      if (!zone) {
+        return { ok: false, error: 'no such zone', choices: ZONES.map((z) => z.id), next: 'Call quote_delivery_for_mission again with one of the listed zones.' };
+      }
 
       const copies = baton.mission.constraints.quantity;
       const priced = priceDelivery({ speed, zone, copies });
@@ -274,6 +262,10 @@ baton.registerWhenMissionAboard((signal, register) => {
         speed: speed.id, zone: zone.id, copies, pickup_date, delivery_date,
         cost_usd: priced.cost_usd, parcels: priced.parcels, est_weight_kg: priced.est_weight_kg
       };
+
+      showLegStatus(copies + ' copies · ' + speed.id + ' to the ' + zone.name.toLowerCase() +
+        ' zone · ' + usd(priced.cost_usd) + ' · collection ' + shortDay(pickup_date) +
+        (check.allowed ? ' · van to book' : ' · outside the mission constraints'));
 
       return {
         ok: true,
@@ -290,7 +282,10 @@ baton.registerWhenMissionAboard((signal, register) => {
         delivery_date,
         cost_usd: priced.cost_usd,
         check,
-        note: 'Collection is the working day after the last date signed onto this baton, so nothing had to be re-asked.'
+        note: 'Collection is the working day after the last date signed onto this baton, so nothing had to be re-asked.',
+        next: check.allowed
+          ? 'Call book_collection with pickup_date ' + pickup_date + '.'
+          : 'This breaks a mission constraint. Quote the other speed or an earlier collection with quote_delivery_for_mission.'
       };
     }
   }, signal);
@@ -307,9 +302,11 @@ baton.registerWhenMissionAboard((signal, register) => {
     annotations: { readOnlyHint: true },
     execute: async (input) => {
       const date = String(input?.date || '');
-      if (!isDate(date)) return { ok: false, error: 'date must look like YYYY-MM-DD' };
+      if (!isDate(date)) return { ok: false, error: 'date must look like YYYY-MM-DD', next: 'Call pickup_windows again with the date as YYYY-MM-DD.' };
       const today = todayISO();
-      if (daysBetween(today, date) < 0) return { ok: false, error: date + ' has already gone by', today };
+      if (daysBetween(today, date) < 0) {
+        return { ok: false, error: date + ' has already gone by', today, next: 'Call pickup_windows again with a day from today onwards.' };
+      }
       const windows = pickupWindows(date);
       const open = windows.filter((w) => w.state === 'open');
       return {
@@ -321,14 +318,17 @@ baton.registerWhenMissionAboard((signal, register) => {
         open_windows: open.map((w) => w.id),
         first_open_window: open[0]?.id ?? null,
         zone_cutoffs: ZONES.map((z) => ({ zone: z.id, cutoff: z.cutoff })),
-        booking_notice_days: DEPOT.booking_notice_days
+        booking_notice_days: DEPOT.booking_notice_days,
+        next: open[0]
+          ? 'Call book_collection with pickup_date ' + date + ' and window ' + open[0].id + '.'
+          : 'Nothing is open on ' + date + '. Call pickup_windows for another day.'
       };
     }
   }, signal);
 
   register({
     name: 'book_collection',
-    description: 'Book the van for the delivery already quoted. Needs the operator to click Confirm on the page: the first call shows the card and returns pending, the second call returns the booking. Hands back the tracking id, pickup date, delivery date and cost for baton_complete_leg.',
+    description: 'Book the van for the delivery already quoted. The booking applies straight away and stands until the leg is signed; nothing is charged before that. Hands back the tracking id, pickup date, delivery date and cost for baton_complete_leg.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -339,35 +339,35 @@ baton.registerWhenMissionAboard((signal, register) => {
       additionalProperties: false
     },
     annotations: { readOnlyHint: false },
-    execute: async (input, client) => {
-      // Read the confirm state before the guards, so the second call returns the
-      // booking rather than tripping over a slot this very call has just taken.
-      const seen = gate.peekConfirm('book_collection', input);
-      if (seen.status === 'confirmed') return { ok: true, ...seen.result };
-      if (seen.status === 'cancelled') return { ok: false, status: 'cancelled', next: seen.next };
-
+    execute: async (input) => {
       const date = String(input?.pickup_date || '');
-      if (!isDate(date)) return { ok: false, error: 'pickup_date must look like YYYY-MM-DD' };
+      if (!isDate(date)) return { ok: false, error: 'pickup_date must look like YYYY-MM-DD', next: 'Call book_collection again with pickup_date as YYYY-MM-DD.' };
 
       const today = todayISO();
       const notice = daysBetween(today, date);
-      if (notice < 0) return { ok: false, error: date + ' has already gone by', today };
+      if (notice < 0) {
+        return { ok: false, error: date + ' has already gone by', today, next: 'Call book_collection again with a later pickup_date.' };
+      }
       if (notice < DEPOT.booking_notice_days) {
         return {
           ok: false,
           error: 'collection is booked at least ' + DEPOT.booking_notice_days + ' working day ahead',
-          earliest_pickup_date: shiftDays(today, DEPOT.booking_notice_days)
+          earliest_pickup_date: shiftDays(today, DEPOT.booking_notice_days),
+          next: 'Call book_collection again with pickup_date ' + shiftDays(today, DEPOT.booking_notice_days) + ' or later.'
         };
       }
       if (isSunday(date)) {
-        return { ok: false, error: 'Ruta does not collect on Sundays', next_working_day: shiftDays(date, 1) };
+        return {
+          ok: false, error: 'Ruta does not collect on Sundays', next_working_day: shiftDays(date, 1),
+          next: 'Call book_collection again with pickup_date ' + shiftDays(date, 1) + '.'
+        };
       }
 
       const windows = pickupWindows(date);
       const open = windows.filter((w) => w.state === 'open');
       const wanted = input?.window ? windows.find((w) => w.id === input.window) : open[0];
       if (input?.window && !wanted) {
-        return { ok: false, error: 'no such window', choices: windows.map((w) => w.id) };
+        return { ok: false, error: 'no such window', choices: windows.map((w) => w.id), next: 'Call book_collection again with one of the listed windows.' };
       }
       if (!wanted || wanted.state !== 'open') {
         return {
@@ -391,49 +391,42 @@ baton.registerWhenMissionAboard((signal, register) => {
       const delivery_date = shiftDays(date, daysBetween(q.pickup_date, q.delivery_date));
       const zone = findZone(q.zone);
 
-      const outcome = await gate.confirmAndApply({
-        toolName: 'book_collection',
-        input,
-        client,
-        message: 'Ruta Courier: collect ' + q.parcels + ' parcel' + (q.parcels === 1 ? '' : 's') +
-          ' on ' + date + ', ' + wanted.label + ', ' + q.speed + ' to the ' + zone.name.toLowerCase() +
-          ' zone, landing ' + delivery_date + ' for ' + usd(q.cost_usd) + '?',
-        apply: () => {
-          const tracking_id = newTrackingId();
-          bookedHere.unshift({
-            tracking_id,
-            route: 'This mission to the ' + zone.name.toLowerCase() + ' zone',
-            speed: q.speed,
-            zone: q.zone,
-            status: 'booked',
-            pickup_date: date,
-            pickup_window: wanted.id,
-            delivery_date,
-            cost_usd: q.cost_usd,
-            copies: q.copies
-          });
-          drawBoard();
-          drawWindows(date);
-          baton.debug('collection booked for ' + date + ' — ' + tracking_id);
-          return {
-            booked: true,
-            evidence: {
-              tracking_id,
-              pickup_date: date,
-              pickup_window: wanted.label,
-              delivery_date,
-              zone: q.zone,
-              speed: q.speed,
-              parcels: q.parcels,
-              cost_usd: q.cost_usd
-            },
-            next: 'Call baton_complete_leg with this evidence, cost_usd ' + q.cost_usd + ', and a one-line summary.'
-          };
-        }
+      const tracking_id = newTrackingId();
+      bookedHere.unshift({
+        tracking_id,
+        route: 'This mission to the ' + zone.name.toLowerCase() + ' zone',
+        speed: q.speed,
+        zone: q.zone,
+        status: 'booked',
+        pickup_date: date,
+        pickup_window: wanted.id,
+        delivery_date,
+        cost_usd: q.cost_usd,
+        copies: q.copies
       });
+      drawBoard();
+      drawWindows(date);
+      baton.debug('collection booked for ' + date + ' — ' + tracking_id + ', held until the leg is signed');
+      showLegStatus(tracking_id + ' · collection ' + shortDay(date) + ' held until the leg is signed · lands ' +
+        shortDay(delivery_date) + ' · ready to sign');
 
-      if (outcome.status !== 'confirmed') return { ok: false, status: outcome.status, next: outcome.next };
-      return { ok: true, ...outcome.result };
+      return {
+        ok: true,
+        booked: true,
+        holds_until: 'the leg is signed',
+        evidence: {
+          tracking_id,
+          pickup_date: date,
+          pickup_window: wanted.label,
+          delivery_date,
+          zone: q.zone,
+          speed: q.speed,
+          parcels: q.parcels,
+          cost_usd: q.cost_usd
+        },
+        next: 'Van held until the leg is signed. Call baton_complete_leg with this evidence, cost_usd ' +
+          q.cost_usd + ' and a one-line summary; the operator taps Confirm once on the page.'
+      };
     }
   }, signal);
 
@@ -452,7 +445,12 @@ baton.registerWhenMissionAboard((signal, register) => {
       const all = [...bookedHere, ...boardParcels(todayISO())];
       const parcel = all.find((p) => p.tracking_id === id);
       if (!parcel) {
-        return { ok: false, error: 'no parcel with that tracking id', known_ids: all.map((p) => p.tracking_id) };
+        return {
+          ok: false,
+          error: 'no parcel with that tracking id',
+          known_ids: all.map((p) => p.tracking_id),
+          next: 'Call track_parcel again with one of the known tracking ids.'
+        };
       }
       return {
         ok: true,
@@ -464,7 +462,8 @@ baton.registerWhenMissionAboard((signal, register) => {
         zone: parcel.zone,
         pickup_date: parcel.pickup_date,
         delivery_date: parcel.delivery_date,
-        ...(parcel.cost_usd ? { cost_usd: parcel.cost_usd } : {})
+        ...(parcel.cost_usd ? { cost_usd: parcel.cost_usd } : {}),
+        next: 'Tell the operator where the parcel is; if this is the mission\'s own booking, call baton_complete_leg to sign the delivery leg.'
       };
     }
   }, signal);

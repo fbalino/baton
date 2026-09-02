@@ -4,12 +4,17 @@
 //
 //   node scripts/e2e.mjs
 //
-// It walks the mission across three origins and asserts the two-call shape of
-// every consequential tool:
+// It walks the mission across three origins and asserts the pacing the demo is
+// built on: one tap per site, and a page that keeps moving.
 //
-//   call 1 → { status: 'pending' } and a confirm card on the page
-//   click Confirm in the page (the page does the work on the click)
-//   call 2 → { status: 'confirmed' } with the result
+//   - only baton_complete_leg confirms, in two calls with a tap between them:
+//       call 1 → { status: 'pending' } and a confirm card on the page
+//       tap Confirm in the page (the page does the work on the tap)
+//       call 2 → the signed leg
+//   - every other write — approving a proof, holding a press day or a bench,
+//     booking a van — applies on the first call and answers with the result
+//   - every call comes back with a `next` line
+//   - baton_mint takes the browser to the next site itself
 //
 // Legs are signed by each site's own /api/sign, which scripts/dev.mjs serves
 // from keys/<site>.private.jwk.json — no private key is in any page. Then it
@@ -66,6 +71,11 @@ async function toolNames(page) {
   return page.evaluate(async () => (await document.modelContext.getTools()).map((t) => t.name).sort());
 }
 
+// Every tool answers with a `next` line so the agent keeps going. Counted on
+// every call and asserted once at the end, with any offender named on the spot.
+let calls = 0;
+const missingNext = [];
+
 async function call(page, name, input = {}) {
   const raw = await page.evaluate(async (n, i) => {
     const tools = await document.modelContext.getTools();
@@ -74,21 +84,39 @@ async function call(page, name, input = {}) {
     try { return await document.modelContext.executeTool(t, JSON.stringify(i)); }
     catch (e) { return JSON.stringify({ __error: String(e) }); }
   }, name, input);
-  return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  const out = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  calls++;
+  if (typeof out.next !== 'string' || !out.next.trim()) {
+    missingNext.push(name);
+    console.log('  FAIL  ' + name + ' came back without a next line — ' + JSON.stringify(out).slice(0, 120));
+  }
+  return out;
 }
 
-// The two-call confirmation pattern.
+// A write that needs no tap: it applies on the first call and answers with the
+// result. Everything except the signature works this way now, so one site is
+// one tap.
+async function callApplying(page, name, input = {}) {
+  const r = await call(page, name, input);
+  check('  ' + name + ' applied on the first call', r.ok === true && r.status !== 'pending',
+    r.status || String(r.error || '').slice(0, 90) || 'ok');
+  const card = await page.$('[data-baton-confirm]');
+  check('  it did not stop for a tap', !card);
+  return r;
+}
+
+// The two-call confirmation, now only for baton_complete_leg and baton_decline.
 //
-// A WebMCP call cannot stay open while a person decides, so a consequential
-// tool answers pending straight away and puts a card on the page. The operator
-// clicks Confirm, the PAGE does the work on the click, and the agent calls the
-// same tool again with the same input to read the result back.
+// A WebMCP call cannot stay open while a person decides, so the signature
+// answers pending straight away and puts a card on the page. The operator taps
+// Confirm, the PAGE signs on the tap, and the agent calls the same tool again
+// with the same input to read the leg back.
 async function callConfirming(page, name, input = {}) {
   const first = await call(page, name, input);
   check('  call 1 answers pending', first.status === 'pending',
     first.status ? first.status + ' — ' + String(first.next || '').slice(0, 70) : JSON.stringify(first).slice(0, 120));
   const next = String(first.next || '');
-  check('  it names the tool and the click the operator has to make',
+  check('  it names the tool and the tap the operator has to make',
     next.includes('Confirm') && next.includes(name), next.slice(0, 120) || '(no next)');
 
   const card = await page.$('.confirm');
@@ -115,6 +143,27 @@ async function callConfirming(page, name, input = {}) {
   return second;
 }
 
+// baton_mint returns the link and then the page follows it itself, 1.5s later.
+// The waiter goes up before the call, so nothing can slip between the two.
+async function mintAndFollow(page, expectOrigin) {
+  const navigated = page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 });
+  const r = await call(page, 'baton_mint');
+  check('  baton_mint says it is moving the browser', r.ok === true && r.done === false && r.navigating === true,
+    String(r.next || '').slice(0, 96));
+  check('  the link points at ' + expectOrigin, String(r.next_url).startsWith(expectOrigin),
+    String(r.next_url).slice(0, 34) + '…');
+  const carryText = await page.$eval('.carry', (el) => el.textContent.trim()).catch(() => '(none)');
+  check('  the page still shows a Carry link for the person', carryText.startsWith('Carry this to'), carryText);
+  await navigated;
+  await sleep(700);
+  check('  the browser moved there by itself, no click needed', page.url().startsWith(expectOrigin), page.url().slice(0, 40) + '…');
+  return r;
+}
+
+// The line the site writes under its own row while the leg is being built.
+const legStatusLine = (page) =>
+  page.$eval('.leg__status', (el) => el.textContent.trim()).catch(() => '');
+
 const debugLine = (page) => page.$eval('.baton__debug', (el) => el.textContent.trim()).catch(() => '(none)');
 const toolCount = (page) => page.$eval('.tools__count', (el) => el.textContent.trim()).catch(() => '(none)');
 
@@ -137,7 +186,10 @@ try {
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console @' + page.url() + ': ' + m.text()); });
   const open = async (url) => { await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 }); await sleep(500); };
 
-  /* ---------------------------------------------------------------- leg 1 */
+  /* --------------------------------------------------------- cold sites */
+  // Surveyed first, before the mission exists anywhere. From here on the page
+  // carries itself from site to site, so this is the only moment the bindery
+  // and the courier can be seen cold.
   step('Site 1 — Rivera Press, no mission yet');
   await open(S1);
   const riveraCold = await toolNames(page);
@@ -150,7 +202,25 @@ try {
   check('the page count matches the browser', (await toolCount(page)).startsWith(riveraCold.length + ' site tool'), await toolCount(page));
   await shot(page, 'Rivera Press, ' + riveraCold.length + ' tools, no mission');
 
+  step('Site 2 — Norte Bindery, cold');
+  await open(S2);
+  const norteCold = await toolNames(page);
+  console.log('  tools: ' + norteCold.join(', '));
+  check('a cold bindery publishes only its always-on tools', norteCold.length === 2, norteCold.join(', '));
+  check('no common baton tools on a cold site', !COMMON_WITH_MISSION.some((n) => norteCold.includes(n)));
+  await shot(page, 'Norte Bindery, cold, ' + norteCold.length + ' tools');
+
+  step('Site 3 — Ruta Courier, cold');
+  await open(S3);
+  const rutaCold = await toolNames(page);
+  console.log('  tools: ' + rutaCold.join(', '));
+  check('a cold courier publishes only its always-on tools', rutaCold.length === 2, rutaCold.join(', '));
+  check('no common baton tools on a cold site', !COMMON_WITH_MISSION.some((n) => rutaCold.includes(n)));
+  await shot(page, 'Ruta Courier, cold, ' + rutaCold.length + ' tools');
+
+  /* ---------------------------------------------------------------- leg 1 */
   step('baton_start — the mission is created here');
+  await open(S1);
   let r = await call(page, 'baton_start', {
     goal: 'Print and bind 40 catalogues for the Norte studio open week, delivered by 14 September',
     budget_usd: 600,
@@ -161,6 +231,8 @@ try {
   check('baton_start returned a mission', r.ok === true && !!r.mission?.id, r.mission?.id);
   check('the route carries all three sites', r.mission?.route?.length === 3,
     (r.mission?.route || []).map((x) => x.role).join(' → '));
+  check('it tells the agent to run the whole leg and stop once, for the signature',
+    /baton_complete_leg/.test(r.next || '') && /Confirm once/.test(r.next || ''), String(r.next).slice(0, 110));
   await sleep(300);
   names = await toolNames(page);
   console.log('  tools: ' + names.join(', '));
@@ -185,10 +257,10 @@ try {
   check('its proof is waiting for approval', r.order?.proof?.approved === false, r.order?.proof?.id);
   const orderId = r.order.order_id;
 
-  step('approve_proof — two calls with a Confirm click between them');
-  r = await callConfirming(page, 'approve_proof', { order_id: orderId });
-  check('call 2 returned the confirmed result', r.ok === true && r.status !== 'pending', r.status || 'ok');
+  step('approve_proof — applies at once, no tap');
+  r = await callApplying(page, 'approve_proof', { order_id: orderId });
   check('the proof is approved on the order', r.order?.proof?.approved === true, r.order?.proof?.approved_at);
+  check('it points straight at the press day', /reserve_print_slot/.test(r.next || ''), String(r.next).slice(0, 96));
 
   step('list_press_days — ask the press which days are still free');
   r = await call(page, 'list_press_days', { only_free: true });
@@ -196,10 +268,13 @@ try {
   const pressDate = r.days[0].date;
   console.log('  holding the press on ' + pressDate);
 
-  step('reserve_print_slot — two calls with a Confirm click between them');
-  r = await callConfirming(page, 'reserve_print_slot', { order_id: orderId, date: pressDate });
-  check('call 2 returned the confirmed result', r.ok === true && r.status !== 'pending', r.status || 'ok');
+  step('reserve_print_slot — applies at once, held until the leg is signed');
+  r = await callApplying(page, 'reserve_print_slot', { order_id: orderId, date: pressDate });
   check('a press slot came back', !!r.slot?.slot_id, r.slot?.slot_id + ' on ' + r.slot?.date);
+  check('the hold is explicitly provisional', /held until the leg is signed/i.test(r.next || ''), String(r.next).slice(0, 96));
+  const printStatus = await legStatusLine(page);
+  check('the panel shows the leg building under this site\'s row', /press day/i.test(printStatus) && /ready to sign/i.test(printStatus),
+    printStatus || '(no status line)');
   console.log('  ' + await debugLine(page));
 
   step('prepare_print_leg — the site assembles what baton_complete_leg needs');
@@ -217,29 +292,18 @@ try {
   check('$220 left of the budget', r.mission?.remaining_usd === 220, '$' + r.mission?.remaining_usd);
   check('call 1 was pending, call 2 read the signed leg back', r.__first_status === 'pending' && r.leg?.sig);
   check('the page signed it through /api/sign, not with a key in the browser', r.signed_in === 'server', r.signed_in);
+  check('it sends the agent straight on to baton_mint', /baton_mint/.test(r.next || ''), String(r.next).slice(0, 96));
+  check('the building line is gone now the row shows the signed summary',
+    (await legStatusLine(page)) === '', await legStatusLine(page));
   console.log('  ' + await debugLine(page));
   await shot(page, 'print leg signed, chain strip green');
 
-  step('baton_mint — the link to carry to the bindery');
-  r = await call(page, 'baton_mint');
-  check('a next link came back', r.ok === true && r.done === false, r.next_role);
-  check('it points at the bindery origin', String(r.next_url).startsWith(S2), String(r.next_url).slice(0, 30) + '…');
-  const carryText = await page.$eval('.carry', (el) => el.textContent.trim()).catch(() => '(none)');
-  check('the page shows a Carry link', carryText.startsWith('Carry this to'), carryText);
-  const linkToBindery = r.next_url;
-  await shot(page, 'Carry this to bind at localhost:4182');
-
   /* ---------------------------------------------------------------- leg 2 */
-  step('Site 2 — Norte Bindery, arriving with no baton first');
-  await open(S2);
-  const norteCold = await toolNames(page);
-  console.log('  tools: ' + norteCold.join(', '));
-  check('a cold bindery publishes only its always-on tools', norteCold.length === 2, norteCold.join(', '));
-  check('no common baton tools on a cold site', !COMMON_WITH_MISSION.some((n) => norteCold.includes(n)));
-  await shot(page, 'Norte Bindery, cold, ' + norteCold.length + ' tools');
+  step('baton_mint — the page carries itself to the bindery');
+  r = await mintAndFollow(page, S2);
+  check('it names the bindery as the next stop', r.next_role === 'bind', r.next_role);
+  await shot(page, 'arrived at the bindery on its own');
 
-  step('Following the carry link to Norte Bindery');
-  await open(linkToBindery);
   names = await toolNames(page);
   console.log('  tools: ' + names.join(', '));
   check('the baton grew the tool list', names.length > norteCold.length, norteCold.length + ' → ' + names.length + ' tools');
@@ -278,10 +342,13 @@ try {
   }
   console.log('  holding the bench on ' + benchDay);
 
-  step('reserve_press_slot — two calls with a Confirm click between them');
-  r = await callConfirming(page, 'reserve_press_slot', { date: benchDay });
-  check('call 2 returned the confirmed result', r.ok === true && r.status !== 'pending', r.status || 'ok');
+  step('reserve_press_slot — applies at once, held until the leg is signed');
+  r = await callApplying(page, 'reserve_press_slot', { date: benchDay });
   check('a bench day came back', !!r.evidence?.slot_id, r.evidence?.slot_id);
+  check('the hold is explicitly provisional', /held until the leg is signed/i.test(r.next || ''), String(r.next).slice(0, 96));
+  const bindStatus = await legStatusLine(page);
+  check('the panel shows the bindery leg building under its row',
+    /bench/i.test(bindStatus) && /ready to sign/i.test(bindStatus), bindStatus || '(no status line)');
   const bindEvidence = r.evidence;
 
   step('baton_complete_leg — sign the binding leg');
@@ -298,22 +365,11 @@ try {
   console.log('  ' + await debugLine(page));
   await shot(page, 'binding leg signed, two green segments');
 
-  step('baton_mint — the link to carry to the courier');
-  r = await call(page, 'baton_mint');
-  check('it points at the courier origin', String(r.next_url).startsWith(S3), r.next_role);
-  const linkToCourier = r.next_url;
-
   /* ---------------------------------------------------------------- leg 3 */
-  step('Site 3 — Ruta Courier, arriving with no baton first');
-  await open(S3);
-  const rutaCold = await toolNames(page);
-  console.log('  tools: ' + rutaCold.join(', '));
-  check('a cold courier publishes only its always-on tools', rutaCold.length === 2, rutaCold.join(', '));
-  check('no common baton tools on a cold site', !COMMON_WITH_MISSION.some((n) => rutaCold.includes(n)));
-  await shot(page, 'Ruta Courier, cold, ' + rutaCold.length + ' tools');
+  step('baton_mint — the page carries itself to the courier');
+  r = await mintAndFollow(page, S3);
+  check('it names the courier as the next stop', r.next_role === 'deliver', r.next_role);
 
-  step('Following the carry link to Ruta Courier');
-  await open(linkToCourier);
   names = await toolNames(page);
   console.log('  tools: ' + names.join(', '));
   check('the baton grew the tool list', names.length > rutaCold.length, rutaCold.length + ' → ' + names.length + ' tools');
@@ -331,10 +387,13 @@ try {
   check('both constraints pass', r.check?.allowed === true);
   const pickupDate = r.pickup_date;
 
-  step('book_collection — two calls with a Confirm click between them');
-  r = await callConfirming(page, 'book_collection', { pickup_date: pickupDate });
-  check('call 2 returned the confirmed result', r.ok === true && r.status !== 'pending', r.status || 'ok');
+  step('book_collection — applies at once, held until the leg is signed');
+  r = await callApplying(page, 'book_collection', { pickup_date: pickupDate });
   check('a tracking id came back', /^RUTA-/.test(r.evidence?.tracking_id || ''), r.evidence?.tracking_id);
+  check('the booking is explicitly provisional', /held until the leg is signed/i.test(r.next || ''), String(r.next).slice(0, 96));
+  const deliverStatus = await legStatusLine(page);
+  check('the panel shows the delivery leg building under its row',
+    /collection/i.test(deliverStatus) && /ready to sign/i.test(deliverStatus), deliverStatus || '(no status line)');
   const deliverEvidence = r.evidence;
 
   step('baton_complete_leg — sign the delivery leg');
@@ -347,6 +406,8 @@ try {
   check('the last leg is signed', r.ok === true && r.leg?.index === 2, 'signed by ' + r.leg?.kid);
   check('Ruta signed it on its own origin', r.signed_in === 'server', r.signed_in);
   check('spent is $594 of $600', r.mission?.spent_usd === 594, '$' + r.mission?.spent_usd);
+  check('the last leg sends the agent to baton_verify, not to another site',
+    /baton_verify/.test(r.next || ''), String(r.next).slice(0, 96));
 
   step('baton_verify — every signature checked against its own origin');
   r = await call(page, 'baton_verify');
@@ -360,8 +421,13 @@ try {
   await shot(page, 'all three legs verified, chain strip fully green');
 
   step('baton_mint at the end of the route');
+  const urlBeforeLastMint = page.url();
   r = await call(page, 'baton_mint');
   check('there is nowhere left to carry it', r.done === true);
+  check('it says the route is complete rather than moving anywhere',
+    /Route complete/i.test(r.next || '') && r.navigating !== true, String(r.next).slice(0, 96));
+  await sleep(2200);
+  check('the page stayed where it is', page.url() === urlBeforeLastMint, page.url().slice(0, 40) + '…');
 
   /* --------------------------------------------------------- tamper link */
   step('Tamper link — the page offers a one-click copy with the budget raised');
@@ -399,6 +465,11 @@ try {
   const caption = await page.$eval('.strip__caption', (el) => el.textContent.trim()).catch(() => '(none)');
   check('the page says the chain is broken', /broken/i.test(caption), caption);
   await shot(page, 'tampered budget, chain strip red');
+
+  /* ------------------------------------------------------------ every next */
+  step('Every call answered with a next line');
+  check('all ' + calls + ' tool calls carried a next line', missingNext.length === 0,
+    missingNext.length ? 'missing on: ' + [...new Set(missingNext)].join(', ') : calls + ' calls');
 
   /* --------------------------------------------------------------- errors */
   step('Page errors');

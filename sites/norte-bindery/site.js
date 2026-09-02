@@ -3,7 +3,7 @@
 // Signing happens on this origin's server (the library POSTs /api/sign); no
 // private key ships to the browser any more.
 
-import { mountBaton, canonicalize, round2, todayISO } from './baton.js';
+import { mountBaton, round2, todayISO } from './baton.js';
 import { SITE } from './config.js';
 import {
   BINDINGS, COVERS, WORKSHOP,
@@ -132,46 +132,27 @@ const baton = mountBaton({
 
 if (!baton.hasWebMCP) $('no-webmcp').hidden = false;
 
-/* ---- confirm gate -------------------------------------------------------
-   The library owns confirmAndApply/peekConfirm. Until that version is synced
-   into this folder, the same semantics run locally on top of confirmInPage:
-   first call shows the card and returns pending, the operator clicks Confirm,
-   the second call applies the work once and caches the result. */
+/* ---- confirmation policy — one tap at Norte -----------------------------
+   The operator taps Confirm once, for baton_complete_leg: the signature, which
+   is also the money. Holding a bench applies as soon as the agent asks for it
+   and stands until the leg is signed, so the agent quotes, holds and signs in
+   one run instead of stopping at every step. */
 
-const gate = (() => {
-  if (typeof baton.confirmAndApply === 'function' && typeof baton.peekConfirm === 'function') {
-    return {
-      confirmAndApply: (args) => baton.confirmAndApply(args),
-      peekConfirm: (toolName, input) => baton.peekConfirm(toolName, input)
-    };
-  }
-  const done = new Map();
-  const dropped = new Map();
-  const keyOf = (toolName, input) => toolName + ':' + canonicalize(input ?? {});
-  return {
-    peekConfirm(toolName, input) {
-      const key = keyOf(toolName, input);
-      if (done.has(key)) return { status: 'confirmed', result: done.get(key) };
-      if (dropped.has(key)) return { status: 'cancelled', next: dropped.get(key) };
-      return { status: 'none' };
-    },
-    async confirmAndApply({ toolName, input, message, apply, client }) {
-      const key = keyOf(toolName, input);
-      if (done.has(key)) return { status: 'confirmed', result: done.get(key) };
-      const asked = await baton.confirmInPage(client, message, toolName, input);
-      if (asked.status === 'confirmed') {
-        const result = await apply();
-        done.set(key, result);
-        dropped.delete(key);
-        await baton.refreshToolsBox();
-        return { status: 'confirmed', result };
-      }
-      const blocked = baton.needsConfirm(asked, toolName);
-      if (asked.status === 'cancelled') dropped.set(key, blocked.next);
-      return { status: asked.status, next: blocked.next };
-    }
-  };
-})();
+/* The line the mission panel shows under Norte's row while the leg is built. */
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const shortDay = (iso) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso));
+  return m ? Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1] : String(iso);
+};
+
+function showLegStatus(line) {
+  try {
+    const m = baton.mission;
+    if (m && m.legs.some((l) => l.origin === location.origin)) return; // signed: the summary speaks now
+    baton.setLegStatus(line);
+  } catch { /* older library, or no panel */ }
+}
 
 /* ------------------------------------------- always on: one plain read tool */
 
@@ -191,7 +172,10 @@ baton.registerAlways((signal, register) => {
       quantity_range: [WORKSHOP.min_quantity, WORKSHOP.max_quantity],
       closed: 'Sundays',
       takes: 'binding legs only, on a mission that already carries a signed print leg',
-      note: 'Quoting needs a mission aboard. Arrive with a baton in the link and the rest of the tools appear.'
+      note: 'Quoting needs a mission aboard. Arrive with a baton in the link and the rest of the tools appear.',
+      next: baton.mission
+        ? 'Call list_bindings, then quote_binding_for_mission with a binding and a cover.'
+        : 'This site needs a baton in the link before it can quote. Open the carry link from the print shop.'
     })
   }, signal);
 });
@@ -211,7 +195,8 @@ baton.registerWhenMissionAboard((signal, register) => {
       currency: 'USD',
       bindings: BINDINGS,
       covers: COVERS,
-      pricing: 'binding per copy + cover per copy, times the copies on the baton'
+      pricing: 'binding per copy + cover per copy, times the copies on the baton',
+      next: 'Price one with quote_binding_for_mission, passing a binding and a cover.'
     })
   }, signal);
 
@@ -231,8 +216,12 @@ baton.registerWhenMissionAboard((signal, register) => {
     execute: async (input) => {
       const b = findBinding(input.binding);
       const c = findCover(input.cover);
-      if (!b) return { ok: false, error: 'no such binding', choices: BINDINGS.map((x) => x.id) };
-      if (!c) return { ok: false, error: 'no such cover', choices: COVERS.map((x) => x.id) };
+      if (!b) {
+        return { ok: false, error: 'no such binding', choices: BINDINGS.map((x) => x.id), next: 'Call quote_binding_for_mission again with one of the listed bindings.' };
+      }
+      if (!c) {
+        return { ok: false, error: 'no such cover', choices: COVERS.map((x) => x.id), next: 'Call quote_binding_for_mission again with one of the listed covers.' };
+      }
 
       const copies = baton.mission.constraints.quantity;
       if (copies < WORKSHOP.min_quantity || copies > WORKSHOP.max_quantity) {
@@ -240,7 +229,8 @@ baton.registerWhenMissionAboard((signal, register) => {
           ok: false,
           error: 'this mission carries ' + copies + ' copies; Norte binds ' +
             WORKSHOP.min_quantity + ' to ' + WORKSHOP.max_quantity + ' per booking',
-          copies
+          copies,
+          next: 'Tell the operator Norte cannot take this quantity, and call baton_decline if the mission should move on without a binding.'
         };
       }
 
@@ -254,6 +244,9 @@ baton.registerWhenMissionAboard((signal, register) => {
         copies, per_copy_usd, cost_usd, bench_days, bench: b.bench
       };
 
+      showLegStatus(copies + ' copies · ' + b.name.toLowerCase() + ', ' + c.name.toLowerCase() +
+        ' · ' + usd(cost_usd) + (check.allowed ? ' · bench day to hold' : ' · over the budget'));
+
       return {
         ok: true,
         binding: b.name,
@@ -266,7 +259,11 @@ baton.registerWhenMissionAboard((signal, register) => {
         cost_usd,
         bench_days,
         check,
-        note: 'The copy count came off the print leg on this baton.'
+        note: 'The copy count came off the print leg on this baton.',
+        next: check.allowed
+          ? 'Call bench_availability, then reserve_press_slot for a free day.'
+          : 'This is over the budget by $' + (check.failures?.[0]?.over_by_usd ?? 0) +
+            '. Quote a cheaper binding or cover with quote_binding_for_mission.'
       };
     }
   }, signal);
@@ -286,7 +283,7 @@ baton.registerWhenMissionAboard((signal, register) => {
     execute: async (input) => {
       const today = todayISO();
       const from = input?.from ? String(input.from) : today;
-      if (!isDate(from)) return { ok: false, error: 'from must look like YYYY-MM-DD' };
+      if (!isDate(from)) return { ok: false, error: 'from must look like YYYY-MM-DD', next: 'Call bench_availability again with from as YYYY-MM-DD, or leave it out.' };
       const days = Math.min(60, Math.max(1, Math.trunc(input?.days ?? WORKSHOP.calendar_days)));
       const calendar = benchCalendar(from, days, today).map((d) =>
         heldDays.has(d.date) ? { ...d, state: 'full', slots_left: 0, note: 'held for this mission' } : d
@@ -302,14 +299,17 @@ baton.registerWhenMissionAboard((signal, register) => {
         calendar,
         free_days: free,
         first_free_day: free[0] ?? null,
-        taken_days: calendar.filter((d) => d.state === 'full').map((d) => d.date)
+        taken_days: calendar.filter((d) => d.state === 'full').map((d) => d.date),
+        next: free[0]
+          ? 'Call reserve_press_slot for ' + free[0] + ', or another free day.'
+          : 'No bench day is free in this window. Call bench_availability again further ahead.'
       };
     }
   }, signal);
 
   register({
     name: 'reserve_press_slot',
-    description: 'Hold a bench day for the binding already quoted. Needs the operator to click Confirm on the page: the first call shows the card and returns pending, the second call returns the booking. Hands back the evidence for baton_complete_leg (binding, cover, copies, bench date, cost).',
+    description: 'Hold a bench day for the binding already quoted. The hold applies straight away and stands until the leg is signed; nothing is charged before that. Hands back the evidence for baton_complete_leg (binding, cover, copies, bench date, cost).',
     inputSchema: {
       type: 'object',
       properties: { date: { type: 'string', description: 'Bench day as YYYY-MM-DD, from bench_availability.' } },
@@ -317,15 +317,9 @@ baton.registerWhenMissionAboard((signal, register) => {
       additionalProperties: false
     },
     annotations: { readOnlyHint: false },
-    execute: async (input, client) => {
-      // Read the confirm state before the guards, so the second call returns the
-      // booking rather than tripping over a day this very call has just taken.
-      const seen = gate.peekConfirm('reserve_press_slot', input);
-      if (seen.status === 'confirmed') return { ok: true, ...seen.result };
-      if (seen.status === 'cancelled') return { ok: false, status: 'cancelled', next: seen.next };
-
+    execute: async (input) => {
       const date = String(input?.date || '');
-      if (!isDate(date)) return { ok: false, error: 'date must look like YYYY-MM-DD' };
+      if (!isDate(date)) return { ok: false, error: 'date must look like YYYY-MM-DD', next: 'Call bench_availability and pass one of its free days.' };
 
       const today = todayISO();
       const day = heldDays.has(date)
@@ -333,13 +327,18 @@ baton.registerWhenMissionAboard((signal, register) => {
         : benchDay(date, today);
 
       if (day.state === 'past') {
-        return { ok: false, error: date + ' has already gone by', today, nearest_free_days: nearestFreeDays(today, today) };
+        return {
+          ok: false, error: date + ' has already gone by', today,
+          nearest_free_days: nearestFreeDays(today, today),
+          next: 'Call reserve_press_slot again with one of the nearest free days.'
+        };
       }
       if (day.state === 'closed') {
         return {
           ok: false,
           error: date + ' is a Sunday and the workshop is shut',
-          nearest_free_days: nearestFreeDays(date, today)
+          nearest_free_days: nearestFreeDays(date, today),
+          next: 'Call reserve_press_slot again with one of the nearest free days.'
         };
       }
       if (day.state === 'full') {
@@ -359,37 +358,31 @@ baton.registerWhenMissionAboard((signal, register) => {
       }
 
       const q = lastQuote;
-      const outcome = await gate.confirmAndApply({
-        toolName: 'reserve_press_slot',
-        input,
-        client,
-        message: 'Norte Bindery: hold ' + q.bench + ' on ' + date + ' for ' + q.copies +
-          ' copies, ' + q.binding_name.toLowerCase() + ' with a ' + q.cover_name.toLowerCase() +
-          ', ' + usd(q.cost_usd) + '?',
-        apply: () => {
-          heldDays.add(date);
-          drawDiary();
-          baton.debug('bench held on ' + date + ' for ' + q.copies + ' copies');
-          return {
-            held: true,
-            evidence: {
-              slot_id: 'NB-' + date.replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase(),
-              bench: q.bench,
-              bench_date: date,
-              binding: q.binding,
-              cover: q.cover,
-              copies: q.copies,
-              cost_usd: q.cost_usd
-            },
-            bench_days: q.bench_days,
-            weekday: weekdayName(date),
-            next: 'Call baton_complete_leg with this evidence, cost_usd ' + q.cost_usd + ', and a one-line summary.'
-          };
-        }
-      });
+      heldDays.add(date);
+      drawDiary();
+      baton.debug('bench held on ' + date + ' for ' + q.copies + ' copies — until the leg is signed');
+      showLegStatus(q.copies + ' copies · ' + q.binding_name.toLowerCase() + ', ' + q.cover_name.toLowerCase() +
+        ' · bench ' + shortDay(date) + ' held until the leg is signed · ready to sign');
 
-      if (outcome.status !== 'confirmed') return { ok: false, status: outcome.status, next: outcome.next };
-      return { ok: true, ...outcome.result };
+      return {
+        ok: true,
+        held: true,
+        holds_until: 'the leg is signed',
+        evidence: {
+          slot_id: 'NB-' + date.replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase(),
+          bench: q.bench,
+          bench_date: date,
+          binding: q.binding,
+          cover: q.cover,
+          copies: q.copies,
+          cost_usd: q.cost_usd
+        },
+        bench_days: q.bench_days,
+        weekday: weekdayName(date),
+        cost_usd: q.cost_usd,
+        next: 'Bench day held until the leg is signed. Call baton_complete_leg with this evidence, cost_usd ' +
+          q.cost_usd + ' and a one-line summary; the operator taps Confirm once on the page.'
+      };
     }
   }, signal);
 });
