@@ -92,28 +92,50 @@ export function readMissionFromHash(hash) {
 
 /* ------------------------------------------------------------------- model */
 
-export function newMission({ goal, budget_usd, deadline, quantity, route }) {
+// The operator's standing instructions: written once when the mission starts,
+// carried in the header, read by every site on the route. Trimmed, capped, and
+// left out entirely when there are none, so a mission without them is byte-for-
+// byte what it was before instructions existed.
+export const MAX_INSTRUCTIONS = 400;
+
+export function cleanInstructions(text) {
+  const s = String(text ?? '').replace(/\s+/g, ' ').trim();
+  return s ? s.slice(0, MAX_INSTRUCTIONS) : '';
+}
+
+export function newMission({ goal, budget_usd, deadline, quantity, route, instructions }) {
+  const standing = cleanInstructions(instructions);
   return {
     v: BATON_VERSION,
     id: 'bt_' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4),
     created_at: new Date().toISOString(),
     goal: String(goal),
+    ...(standing ? { instructions: standing } : {}),
     constraints: {
       budget_usd: round2(budget_usd),
       deadline: String(deadline),
       quantity: Math.trunc(quantity)
     },
-    route: route.map((r) => ({ role: r.role, url: String(r.url).split('#')[0] })),
+    // A stop may carry the name of the business as well as its URL, so a site
+    // three origins away can say "deliver at Ruta Courier" instead of a host.
+    route: route.map((r) => ({
+      role: r.role,
+      url: String(r.url).split('#')[0],
+      ...(r.name ? { name: String(r.name) } : {})
+    })),
     spent_usd: 0,
     legs: [],
     declined: []
   };
 }
 
+// Signed into every leg. `instructions` is undefined on a mission that has none
+// and canonicalize() drops undefined keys, so those missions still verify.
 export function missionHeader(mission) {
   return {
     id: mission.id,
     goal: mission.goal,
+    instructions: mission.instructions,
     constraints: mission.constraints,
     route: mission.route
   };
@@ -131,6 +153,9 @@ export function validateMission(mission) {
   const c = mission.constraints;
   if (!c || typeof c.budget_usd !== 'number' || !/^\d{4}-\d{2}-\d{2}$/.test(String(c.deadline || ''))) {
     return { ok: false, reason: 'malformed constraints' };
+  }
+  if (mission.instructions !== undefined && typeof mission.instructions !== 'string') {
+    return { ok: false, reason: 'instructions must be text' };
   }
   if (!Array.isArray(mission.route) || mission.route.length === 0) return { ok: false, reason: 'empty route' };
   if (!Array.isArray(mission.legs)) return { ok: false, reason: 'missing legs' };
@@ -331,6 +356,7 @@ export function missionSummary(mission) {
   return {
     id: mission.id,
     goal: mission.goal,
+    instructions: mission.instructions || null,
     quantity: mission.constraints.quantity,
     budget_usd: mission.constraints.budget_usd,
     spent_usd: round2(mission.spent_usd || 0),
@@ -348,6 +374,8 @@ export function missionSummary(mission) {
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const host = (u) => { try { return new URL(u).host; } catch { return String(u); } };
 const money = (n) => '$' + round2(n).toFixed(2);
+// The same figure written the way a person says it out loud: $380, not $380.00.
+const plainMoney = (n) => '$' + round2(n);
 
 /* ------------------------------------------------------------------- next */
 
@@ -460,6 +488,53 @@ export function mountBaton(siteConfig) {
     return line;
   }
 
+  /* ---- the arrival brief ------------------------------------------------
+     What an agent needs the moment it lands on a site it has never seen, so it
+     never has to ask the person to say the job again. It is the mission in
+     working order: the operator's standing instructions, the money and the
+     dates, what the earlier sites already did, one paragraph naming what this
+     stop is for, and where the mission goes afterwards. baton_inspect returns
+     it and the panel prints the same paragraph on the page, so a model that
+     reads the DOM instead of calling a tool arrives at the same instruction. */
+
+  const DEFAULT_STOP_BRIEF =
+    'Do this site\'s leg with what the baton already carries, choose options that fit the ' +
+    'remaining budget and the instructions, sign the leg (the operator taps Confirm once), ' +
+    'then mint the link and continue on the next site.';
+
+  const stopBriefText = () => String(cfg.stopBrief || DEFAULT_STOP_BRIEF);
+
+  // A stop written the way a person names it: the business if the mission
+  // carries the name, the host otherwise.
+  const stopLabel = (stop) => (stop ? String(stop.name || host(stop.url)) : '');
+
+  function arrivalBrief() {
+    const s = missionSummary(mission);
+    const mine = legIndexFor(mission, cfg.role);
+    const after = mission.route[(mine >= 0 ? mine : mission.legs.length) + 1] || null;
+    return {
+      stop: cfg.role,
+      of_route: mission.route.map((r) => r.role),
+      goal: mission.goal,
+      instructions: mission.instructions || null,
+      budget_usd: s.budget_usd,
+      spent_usd: s.spent_usd,
+      remaining_usd: s.remaining_usd,
+      deadline: s.deadline,
+      days_to_deadline: s.days_to_deadline,
+      quantity: s.quantity,
+      done_so_far: mission.legs.map((leg) =>
+        leg.role + ': ' + leg.summary + ', ' + plainMoney(leg.cost_usd) +
+        ' (' + (stopLabel(mission.route[leg.index]) || host(leg.origin)) + ')'),
+      this_stop_must: stopBriefText(),
+      then_next: after
+        ? after.role + ' at ' + stopLabel(after)
+        : 'nothing after this stop — the route ends here',
+      rule: 'Do not ask the operator to repeat the job; the baton carries it. ' +
+        'Ask only when the instructions cannot be met.'
+    };
+  }
+
   /* --------------------------------------------------------- verification */
 
   let chain = null;
@@ -525,6 +600,12 @@ export function mountBaton(siteConfig) {
                   : '<span class="leg__cost leg__cost--todo">' + (hereNow ? 'this site' : 'waiting') + '</span>') + '</div>',
         leg ? '    <div class="leg__summary">' + esc(leg.summary) + '</div>'
             : hereNow && legStatus ? '    <div class="leg__status">' + esc(legStatus) + '</div>' : '',
+        // The same sentence baton_inspect hands back as brief.this_stop_must,
+        // on the page for whoever reads the page instead of calling the tool.
+        !leg && hereNow
+          ? '    <div class="leg__brief"><b class="leg__brief-title">This stop</b>' +
+            '<span class="leg__brief-text">' + esc(stopBriefText()) + '</span></div>'
+          : '',
         leg ? '    <div class="leg__meta">signed by ' + esc(leg.kid) + ' · ' + esc(String(leg.completed_at).slice(0, 16).replace('T', ' ')) +
               (v ? ' · ' + esc(v.ok ? 'signature verified' : v.reason) : ' · checking…') + '</div>' : '',
         '  </div>',
@@ -541,6 +622,11 @@ export function mountBaton(siteConfig) {
 
     bodyEl.innerHTML = [
       '<h3 class="baton__goal">' + esc(mission.goal) + '</h3>',
+      mission.instructions
+        ? '<div class="baton__instructions">' +
+          '<b class="baton__instructions-title">Instructions for every stop</b>' +
+          '<p class="baton__instructions-text">' + esc(mission.instructions) + '</p></div>'
+        : '',
       '<div class="baton__id">Baton <b>' + esc(mission.id) + '</b> · ' + s.legs_done + ' of ' + s.legs_total + ' legs signed</div>',
       '<dl class="baton__facts">',
       '  <div class="fact"><dt>Quantity</dt><dd>' + esc(s.quantity) + '</dd></div>',
@@ -974,13 +1060,25 @@ export function mountBaton(siteConfig) {
       return 'This mission is waiting for the ' + stop.role + ' leg at ' + host(stop.url) + '. Call baton_mint to carry it there.';
     };
 
+    // The sentence that makes an agent act on arrival instead of turning round
+    // and asking the person what the job was.
+    const briefNext = () => {
+      const stop = nextStop(mission);
+      if (stop && stop.role === cfg.role) {
+        return 'This is the ' + cfg.role + ' stop. Follow brief.this_stop_must now without asking ' +
+          'the operator to repeat the job.';
+      }
+      return hereNext();
+    };
+
     register({
       name: 'baton_inspect',
-      description: 'Read the whole mission travelling with this person: goal, constraints, route, the legs signed so far and by whom, money spent and left, and days to the deadline.',
+      description: 'Read the whole mission travelling with this person, and the brief for this stop: the operator\'s standing instructions, the goal, the money left, the deadline, what the earlier sites already did, and what this site has to do now. Call this first on arrival; it carries everything, so the person never has to say the job again.',
       inputSchema: { type: 'object', properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: true },
       execute: async () => ({
         ok: true,
+        brief: arrivalBrief(),
         mission: missionSummary(mission),
         constraints: mission.constraints,
         route: mission.route.map((r, i) => ({ ...r, status: i < mission.legs.length ? 'done' : 'pending' })),
@@ -989,7 +1087,7 @@ export function mountBaton(siteConfig) {
           cost_usd: l.cost_usd, evidence: l.evidence, completed_at: l.completed_at, signed_by: l.kid
         })),
         declined: mission.declined || [],
-        next: hereNext()
+        next: briefNext()
       })
     }, signal);
 
@@ -1116,7 +1214,9 @@ export function mountBaton(siteConfig) {
               signed_in: signed.signed_in,
               mission: missionSummary(mission),
               next: stop
-                ? 'Leg signed. Call baton_mint to carry the mission to the ' + siteWord(stop.role) + '.'
+                ? 'Leg signed. Call baton_mint to carry the mission to the ' + siteWord(stop.role) +
+                  '; the browser moves there by itself, so call baton_inspect on arrival and arrange ' +
+                  workWord(stop.role) + ' without asking the operator to repeat the job.'
                 : 'Leg signed and the route is finished. Call baton_verify to check every signature.'
             };
           }
@@ -1170,8 +1270,10 @@ export function mountBaton(siteConfig) {
           navigating: !stay,
           mission: missionSummary(mission),
           next: stay
-            ? 'The link is ready and the page has not moved. Give the operator the "Carry this to ' + stop.role + '" link on the page, or call baton_mint again without stay.'
-            : 'The browser is moving to ' + host(stop.url) + ' now. Continue there: call baton_inspect first, then quote ' + workWord(stop.role) + '.'
+            ? 'The link is ready and the page has not moved. Give the operator the "Carry this to ' + stop.role +
+              '" link on the page; when it opens, call baton_inspect there and follow brief.this_stop_must.'
+            : 'The browser is moving to ' + host(stop.url) + ' now. Continue there on your own: ' +
+              'call baton_inspect, read brief.this_stop_must, and do it.'
         };
       }
     }, signal);

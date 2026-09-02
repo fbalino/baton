@@ -6,14 +6,16 @@ forgets the job: the budget, the deadline, what was already agreed. The person t
 the next site, and the third company cannot check what the first two did.
 
 Baton makes the job itself a small, signed, human-readable object called a mission, and the mission
-travels with the person in the link. A website that has never seen the task reads it on arrival,
-checks it against its own house terms, and registers only the WebMCP tools that leg needs. Norte
-Bindery hands an agent 2 tools on an ordinary visit and 12 when a mission arrives. Each site signs
-its leg with a key held in a serverless function on its own origin and publishes the public half at
-`/.well-known/baton/key.json`, so any later site can verify who wrote what. Editing the budget in the
-link breaks every signature. Each leg runs in one turn: the agent quotes, orders and holds without
-stopping, the person taps Confirm once for the signature, and the page carries the mission to the
-next site itself.
+travels with the person in the link. It carries the operator's own standing instructions, in the
+operator's words, so a website that has never seen the task reads both the job and the rules on
+arrival, checks them against its own house terms, and registers only the WebMCP tools that leg needs.
+Norte Bindery hands an agent 2 tools on an ordinary visit and 12 when a mission arrives. Each site
+signs its leg with a key held in a serverless function on its own origin and publishes the public
+half at `/.well-known/baton/key.json`, so any later site can verify who wrote what. Editing the budget
+in the link breaks every signature. The job is described once, on the first site. After that each leg
+runs in one turn: the agent reads its brief off the baton, quotes, orders and holds without stopping,
+the person taps Confirm once for the signature, and the page carries the mission to the next site
+itself.
 
 Baton is a convention with a reference implementation. It is not a standard.
 
@@ -27,51 +29,53 @@ Three fictional businesses on three different hosts. They share no database, no 
 | Norte Bindery | bind | Netlify | https://baton-norte-bindery.netlify.app |
 | Ruta Courier | deliver | Cloudflare Pages | https://baton-ruta-courier.pages.dev |
 
-**Open the first link only.** When a leg is signed the page produces the link to the next site and
-the browser follows it by itself, so the whole demo is three prompts and three taps.
+**Open the first link only, and say the job once.** When a leg is signed the page produces the link
+to the next site and the browser follows it by itself. Your instructions travel in the mission, so
+the site you land on reads what you want instead of asking you for it again. The whole demo is one
+prompt and three taps.
 
 Typed into the ChatGPT desktop app, with the built-in browser open beside the chat and pointed at
 Rivera Press:
 
-1. **Rivera Press.** Paste:
+```text
+@Browser Use the site tools on this page. Print and bind 40 catalogues for the studio open week, delivered by 2026-09-14, budget $600. Instructions for every stop: fit the budget, keep the deadline, take the cheaper option when one does not fit, hold the first free day, and sign each leg after my tap. Start with 40 prints of Cerro Signals at 20x30 on Photo Rag, then carry the baton through the bindery and the courier.
+```
 
-   ```text
-   @Browser Use the site tools on this page. Quote 40 prints of Cerro Signals at 20x30 on Photo Rag, open the order, approve the proof, hold the first free press day, and start a mission on it: 40 catalogues for the studio open week, $600 budget, deadline 2026-09-14. Then sign the print leg and carry it to the bindery.
-   ```
+With nothing else typed, here is what happens.
 
-   The run is $380, and the page's tool list goes from 12 to 19 as the mission lands. Nothing stops
-   the agent along the way, because the proof and the press day are provisional until the leg is
-   signed, and the sidebar keeps a line under "this site" while the leg is built:
-   `Order RP-1042 · proof approved · press day 3 Sep held · ready to sign`. Then the confirm card
-   comes up, saying what is being signed and for how much. **Tap Confirm once.** The line clears, the
-   leg turns green, and a second and a half later the browser takes itself to the bindery.
+1. **Rivera Press.** The agent quotes the run at $380, opens the order, approves the proof and holds
+   the first free press day without stopping once, because none of that costs anything until the leg
+   is signed. It calls `baton_start` with the goal, the budget, the deadline and your instructions in
+   your own words, and the page's tool list goes from 12 to 19 as the mission lands. The sidebar
+   prints the instructions under "Instructions for every stop" and keeps a line under "this site"
+   while the leg is built: `Order RP-1042 · proof approved · press day 3 Sep held · ready to sign`.
+   Then the confirm card comes up, saying what is being signed and for how much. **Tap Confirm
+   once.** The line clears, the leg turns green, `baton_mint` runs, and a second and a half later the
+   browser takes itself to the bindery.
 
-2. **Norte Bindery**, a site that has never seen this job. Paste:
+2. **Norte Bindery**, a site that has never seen this job. Nothing is typed here. The agent calls
+   `baton_inspect`, reads the brief for this stop, and works from it. It quotes coptic binding with a
+   cloth board at $260, which is $40 over what is left of the $600, so it takes Japanese stab with a
+   light card wrap at $190, because the instructions say to take the cheaper option when one does not
+   fit. It never asks how many copies there are: it reads 40 and the money left off the signed print
+   leg. It holds the first free bench day and asks for the signature. **Tap Confirm once.** The leg
+   is signed, `baton_mint` runs, and the browser moves to the courier.
 
-   ```text
-   @Browser Use the site tools on this page. Quote a coptic binding with a cloth board for this baton and check it against the budget; if it does not fit, find a binding and cover that do, hold the first free bench day, sign the leg, and carry it to the courier.
-   ```
-
-   The bindery never asks how many copies there are. It reads 40 and the $220 left off the signed
-   print leg. Coptic with a cloth board is $260, which it reports as $40 over the $600 budget, so it
-   takes Japanese stab with a light card wrap at $190, holds the first free bench day, and asks for
-   the signature. **Tap Confirm once.** The browser moves to the courier.
-
-3. **Ruta Courier.** Paste:
-
-   ```text
-   @Browser Use the site tools on this page. Price the last leg standard, book the collection, sign the leg, and verify every signature on the baton.
-   ```
-
-   Standard is $24, collected the working day after the bindery finishes and landing two days later,
-   inside the 14 September deadline. **Tap Confirm once.** Then the courier checks all three
-   signatures against the origins that made them: three legs verified, $594 of the $600 budget.
+3. **Ruta Courier.** Nothing is typed here either. The agent reads its brief, prices the last leg
+   standard at $24, and books the collection that lands inside the 14 September deadline, the working
+   day after the bindery finishes. **Tap Confirm once.** Then it verifies the chain, checking all
+   three signatures against the origins that made them: three legs verified, $594 of the $600 budget.
 
 To break the chain, click the small link under the legs, "See what happens if someone raises the
 budget to $900 in the link". It opens a copy of the same mission with `budget_usd` rewritten and
-nothing else touched. Every leg goes red, because the mission header is signed into all of them, and
-a "Restore the signed copy" link brings the real one back. `node scripts/e2e.mjs` does the same edit
-by hand at the end of its run.
+nothing else touched. Every leg goes red, because the mission header, instructions included, is
+signed into all of them, and a "Restore the signed copy" link brings the real one back.
+`node scripts/e2e.mjs` does the same edit by hand at the end of its run.
+
+**If the agent pauses after the page changes.** In the ChatGPT desktop browser a navigation can end
+the agent's turn. If it stops after the browser has moved to the next site, type `continue` and
+nothing else. The brief on the page tells it which leg it is on and what that leg needs, so the job
+never has to be described twice.
 
 ## How to test
 
@@ -86,8 +90,8 @@ Two browsers implement WebMCP today.
 In any other browser the three sites are ordinary websites, and each says so in a banner.
 
 **Point the agent at the page.** Testing in the ChatGPT desktop app on 2 September 2026 showed the
-model answers from the chat unless the prompt sends it to the browser, so every prompt below starts
-with `@Browser` and the sentence "Use the site tools on this page". The arrow in the browser pane's
+model answers from the chat unless the prompt sends it to the browser, so the prompt starts with
+`@Browser` and the sentence "Use the site tools on this page". The arrow in the browser pane's
 address bar lists the tools the page has registered, and it turns blue while a tool is running, which
 is how you can see the work happening on the site.
 
@@ -108,11 +112,25 @@ being signed and for how much, the person taps Confirm, the page applies the act
 reads the result on its next call with the same input. Baton tries `requestUserInteraction` first and
 falls back to this path, so it works either way.
 
+**The instructions ride along.** `baton_start` takes an optional `instructions` string, up to 400
+characters, kept in the operator's words. It goes into the mission header, which is signed into every
+leg, so no site can quietly change the rules it was given, and the sidebar shows it on every stop
+under "Instructions for every stop".
+
+**The brief on every site.** `baton_inspect` answers with a `brief` written for the stop the agent is
+standing on: which leg this is, the goal, the instructions, the budget, what is spent, what is left,
+the deadline and the days to it, the quantity, and what the earlier legs did. `this_stop_must` is the
+exact sequence this site needs, `then_next` is what follows the signature, and the brief carries one
+rule: do not ask the operator to repeat the job, the baton carries it, ask only when the instructions
+cannot be met. The same "This stop" text is printed in the sidebar, so an agent that reads the page
+rather than the tool result gets it too.
+
 **Every result says what to do next.** Each tool result carries a `next` sentence, so the agent
 finishes a leg in one turn instead of stopping to ask. `baton_mint` returns the link, shows the
 "Carry this to ..." link on the page for a person, and moves the browser to the next site itself a
-second and a half later. Pass `stay: true` to get the link without moving. On the last leg it returns
-`done: true` and nothing to carry.
+second and a half later; its `next` tells the agent to carry on there on its own, by calling
+`baton_inspect`, reading `brief.this_stop_must` and doing it. Pass `stay: true` to get the link
+without moving. On the last leg it returns `done: true` and nothing to carry.
 
 **The leg while it is being built.** Each site writes a short line under its own row in the sidebar
 as it works: the order it opened, the proof it approved, the day it is holding. The line is cleared
@@ -120,8 +138,12 @@ when the leg is signed and the signed summary takes over.
 
 ## What people and agents do together that was hard before
 
+- **You say the job once.** Every company on the route reads your instructions off the baton and
+  carries on without asking. The second and third sites are worked with nothing typed into the chat.
 - **A site quotes against a budget it was never told.** Norte Bindery reads 40 copies and $220
   remaining off the signed print leg, and answers "$40 over" instead of "how many copies?".
+- **A site knows what to do with that answer.** The instructions say to take the cheaper option when
+  one does not fit, so the bindery drops to $190 by itself rather than coming back to ask.
 - **The third company can check the first two.** Ruta Courier verifies both earlier signatures
   against the origins that made them before adding its own.
 - **The person signs the money, once per site.** The agent quotes, orders and holds without
@@ -147,6 +169,7 @@ already the one who taps Confirm.
   "v": 1,
   "id": "bt_k3f9x1a2",
   "goal": "Print and bind 40 catalogues for the studio open week",
+  "instructions": "Fit the budget, keep the deadline, take the cheaper option when one does not fit, hold the first free day, and sign each leg after my tap.",
   "constraints": { "budget_usd": 600, "deadline": "2026-09-14", "quantity": 40 },
   "route": [                                    // written once, by the site that starts the mission
     { "role": "print",   "url": "https://baton-rivera-press.vercel.app/" },
@@ -171,6 +194,9 @@ already the one who taps Confirm.
 }
 ```
 
+The header covers `goal`, `instructions` and `constraints`, and every leg signs it, so a site cannot
+loosen the rules it was handed without breaking the chain.
+
 ## The tools of each site
 
 Kind is the `readOnlyHint` annotation each tool publishes. "Common" marks the tools that
@@ -192,12 +218,12 @@ do now, and only the two tools marked "Confirm on the page" stop for a person.
 | `approve_proof` | write | always | Approve the proof so a press day can be held. Applies at once |
 | `list_press_days` | read | always | Twenty-one days of press time |
 | `reserve_print_slot` | write | always | Hold a press day. Applies at once, released if the leg is not signed within 48 hours |
-| `baton_start` | write | always | Start a mission here and set the route |
-| `baton_inspect` | read | mission, common | The whole mission: constraints, legs, money, days left |
+| `baton_start` | write | always | Start a mission here: goal, constraints, route, and the operator's standing `instructions` in their own words, up to 400 characters |
+| `baton_inspect` | read | mission, common | The whole mission, plus a `brief` for this stop: instructions, money, deadline, what earlier legs did, `this_stop_must` and `then_next` |
 | `baton_check` | read | mission, common | Test a cost or a date against the constraints |
 | `baton_verify` | read | mission, common | Re-check every leg against the origin that signed it |
 | `baton_complete_leg` | write | mission, common | Sign this site's leg. Confirm on the page |
-| `baton_mint` | write | mission, common | Produce the link to the next stop and take the browser there |
+| `baton_mint` | write | mission, common | Produce the link to the next stop, take the browser there, and tell the agent to carry on |
 | `baton_decline` | write | mission, common | Record a refusal, with the reason. Confirm on the page |
 | `prepare_print_leg` | read | mission | Assemble the summary, cost and evidence for the signature |
 
@@ -237,13 +263,23 @@ const baton = mountBaton({
   role: 'bind',                      // the leg this site is allowed to sign
   kid: 'norte-2026-09',              // the key id published at /.well-known/baton/key.json
   houseTerms: { accepts_roles: ['bind'], min_quantity: 10, max_quantity: 500 },
+  stopBrief: 'Quote the binding for the copies on the baton, check the price against the money ' +
+    'left, take a cheaper binding or cover if it does not fit, hold the first free bench day, ' +
+    'then call baton_complete_leg.',
   panel: document.getElementById('mission-panel'),
   toolsBox: document.getElementById('site-tools')
 });
 // mountBaton reads #baton=..., validates it, verifies every signed leg against the
 // origin that signed it, and registers baton_house_terms straight away. The six
 // common baton tools register themselves as soon as a mission is aboard.
+```
 
+`stopBrief` is the one thing a site writes for the arriving agent. The library puts it into
+`brief.this_stop_must` in every `baton_inspect` result, alongside the operator's instructions, the
+money and the deadline, and prints the same sentence in the sidebar under "This stop". Nothing else
+needs to be said to the agent when it lands.
+
+```js
 baton.registerWhenMissionAboard((signal, register) => {
   register({
     name: 'reserve_press_slot',
@@ -306,11 +342,12 @@ proves.
 - Keys are fetched over TLS from each origin. Trust in a key is trust in that origin's certificate
   and DNS. There is no registry and no revocation.
 - The mission travels in the URL fragment, so no server ever receives it. It is also visible to
-  anyone who can see the link or the screen. Nothing private belongs in it.
+  anyone who can see the link or the screen. Nothing private belongs in it, instructions included.
 - The keys here are demo keys. Earlier commits in this repository carried demo keys inside the pages;
   no page signs in the browser now.
-- The chain covers the header and every leg, so changing the budget breaks all three signatures and
-  the page says so. It does not stop anyone from discarding the chain and starting a fresh mission.
+- The chain covers the header and every leg, so changing the budget or the instructions breaks all
+  three signatures and the page says so. It does not stop anyone from discarding the chain and
+  starting a fresh mission.
 
 ## Architecture
 

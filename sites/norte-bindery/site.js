@@ -126,6 +126,12 @@ for (const btn of document.querySelectorAll('.prompt__copy')) {
 const baton = mountBaton({
   ...SITE,
   emptyHint: 'Arrive with a baton in the link and the tools for this leg appear.',
+  // What an agent that lands here has to do, in one paragraph. baton_inspect
+  // hands it back as brief.this_stop_must and the panel prints it on the page,
+  // so nobody has to tell the agent the job a second time.
+  stopBrief: 'Quote binding options for the copies on the baton, choose one that fits the remaining ' +
+    'budget and the instructions, hold the first free bench day, sign the leg (the operator taps ' +
+    'Confirm once), then mint the link and continue to the courier.',
   panel: $('mission-panel'),
   toolsBox: $('site-tools')
 });
@@ -261,9 +267,11 @@ baton.registerWhenMissionAboard((signal, register) => {
         check,
         note: 'The copy count came off the print leg on this baton.',
         next: check.allowed
-          ? 'Call bench_availability, then reserve_press_slot for a free day.'
+          ? 'This fits. Call bench_availability, hold the first free day with reserve_press_slot, ' +
+            'sign the leg with baton_complete_leg, then baton_mint to carry the mission to the courier.'
           : 'This is over the budget by $' + (check.failures?.[0]?.over_by_usd ?? 0) +
-            '. Quote a cheaper binding or cover with quote_binding_for_mission.'
+            '. Follow the operator\'s instructions and quote the cheaper binding or cover with ' +
+            'quote_binding_for_mission, rather than asking them what to do.'
       };
     }
   }, signal);
@@ -301,7 +309,8 @@ baton.registerWhenMissionAboard((signal, register) => {
         first_free_day: free[0] ?? null,
         taken_days: calendar.filter((d) => d.state === 'full').map((d) => d.date),
         next: free[0]
-          ? 'Call reserve_press_slot for ' + free[0] + ', or another free day.'
+          ? 'Hold the first free day: call reserve_press_slot for ' + free[0] +
+            ', then sign the leg with baton_complete_leg and mint on to the courier.'
           : 'No bench day is free in this window. Call bench_availability again further ahead.'
       };
     }
@@ -381,7 +390,8 @@ baton.registerWhenMissionAboard((signal, register) => {
         weekday: weekdayName(date),
         cost_usd: q.cost_usd,
         next: 'Bench day held until the leg is signed. Call baton_complete_leg with this evidence, cost_usd ' +
-          q.cost_usd + ' and a one-line summary; the operator taps Confirm once on the page.'
+          q.cost_usd + ' and a one-line summary — the operator taps Confirm once on the page — then ' +
+          'baton_mint to carry the mission to the courier and finish the route there on your own.'
       };
     }
   }, signal);

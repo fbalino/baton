@@ -149,6 +149,12 @@ for (const btn of document.querySelectorAll('.prompt__copy')) {
 const baton = mountBaton({
   ...SITE,
   emptyHint: 'Arrive with a baton in the link and the tools for this leg appear.',
+  // What an agent that lands here has to do, in one paragraph. baton_inspect
+  // hands it back as brief.this_stop_must and the panel prints it on the page,
+  // so the last stop runs without the operator explaining the job again.
+  stopBrief: 'Price standard and express for the copies on the baton, book the collection that lands ' +
+    'before the deadline on the money that is left, sign the leg (the operator taps Confirm once), ' +
+    'then call baton_verify to check every signature on the finished route.',
   panel: $('mission-panel'),
   toolsBox: $('site-tools')
 });
@@ -284,8 +290,10 @@ baton.registerWhenMissionAboard((signal, register) => {
         check,
         note: 'Collection is the working day after the last date signed onto this baton, so nothing had to be re-asked.',
         next: check.allowed
-          ? 'Call book_collection with pickup_date ' + pickup_date + '.'
-          : 'This breaks a mission constraint. Quote the other speed or an earlier collection with quote_delivery_for_mission.'
+          ? 'This lands inside the deadline and the money left. Call book_collection with pickup_date ' +
+            pickup_date + ', then sign the leg with baton_complete_leg and call baton_verify.'
+          : 'This breaks a mission constraint. Follow the operator\'s instructions and quote the other ' +
+            'speed or an earlier collection with quote_delivery_for_mission, rather than asking them what to do.'
       };
     }
   }, signal);
@@ -320,7 +328,8 @@ baton.registerWhenMissionAboard((signal, register) => {
         zone_cutoffs: ZONES.map((z) => ({ zone: z.id, cutoff: z.cutoff })),
         booking_notice_days: DEPOT.booking_notice_days,
         next: open[0]
-          ? 'Call book_collection with pickup_date ' + date + ' and window ' + open[0].id + '.'
+          ? 'Call book_collection with pickup_date ' + date + ' and window ' + open[0].id +
+            ', then sign the leg with baton_complete_leg and call baton_verify.'
           : 'Nothing is open on ' + date + '. Call pickup_windows for another day.'
       };
     }
@@ -425,7 +434,8 @@ baton.registerWhenMissionAboard((signal, register) => {
           cost_usd: q.cost_usd
         },
         next: 'Van held until the leg is signed. Call baton_complete_leg with this evidence, cost_usd ' +
-          q.cost_usd + ' and a one-line summary; the operator taps Confirm once on the page.'
+          q.cost_usd + ' and a one-line summary — the operator taps Confirm once on the page — then ' +
+          'baton_verify to check every signature and tell the operator the route is finished.'
       };
     }
   }, signal);

@@ -145,6 +145,28 @@
   letter-spacing: -0.01em;
 }
 
+/* The operator's standing instructions, written once when the mission starts
+   and read at every stop. Quiet on purpose: no rule, no box, no colour — the
+   goal above it is the loud line. */
+.baton__instructions {
+  margin: 8px 0 9px;
+}
+.baton .baton__instructions-title {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--baton-muted);
+}
+.baton .baton__instructions-text {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--baton-muted);
+  text-wrap: pretty;
+}
+
 .baton__hint {
   font-size: 13px;
   line-height: 1.5;
@@ -336,6 +358,29 @@
   line-height: 1.45;
   color: var(--baton-muted);
   margin-top: 3px;
+  text-wrap: pretty;
+}
+
+/* What this site is here to do, printed under its own row: the same sentence
+   baton_inspect returns as brief.this_stop_must, for whoever reads the page
+   rather than calling the tool. */
+.leg__brief {
+  margin-top: 5px;
+}
+.baton .leg__brief-title {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--baton-muted);
+}
+.baton .leg__brief-text {
+  display: block;
+  margin-top: 1px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--baton-muted);
   text-wrap: pretty;
 }
 

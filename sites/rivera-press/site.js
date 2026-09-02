@@ -690,6 +690,11 @@ el('press-calendar').addEventListener('click', (e) => {
 
 /* ------------------------------------------------------------ the baton */
 
+// The businesses on the route. config.js holds the addresses; these are the
+// names, written into the mission when it starts so every later site can say
+// where the baton goes next in words a person uses.
+const STOP_NAMES = { print: 'Rivera Press', bind: 'Norte Bindery', deliver: 'Ruta Courier' };
+
 const baton = mountBaton({
   ...SITE,
   route: ROUTE,
@@ -704,6 +709,11 @@ const baton = mountBaton({
   },
   emptyHint: 'Missions begin at Rivera Press. Ask your agent to run baton_start. The baton appears here, ' +
     'then travels to the bindery and the courier with every leg signed.',
+  // What an agent that lands here has to do, in one paragraph. baton_inspect
+  // hands it back as brief.this_stop_must and the panel prints it on the page.
+  stopBrief: 'Quote the run for the quantity on the baton, open the order, approve the proof, ' +
+    'hold the first free press day that fits the instructions, sign the leg (the operator taps ' +
+    'Confirm once), then mint the link and continue to the bindery.',
   panel: el('mission-panel'),
   toolsBox: el('site-tools')
 });
@@ -1144,7 +1154,8 @@ baton.registerAlways((signal, register) => {
         order: orderView(order),
         evidence: legEvidence(order),
         next: baton.mission
-          ? 'Press day held until the leg is signed. Call prepare_print_leg, then baton_complete_leg.'
+          ? 'Press day held until the leg is signed. Call prepare_print_leg, then baton_complete_leg — the ' +
+            'operator taps Confirm once — then baton_mint to carry the mission to the bindery and go on there yourself.'
           : 'Press day held until the leg is signed. Call baton_start to put a mission on this page, then baton_complete_leg.',
         page: pageNow()
       };
@@ -1153,11 +1164,16 @@ baton.registerAlways((signal, register) => {
 
   register({
     name: 'baton_start',
-    description: 'Start a mission here at Rivera Press: the goal, the budget, the deadline and the quantity go into a baton, the route is set (print here, then the bindery, then the courier), and the baton appears on the page so the rest of the baton tools register.',
+    description: 'Start a mission here at Rivera Press: the goal, the operator\'s standing instructions, the budget, the deadline and the quantity go into a baton, the route is set (print here, then the bindery, then the courier), and the baton appears on the page so the rest of the baton tools register. Everything written here travels to every site on the route, so nobody has to say it again.',
     inputSchema: {
       type: 'object',
       properties: {
         goal: { type: 'string', description: 'What the whole job is, in one line.' },
+        instructions: {
+          type: 'string',
+          maxLength: 400,
+          description: 'What the operator wants every stop to follow, in their words, for example: fit the budget, keep the deadline, take the cheaper option when one does not fit, hold the first free day, sign each leg after my tap. Written once here and read by every site on the route.'
+        },
         budget_usd: { type: 'number', description: 'Total budget for the whole job, in US dollars.' },
         deadline: { type: 'string', description: 'Final deadline as YYYY-MM-DD.' },
         quantity: { type: 'integer', minimum: 1, description: 'How many copies the whole job covers. Taken from the order if order_id is given.' },
@@ -1180,6 +1196,15 @@ baton.registerAlways((signal, register) => {
       if (!isDate(input.deadline)) {
         return { ok: false, error: 'deadline must look like YYYY-MM-DD', next: 'Call baton_start again with the deadline as YYYY-MM-DD.', page: pageNow() };
       }
+      const instructions = String(input.instructions ?? '').trim();
+      if (instructions.length > 400) {
+        return {
+          ok: false,
+          error: 'instructions must be 400 characters or fewer (this one is ' + instructions.length + ')',
+          next: 'Shorten the instructions to the rules every stop has to follow, then call baton_start again.',
+          page: pageNow()
+        };
+      }
 
       let order = null;
       if (input.order_id) {
@@ -1195,10 +1220,13 @@ baton.registerAlways((signal, register) => {
       }
       const mission = newMission({
         goal: input.goal,
+        instructions,
         budget_usd: input.budget_usd,
         deadline: input.deadline,
         quantity,
-        route: ROUTE
+        // The names travel with the route, so the bindery can tell the agent to
+        // continue to "Ruta Courier" rather than to a hostname.
+        route: ROUTE.map((r) => ({ ...r, name: STOP_NAMES[r.role] || r.name }))
       });
       const set = await baton.setMission(mission, { source: 'baton_start' });
       if (!set.ok) return { ok: false, error: set.reason, next: 'Fix the goal, budget, deadline or quantity and call baton_start again.', page: pageNow() };
@@ -1206,11 +1234,21 @@ baton.registerAlways((signal, register) => {
       showLegStatus(order || activeOrder());
       return {
         ok: true,
-        mission: { id: mission.id, goal: mission.goal, constraints: mission.constraints, route: mission.route },
+        mission: {
+          id: mission.id,
+          goal: mission.goal,
+          instructions: mission.instructions || null,
+          constraints: mission.constraints,
+          route: mission.route
+        },
         quantity_from: order ? order.id : 'the call',
         order: order ? orderView(order) : null,
-        note: 'The baton is on the page and the common baton tools are registered.',
-        next: 'Quote the run, open the order, approve the proof and hold a press day, then call baton_complete_leg to sign the print leg; the operator taps Confirm once on the page.',
+        note: instructions
+          ? 'The baton is on the page with the operator\'s instructions aboard; every site on the route reads them.'
+          : 'The baton is on the page and the common baton tools are registered.',
+        next: (instructions ? 'Mission started with your instructions aboard.' : 'Mission started.') +
+          ' Do the print stop now: quote, order, proof, hold the first free press day, sign (one tap), ' +
+          'mint; then continue to the bindery on your own.',
         page: pageNow()
       };
     }
