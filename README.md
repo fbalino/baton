@@ -11,7 +11,9 @@ checks it against its own house terms, and registers only the WebMCP tools that 
 Bindery hands an agent 2 tools on an ordinary visit and 12 when a mission arrives. Each site signs
 its leg with a key held in a serverless function on its own origin and publishes the public half at
 `/.well-known/baton/key.json`, so any later site can verify who wrote what. Editing the budget in the
-link breaks every signature.
+link breaks every signature. Each leg runs in one turn: the agent quotes, orders and holds without
+stopping, the person taps Confirm once for the signature, and the page carries the mission to the
+next site itself.
 
 Baton is a convention with a reference implementation. It is not a standard.
 
@@ -25,64 +27,96 @@ Three fictional businesses on three different hosts. They share no database, no 
 | Norte Bindery | bind | Netlify | https://baton-norte-bindery.netlify.app |
 | Ruta Courier | deliver | Cloudflare Pages | https://baton-ruta-courier.pages.dev |
 
-**Open the first link only.** When a leg is signed the page produces the link to the next site, and
-following that link is the demo.
+**Open the first link only.** When a leg is signed the page produces the link to the next site and
+the browser follows it by itself, so the whole demo is three prompts and three taps.
 
-The walkthrough, typed into the ChatGPT desktop app with its built-in browser open beside the chat:
+Typed into the ChatGPT desktop app, with the built-in browser open beside the chat and pointed at
+Rivera Press:
 
-1. **Rivera Press.** Type: *"Quote 40 prints of Cerro Signals at 20x30 on Photo Rag, open the order,
-   and start a mission on it: 40 catalogues for the studio open week, $600 budget, deadline
-   2026-09-14."*
-   The run is $380. The page's tool list goes from 12 to 19 as the mission lands.
-2. Type: *"Approve the proof, then hold the first free press day."*
-   A confirm card appears on the page. **Tap Confirm** twice, once for the proof and once for the
-   press day. Each tool answers `pending`, the page does the work on the tap, and the agent reads the
-   result on its next call.
-3. Type: *"Sign the print leg and give me the link to the bindery."*
-   **Tap Confirm** for the signature, then **click the Carry this to bind link** on the page.
-4. **Norte Bindery**, a site that has never seen this job. Type: *"Quote a coptic binding with a
-   cloth board for this baton."*
-   $260 against the $220 left, so the tool says it is $40 over the $600 budget. The bindery never
-   asks how many copies there are; it reads 40 off the signed print leg.
-5. Type: *"Find a binding and cover that fit, hold the first free bench day, sign the leg, and give
-   me the link to the courier."*
-   Japanese stab with a light card wrap is $190. **Tap Confirm** for the bench day, **Confirm** for
-   the signature, then **click the Carry link**.
-6. **Ruta Courier.** Type: *"Price the last leg standard, book the collection and sign the leg."*
-   Standard is $24, collected the working day after the bindery finishes and landing two days later.
-   In the recorded run that is a 12 September pickup arriving 14 September, the deadline.
-   **Tap Confirm** twice.
-7. Type: *"Verify every signature on this baton."*
-   Three legs, each checked against the public key published by the origin that signed it. $594 of
-   the $600 budget.
+1. **Rivera Press.** Paste:
+
+   ```text
+   @Browser Use the site tools on this page. Quote 40 prints of Cerro Signals at 20x30 on Photo Rag, open the order, approve the proof, hold the first free press day, and start a mission on it: 40 catalogues for the studio open week, $600 budget, deadline 2026-09-14. Then sign the print leg and carry it to the bindery.
+   ```
+
+   The run is $380, and the page's tool list goes from 12 to 19 as the mission lands. Nothing stops
+   the agent along the way, because the proof and the press day are provisional until the leg is
+   signed, and the sidebar keeps a line under "this site" while the leg is built:
+   `Order RP-1042 · proof approved · press day 3 Sep held · ready to sign`. Then the confirm card
+   comes up, saying what is being signed and for how much. **Tap Confirm once.** The line clears, the
+   leg turns green, and a second and a half later the browser takes itself to the bindery.
+
+2. **Norte Bindery**, a site that has never seen this job. Paste:
+
+   ```text
+   @Browser Use the site tools on this page. Quote a coptic binding with a cloth board for this baton and check it against the budget; if it does not fit, find a binding and cover that do, hold the first free bench day, sign the leg, and carry it to the courier.
+   ```
+
+   The bindery never asks how many copies there are. It reads 40 and the $220 left off the signed
+   print leg. Coptic with a cloth board is $260, which it reports as $40 over the $600 budget, so it
+   takes Japanese stab with a light card wrap at $190, holds the first free bench day, and asks for
+   the signature. **Tap Confirm once.** The browser moves to the courier.
+
+3. **Ruta Courier.** Paste:
+
+   ```text
+   @Browser Use the site tools on this page. Price the last leg standard, book the collection, sign the leg, and verify every signature on the baton.
+   ```
+
+   Standard is $24, collected the working day after the bindery finishes and landing two days later,
+   inside the 14 September deadline. **Tap Confirm once.** Then the courier checks all three
+   signatures against the origins that made them: three legs verified, $594 of the $600 budget.
 
 To break the chain, click the small link under the legs, "See what happens if someone raises the
-budget in the link". It opens a copy of the same mission with `budget_usd` rewritten and nothing
-else touched. Every leg goes red, because the mission header is signed into all of them, and a
-"Restore the signed copy" link brings the real one back. `node scripts/e2e.mjs` does the same edit
+budget to $900 in the link". It opens a copy of the same mission with `budget_usd` rewritten and
+nothing else touched. Every leg goes red, because the mission header is signed into all of them, and
+a "Restore the signed copy" link brings the real one back. `node scripts/e2e.mjs` does the same edit
 by hand at the end of its run.
 
 ## How to test
 
 Two browsers implement WebMCP today.
 
-- **The ChatGPT desktop app's built-in browser** (GPT-5.6 Sol or Terra). Open the browser pane beside
-  the chat and navigate it to the first link. The tools each page registers become the agent's tools.
+- **The ChatGPT desktop app's built-in browser** (GPT-5.6 Sol or Terra). Open it with Cmd+Shift+B
+  beside the chat and navigate it to the first link. The tools each page registers become the agent's
+  tools.
 - **Chrome 149 or newer**, with `chrome://flags/#enable-webmcp-testing` enabled and the browser
   restarted. Tested on Chrome 152.
 
 In any other browser the three sites are ordinary websites, and each says so in a banner.
+
+**Point the agent at the page.** Testing in the ChatGPT desktop app on 2 September 2026 showed the
+model answers from the chat unless the prompt sends it to the browser, so every prompt below starts
+with `@Browser` and the sentence "Use the site tools on this page". The arrow in the browser pane's
+address bar lists the tools the page has registered, and it turns blue while a tool is running, which
+is how you can see the work happening on the site.
 
 **Resetting.** The mission lives in `sessionStorage` under `baton.mission` on each origin, and each
 shop keeps its own state under its own key. Close the tab and open the first link again. Nothing is
 stored on any server, so there is nothing else to clear. A plain reload keeps the mission that is
 further along, so refreshing never loses a leg you just signed.
 
-**Confirmations.** In the ChatGPT browser `client.requestUserInteraction` exists but fails when
-called, and a tool call cannot stay open while a person decides. So every consequential tool answers
-`pending` at once, the page shows the confirm card, the person taps Confirm, the page applies the
-action, and the agent reads the result on its next call with the same input. Baton tries
-`requestUserInteraction` first and falls back to this path, so it works either way.
+**Confirmations.** One tap per site. Only `baton_complete_leg`, the signature, which is also the
+money, and `baton_decline` stop for a person. Holds and bookings apply the moment the agent asks for
+them and are provisional until the leg is signed, so `create_order`, `update_order`, `approve_proof`,
+`reserve_print_slot`, `reserve_press_slot` and `book_collection` answer with their result straight
+away. Nothing is charged before the signature, and Rivera's house terms release a held press day if
+the leg is not signed within 48 hours. For the two tools that do stop: a tool call cannot stay open
+while a person decides, and in the ChatGPT browser `client.requestUserInteraction` exists but fails
+when called. So the tool answers `pending` at once, the page shows the confirm card with what is
+being signed and for how much, the person taps Confirm, the page applies the action, and the agent
+reads the result on its next call with the same input. Baton tries `requestUserInteraction` first and
+falls back to this path, so it works either way.
+
+**Every result says what to do next.** Each tool result carries a `next` sentence, so the agent
+finishes a leg in one turn instead of stopping to ask. `baton_mint` returns the link, shows the
+"Carry this to ..." link on the page for a person, and moves the browser to the next site itself a
+second and a half later. Pass `stay: true` to get the link without moving. On the last leg it returns
+`done: true` and nothing to carry.
+
+**The leg while it is being built.** Each site writes a short line under its own row in the sidebar
+as it works: the order it opened, the proof it approved, the day it is holding. The line is cleared
+when the leg is signed and the signed summary takes over.
 
 ## What people and agents do together that was hard before
 
@@ -90,8 +124,9 @@ action, and the agent reads the result on its next call with the same input. Bat
   remaining off the signed print leg, and answers "$40 over" instead of "how many copies?".
 - **The third company can check the first two.** Ruta Courier verifies both earlier signatures
   against the origins that made them before adding its own.
-- **The person keeps every consequential step.** Holding a press day, booking a van and signing a leg
-  each stop for a tap on the page, next to the price.
+- **The person signs the money, once per site.** The agent quotes, orders and holds without
+  stopping, because a hold costs nothing until the leg is signed. The signature is the one thing
+  that waits for a tap, on a card that says what is being signed and for how much.
 - **The job survives the hop between companies**, so the agent's memory of it no longer has to.
 - **Every business keeps its own rules.** No shared backend, no shared login, no shared vocabulary
   beyond the mission object.
@@ -139,7 +174,8 @@ already the one who taps Confirm.
 ## The tools of each site
 
 Kind is the `readOnlyHint` annotation each tool publishes. "Common" marks the tools that
-`lib/baton.js` gives every site.
+`lib/baton.js` gives every site. Every result carries a `next` sentence telling the agent what to
+do now, and only the two tools marked "Confirm on the page" stop for a person.
 
 **Rivera Press.** 12 tools cold, 19 with a mission aboard.
 
@@ -153,15 +189,15 @@ Kind is the `readOnlyHint` annotation each tool publishes. "Common" marks the to
 | `create_order` | write | always | Open an order and issue its proof |
 | `get_order` | read | always | Read one order, its proof and its press slot |
 | `update_order` | write | always | Change the specification and requote |
-| `approve_proof` | write | always | Approve the proof. Confirm on the page |
+| `approve_proof` | write | always | Approve the proof so a press day can be held. Applies at once |
 | `list_press_days` | read | always | Twenty-one days of press time |
-| `reserve_print_slot` | write | always | Hold a press day. Confirm on the page |
+| `reserve_print_slot` | write | always | Hold a press day. Applies at once, released if the leg is not signed within 48 hours |
 | `baton_start` | write | always | Start a mission here and set the route |
 | `baton_inspect` | read | mission, common | The whole mission: constraints, legs, money, days left |
 | `baton_check` | read | mission, common | Test a cost or a date against the constraints |
 | `baton_verify` | read | mission, common | Re-check every leg against the origin that signed it |
 | `baton_complete_leg` | write | mission, common | Sign this site's leg. Confirm on the page |
-| `baton_mint` | write | mission, common | Produce the link to the next stop |
+| `baton_mint` | write | mission, common | Produce the link to the next stop and take the browser there |
 | `baton_decline` | write | mission, common | Record a refusal, with the reason. Confirm on the page |
 | `prepare_print_leg` | read | mission | Assemble the summary, cost and evidence for the signature |
 
@@ -174,7 +210,7 @@ Kind is the `readOnlyHint` annotation each tool publishes. "Common" marks the to
 | `list_bindings` | read | mission | Three bindings, two covers, per copy |
 | `quote_binding_for_mission` | read | mission | Price for the copies on the baton, checked against the budget |
 | `bench_availability` | read | mission | The bench diary, three weeks ahead |
-| `reserve_press_slot` | write | mission | Hold a bench day. Confirm on the page |
+| `reserve_press_slot` | write | mission | Hold a bench day. Applies at once, stands until the leg is signed |
 
 Plus the six common baton tools listed in the Rivera table, on the same terms.
 
@@ -186,7 +222,7 @@ Plus the six common baton tools listed in the Rivera table, on the same terms.
 | `service_areas` | read | always | Three zones, two speeds, cut-offs and transit |
 | `quote_delivery_for_mission` | read | mission | Weight, parcels, cost and dates for the copies aboard |
 | `pickup_windows` | read | mission | Collection windows still open on a day |
-| `book_collection` | write | mission | Book the van. Confirm on the page |
+| `book_collection` | write | mission | Book the van. Applies at once, stands until the leg is signed |
 | `track_parcel` | read | mission | Status and checkpoints for a tracking id |
 
 Plus the six common baton tools, again on the same terms.
@@ -211,25 +247,46 @@ const baton = mountBaton({
 baton.registerWhenMissionAboard((signal, register) => {
   register({
     name: 'reserve_press_slot',
-    description: 'Hold a bench day for the binding already quoted.',
+    description: 'Hold a bench day for the binding already quoted. The hold applies straight ' +
+      'away and stands until the leg is signed; nothing is charged before that.',
     inputSchema: { type: 'object', properties: { date: { type: 'string' } }, required: ['date'] },
     annotations: { readOnlyHint: false },
-    execute: async (input, client) => {
-      const seen = baton.peekConfirm('reserve_press_slot', input);   // read the answer first
-      if (seen.status === 'confirmed') return { ok: true, ...seen.result };
+    execute: async (input) => {
+      const day = benchDay(input.date);
+      if (day.state !== 'open') {
+        return {
+          ok: false,
+          error: 'both benches are taken on ' + input.date,
+          nearest_free_days: nearestFreeDays(input.date),
+          next: 'Pick one of the nearest free days and call reserve_press_slot again.'
+        };
+      }
 
-      const outcome = await baton.confirmAndApply({
-        toolName: 'reserve_press_slot', input, client,
-        message: 'Norte Bindery: hold Bench 1 on ' + input.date + '?',
-        apply: () => { hold(input.date); return { evidence: { bench_date: input.date } }; }
-      });
-      // Call 1 returns { status: 'pending' } and puts the card up. The person taps
-      // Confirm and the page runs apply(). Call 2 with the same input reads the result.
-      return outcome.status === 'confirmed' ? { ok: true, ...outcome.result } : { ok: false, ...outcome };
+      hold(input.date);                    // applies now: no card, no second call, no waiting
+      baton.setLegStatus(quote.copies + ' copies · ' + quote.binding_name.toLowerCase() +
+        ' · bench ' + input.date + ' held until the leg is signed · ready to sign');
+
+      return {
+        ok: true,
+        held: true,
+        holds_until: 'the leg is signed',
+        evidence: { bench_date: input.date, copies: quote.copies, cost_usd: quote.cost_usd },
+        next: 'Bench day held. Call baton_complete_leg with this evidence and cost_usd ' +
+          quote.cost_usd + '; the operator taps Confirm once on the page.'
+      };
     }
   }, signal);
 });
 ```
+
+`baton.setLegStatus(line)` writes that short sentence under this site's row in the sidebar, so a
+person watching the panel sees the leg being assembled before anything is signed. The library clears
+it the moment the leg is signed and the signed summary takes over.
+
+`baton.confirmAndApply` is reserved for signatures. Only `baton_complete_leg`, which is also the
+money, and `baton_decline` use it. It answers `{ status: 'pending' }` on the first call and puts the
+card up, runs `apply()` when the person taps Confirm, and hands the stored result back when the agent
+calls again with the same input; `baton.peekConfirm` reads that stored result before any guard runs.
 
 Two files complete the adoption. `/.well-known/baton/key.json` publishes `{ kid, alg: "ES256", jwk }`
 with `Access-Control-Allow-Origin: *`, so any other site can fetch it. `POST /api/sign` on the same
@@ -281,10 +338,11 @@ bash scripts/sync-lib.sh    # copy lib/ into each site folder after editing it
 ```
 
 `keygen.mjs` leaves existing keys alone; `--force` regenerates and invalidates every old signature.
-`e2e.mjs` needs `puppeteer-core` and walks all three legs, asserts the two-call shape of every
-confirmation, verifies the chain, then raises the budget inside the fragment and asserts all three
-legs go red. Deployment is per folder: `config.js` holds the three origins, and each host needs
-`BATON_PRIVATE_JWK` set to the single line in the matching `keys/` file.
+`e2e.mjs` needs `puppeteer-core` and walks all three legs, asserts that every hold applies on the
+first call and that only the signature takes two calls with a tap between them, verifies the chain,
+then raises the budget inside the fragment and asserts all three legs go red. Deployment is per
+folder: `config.js` holds the three origins, and each host needs `BATON_PRIVATE_JWK` set to the
+single line in the matching `keys/` file.
 
 ## Repo layout
 
