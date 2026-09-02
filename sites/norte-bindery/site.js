@@ -41,6 +41,13 @@ paintThemeButton();
 
 $('host-label').textContent = location.host || 'file://';
 
+$('figures').innerHTML = [
+  ['Benches', WORKSHOP.benches],
+  ['Bindings', BINDINGS.length],
+  ['Copies a booking', WORKSHOP.min_quantity + ' to ' + WORKSHOP.max_quantity],
+  ['Working since', WORKSHOP.founded]
+].map(([k, v]) => '<div><dt>' + k + '</dt><dd>' + v + '</dd></div>').join('');
+
 $('bindings').innerHTML = BINDINGS.map((b) =>
   '<tr><td class="name">' + b.name + '</td><td class="how">' + b.notes + '</td>' +
   '<td class="num">' + usd(b.per_copy) + '</td></tr>'
@@ -61,7 +68,7 @@ function drawDiary() {
     const held = heldDays.has(d.date);
     const cls = held ? 'half' : d.state === 'free' ? (d.slots_left === 1 ? 'half' : 'free') : d.state;
     const label = held ? 'held for you'
-      : d.state === 'closed' ? 'shut'
+      : d.state === 'closed' ? 'closed'
       : d.state === 'full' ? 'taken'
       : d.slots_left === 1 ? '1 bench' : '2 benches';
     return '<li class="day day--' + cls + '">' +
@@ -73,6 +80,46 @@ function drawDiary() {
   $('bench-diary').innerHTML = rows.join('');
 }
 drawDiary();
+
+/* ------------------------------------------------- copy an example prompt */
+
+function fallbackCopy(text) {
+  const box = document.createElement('textarea');
+  box.value = text;
+  box.setAttribute('readonly', '');
+  box.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+  document.body.appendChild(box);
+  box.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch { ok = false; }
+  box.remove();
+  return ok;
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return fallbackCopy(text);
+  }
+}
+
+for (const btn of document.querySelectorAll('.prompt__copy')) {
+  let restore = 0;
+  btn.addEventListener('click', async () => {
+    const text = btn.closest('.prompt')?.querySelector('.prompt__text')?.textContent.trim() || '';
+    if (!text) return;
+    const ok = await copyText(text);
+    btn.textContent = ok ? 'Copied' : 'Select it';
+    if (ok) btn.dataset.copied = 'yes'; else delete btn.dataset.copied;
+    clearTimeout(restore);
+    restore = setTimeout(() => {
+      btn.textContent = 'Copy';
+      delete btn.dataset.copied;
+    }, 1600);
+  });
+}
 
 /* ------------------------------------------------------------------ baton */
 

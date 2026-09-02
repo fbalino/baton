@@ -1,6 +1,12 @@
 /* Ruta Courier — the depot's own look.
-   The mission panel and the tools box are the library's; this file only hands
-   them five colours through --baton-*. Everything else here is the site. */
+
+   The sidebar is the library's: baton-shell.css owns .shell, .side, .main and
+   everything inside the sidebar, and baton-panel.css owns the mission card and
+   the tools list. This file hands both of them the depot's colours and type
+   through --baton-* / --font-*, and then styles the business in .main.
+
+   High contrast, and one orange that only ever marks something: express, an
+   open window, a parcel on the road. No left accent borders anywhere. */
 
 html { scrollbar-gutter: stable; }
 
@@ -9,39 +15,40 @@ html { scrollbar-gutter: stable; }
 :root {
   color-scheme: light;
 
-  --paper: #ffffff;
-  --card: #ffffff;
-  --surface: #f3f3f1;
+  --paper: #f6f6f4;         /* the page */
+  --card: #ffffff;          /* raised: panels and the sidebar */
+  --sunk: #eeeeeb;          /* recessed: quiet rows, prompt cards */
   --ink: #0d0e10;
-  --ink-soft: #43464b;
-  --muted: #71757b;
-  --line: #d6d7d4;
-  --line-soft: #e8e8e5;
+  --ink-soft: #41444a;
+  --muted: #6a6e75;
+  --line: #d5d6d3;
+  --line-soft: #e6e6e3;
 
-  --signal: #d8480a;        /* the one colour that means something */
-  --signal-hover: #b73a06;
+  --signal: #cf4408;        /* the one colour that means something */
+  --signal-hover: #b03a06;
   --signal-on: #ffffff;
-  --signal-wash: #fdeee5;
+  --signal-wash: #fcece3;
 
   --ok: #17663a;
+  --warn: #8a5a10;
   --bad: #9e2318;
-  --rule: var(--ink);
 
-  --display: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
-  --radius: 4px;
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-display: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
-  /* the five the panel documents, plus the surface colours so the card sits
-     on the same flat white and black as the rest of the depot */
+  --radius: 6px;
+
+  /* What the shell and the panel read. */
   --baton-accent: var(--signal);
   --baton-ink: var(--ink);
-  --baton-paper: var(--paper);
+  --baton-paper: var(--sunk);
   --baton-line: var(--line);
   --baton-muted: var(--muted);
   --baton-card: var(--card);
   --baton-on-accent: var(--signal-on);
   --baton-ok: var(--ok);
-  --baton-warn: var(--signal);
+  --baton-warn: var(--warn);
   --baton-bad: var(--bad);
   --baton-radius: var(--radius);
 }
@@ -52,13 +59,13 @@ html { scrollbar-gutter: stable; }
   color-scheme: dark;
 
   --paper: #0b0c0d;
-  --card: #131416;
-  --surface: #191b1d;
+  --card: #141618;
+  --sunk: #1c1f21;
   --ink: #f3f3f1;
   --ink-soft: #b8bbc0;
-  --muted: #84888e;
-  --line: #282a2d;
-  --line-soft: #1f2123;
+  --muted: #888d93;
+  --line: #2a2d30;
+  --line-soft: #202325;
 
   --signal: #ff7a33;
   --signal-hover: #ff9257;
@@ -66,8 +73,8 @@ html { scrollbar-gutter: stable; }
   --signal-wash: #2a1a0e;
 
   --ok: #4fbe80;
+  --warn: #d9b25c;
   --bad: #e8776c;
-  --rule: #55595e;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -75,13 +82,13 @@ html { scrollbar-gutter: stable; }
     color-scheme: dark;
 
     --paper: #0b0c0d;
-    --card: #131416;
-    --surface: #191b1d;
+    --card: #141618;
+    --sunk: #1c1f21;
     --ink: #f3f3f1;
     --ink-soft: #b8bbc0;
-    --muted: #84888e;
-    --line: #282a2d;
-    --line-soft: #1f2123;
+    --muted: #888d93;
+    --line: #2a2d30;
+    --line-soft: #202325;
 
     --signal: #ff7a33;
     --signal-hover: #ff9257;
@@ -89,8 +96,8 @@ html { scrollbar-gutter: stable; }
     --signal-wash: #2a1a0e;
 
     --ok: #4fbe80;
+    --warn: #d9b25c;
     --bad: #e8776c;
-    --rule: #55595e;
   }
 }
 
@@ -102,84 +109,94 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font: 16px/1.55 var(--body);
+  font: 15px/1.55 var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
-
-.wrap { max-width: 920px; margin: 0 auto; padding: 30px 20px 80px; }
 
 a { color: var(--signal); }
-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; }
+code { font-family: var(--font-mono); font-size: 0.9em; }
+.muted { color: var(--muted); }
 
-:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+h1, h2, h3 { text-wrap: balance; }
 
-/* --------------------------------------------------------------- masthead */
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; border-radius: 3px; }
 
-.masthead { border-bottom: 2px solid var(--rule); padding-bottom: 22px; margin-bottom: 34px; }
+/* The one place the depot's orange shows in the sidebar: after the name. */
+.spot {
+  display: inline-block;
+  width: 0.42em;
+  height: 0.42em;
+  margin-left: 0.3em;
+  vertical-align: 0.04em;
+  background: var(--signal);
+}
 
-.masthead__row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+/* ---------------------------------------------------------------- banner */
 
-.wordmark {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--display);
+.banner {
+  border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line));
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 15px 17px;
+  margin: 0 0 24px;
+  color: var(--ink-soft);
+}
+.banner b { display: block; margin-bottom: 3px; color: var(--ink); }
+
+/* ------------------------------------------------------------------ hero */
+
+.hero {
+  margin: 0 0 30px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--sunk);
+  border: 1px solid var(--line);
+}
+.hero[hidden] { display: none; }
+.hero__img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 38% center; }
+
+/* ----------------------------------------------------------------- intro */
+
+.intro { margin: 0 0 36px; }
+
+.intro h1 {
+  font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(34px, 7.6vw, 54px);
-  line-height: 1;
-  letter-spacing: -0.035em;
-  text-transform: uppercase;
-  color: var(--ink);
-  text-decoration: none;
-}
-.wordmark__mark { width: 0.42em; height: 0.42em; background: var(--signal); display: inline-block; }
-
-.masthead__tools { display: flex; align-items: center; gap: 10px; }
-
-.host {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12px;
-  color: var(--muted);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 4px 10px;
-  background: var(--card);
-  white-space: nowrap;
+  font-stretch: 112%;
+  font-size: clamp(25px, 2.7vw, 32px);
+  line-height: 1.16;
+  letter-spacing: -0.022em;
+  margin: 0;
+  max-width: 26ch;
 }
 
-.theme {
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink);
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 5px 13px;
-  cursor: pointer;
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 34px;
+  margin: 22px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
 }
-.theme:hover { border-color: var(--signal); color: var(--signal); }
-
-.lede { font-size: 18px; line-height: 1.5; color: var(--ink-soft); max-width: 62ch; margin: 20px 0 0; }
-
-.figures { display: flex; flex-wrap: wrap; gap: 10px 32px; margin: 20px 0 0; }
 .figures div { margin: 0; }
 .figures dt { font-size: 13px; color: var(--muted); }
 .figures dd {
-  margin: 1px 0 0;
-  font-family: var(--display);
+  margin: 2px 0 0;
+  font-family: var(--font-display);
   font-weight: 700;
-  font-size: 20px;
+  font-size: 21px;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
-/* --------------------------------------------------------------- sections */
+/* -------------------------------------------------------------- sections */
 
-.stack { margin: 0 0 38px; }
+.stack { margin: 0 0 36px; }
 
 .head {
-  font-family: var(--display);
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 20px;
   letter-spacing: -0.02em;
@@ -193,90 +210,80 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
   padding: 18px;
   overflow-x: auto;
 }
-.panel__intro { margin: 0 0 14px; color: var(--ink-soft); max-width: 62ch; }
-.fineprint { margin: 14px 0 0; font-size: 14px; color: var(--muted); max-width: 66ch; }
-
-/* ------------------------------------------------------------ agent note */
-
-.agent-note {
-  margin-top: 14px;
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--signal);
-  border-radius: var(--radius);
-  background: var(--surface);
-  padding: 17px 19px;
-}
-.agent-note h3 { font-family: var(--display); font-weight: 700; font-size: 16px; margin: 0 0 6px; letter-spacing: -0.01em; }
-.agent-note p { margin: 0; color: var(--ink-soft); max-width: 62ch; }
-
-.prompts { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
-.prompts li {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 11px 13px;
-  font-size: 15px;
-}
+.panel__intro { margin: 0 0 14px; font-size: 16px; line-height: 1.6; color: var(--ink-soft); max-width: 62ch; }
+.fineprint { margin: 14px 0 0; font-size: 13px; color: var(--muted); max-width: 66ch; }
 
 /* ---------------------------------------------------------------- tables */
 
-table.grid { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 460px; }
+table.grid { width: 100%; border-collapse: collapse; min-width: 460px; }
 table.grid th,
 table.grid td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
-table.grid thead th { font-size: 13px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line); }
+table.grid thead th { font-size: 13px; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--line); }
 table.grid tbody tr:last-child td { border-bottom: 0; }
 table.grid td.num,
-table.grid th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-table.grid .name { font-weight: 700; font-family: var(--display); letter-spacing: -0.01em; }
-table.grid .covers { color: var(--ink-soft); }
-table.grid .price { font-variant-numeric: tabular-nums; }
+table.grid th.num { text-align: right; white-space: nowrap; }
+table.grid td.num { font-family: var(--font-mono); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.grid .name { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.015em; }
+table.grid .covers { font-family: var(--font-sans); color: var(--ink-soft); }
+table.grid td.num .covers { font-size: 12.5px; color: var(--muted); }
 table.grid .price--express { color: var(--signal); }
-table.grid .tid { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; white-space: nowrap; }
-table.grid .tid + .covers { font-size: 14px; margin-top: 2px; }
+table.grid .tid { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+table.grid .tid + .covers { font-size: 13.5px; margin-top: 2px; }
 
-.status { display: inline-block; font-size: 13px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); white-space: nowrap; }
+.status {
+  display: inline-block;
+  font-size: 13px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--sunk);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
 .status--out { border-color: var(--signal); color: var(--signal); background: var(--signal-wash); }
-.status--delivered { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+.status--delivered { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); background: transparent; }
 
-/* ------------------------------------------------------- pickup windows */
+/* A row that was booked on this page during this visit arrives once. */
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+tr.row--new { animation: row-in 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+
+/* -------------------------------------------------------- pickup windows */
 
 .windows { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .window { border: 1px solid var(--line); border-radius: var(--radius); padding: 13px 14px; background: var(--card); }
-.window__label { font-family: var(--display); font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
-.window__slots { font-size: 13px; color: var(--muted); margin-top: 3px; }
-.window--open { border-left: 3px solid var(--signal); }
-.window--full { background: var(--surface); color: var(--muted); }
+.window__label { font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+.window__slots { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.window--open { border-color: color-mix(in srgb, var(--signal) 45%, var(--line)); }
+.window--open .window__slots { color: var(--signal); }
+.window--full { background: var(--sunk); }
 .window--full .window__label { color: var(--muted); }
 .window--closed { border-style: dashed; color: var(--muted); }
+.window--closed .window__label { color: var(--muted); }
 
 /* ----------------------------------------------------------------- terms */
 
-.terms { list-style: none; margin: 0; padding: 0; color: var(--ink-soft); }
-.terms li { padding: 6px 0 6px 20px; position: relative; }
-.terms li::before { content: ""; position: absolute; left: 0; top: 13px; width: 10px; height: 2px; background: var(--signal); }
+.terms { list-style: none; margin: 0; padding: 0; color: var(--ink-soft); font-size: 16px; line-height: 1.6; }
+.terms li { padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
+.terms li:first-child { padding-top: 0; }
+.terms li:last-child { border-bottom: 0; padding-bottom: 0; }
 
-.aside { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
-.aside h3 { font-family: var(--display); font-weight: 700; font-size: 16px; margin: 0 0 6px; letter-spacing: -0.01em; }
-.aside p { margin: 0; color: var(--ink-soft); max-width: 62ch; }
-
-/* ---------------------------------------------------------------- banner */
-
-.banner {
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--signal);
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 15px 17px;
-  margin-bottom: 28px;
-  font-size: 15px;
-  color: var(--ink-soft);
-}
-.banner b { display: block; margin-bottom: 3px; color: var(--ink); }
+.aside { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.aside h3 { font-family: var(--font-display); font-weight: 700; font-size: 17px; margin: 0 0 6px; letter-spacing: -0.015em; }
+.aside p { margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-soft); max-width: 62ch; }
 
 /* ------------------------------------------------------------------ foot */
 
-.foot { border-top: 1px solid var(--line); padding-top: 18px; font-size: 14px; color: var(--muted); }
+.foot { border-top: 1px solid var(--line); padding-top: 18px; font-size: 13px; color: var(--muted); }
 .foot p { margin: 0; max-width: 62ch; }
+
+/* ----------------------------------------------------------------- hover */
+
+@media (hover: hover) and (pointer: fine) {
+  a:hover { color: var(--signal-hover); }
+}
 
 /* ------------------------------------------------------------ responsive */
 
@@ -286,15 +293,17 @@ table.grid .tid + .covers { font-size: 14px; margin-top: 2px; }
      the cut-off and the two prices are what a rate card is for. */
   .covers-col { display: none; }
   table.grid { min-width: 0; }
-  table.grid th, table.grid td { padding: 9px 5px; }
-  table.grid .tid { font-size: 12px; }
+  table.grid th, table.grid td { padding: 9px 6px; }
+  table.grid .tid { font-size: 12.5px; }
   .status { font-size: 12px; padding: 2px 7px; white-space: normal; }
 }
 
 @media (max-width: 560px) {
-  .wrap { padding: 22px 15px 60px; }
-  .lede { font-size: 16.5px; }
-  .masthead__row { align-items: flex-start; }
+  .hero { aspect-ratio: 3 / 2; margin-bottom: 22px; }
   .panel { padding: 15px; }
-  .figures { gap: 10px 22px; }
+  .figures { gap: 12px 24px; }
 }
+
+/* ---------------------------------------------------------------- motion */
+
+

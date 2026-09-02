@@ -50,6 +50,7 @@ $('figures').innerHTML = [
   ['Vans', DEPOT.vans],
   ['Bikes', DEPOT.bikes],
   ['Zones', ZONES.length],
+  ['Speeds', SPEEDS.length],
   ['Parcel limit', DEPOT.max_parcel_kg + ' kg']
 ].map(([k, v]) => '<div><dt>' + k + '</dt><dd>' + v + '</dd></div>').join('');
 
@@ -67,7 +68,7 @@ $('rates').innerHTML = ZONES.map((z) => {
 
 $('rates-note').textContent =
   'Priced for a ' + SAMPLE_COPIES + '-copy parcel, about ' + sampleWeight + ' kg. ' +
-  'A quote against a real baton uses the copy count already on it.';
+  'A quote against a real baton uses the copy count already signed onto it.';
 
 function drawWindows(dateISO) {
   const windows = pickupWindows(dateISO);
@@ -85,12 +86,15 @@ function drawWindows(dateISO) {
 
 // Parcels booked during this visit, newest first, in front of the standing board.
 const bookedHere = [];
+const arrived = new Set(); // rows that have already played their entrance
 
 function drawBoard() {
   const today = todayISO();
   const rows = [...bookedHere, ...boardParcels(today)].map((p) => {
     const cls = p.status === 'delivered' ? ' status--delivered' : p.status === 'out for delivery' ? ' status--out' : '';
-    return '<tr>' +
+    const fresh = bookedHere.includes(p) && !arrived.has(p.tracking_id);
+    if (fresh) arrived.add(p.tracking_id);
+    return '<tr' + (fresh ? ' class="row--new"' : '') + '>' +
       '<td><div class="tid">' + p.tracking_id + '</div>' +
       '<div class="covers">' + p.route + '</div></td>' +
       '<td><span class="status' + cls + '">' + p.status + '</span></td>' +
@@ -98,6 +102,46 @@ function drawBoard() {
       '</tr>';
   });
   $('board').innerHTML = rows.join('');
+}
+
+/* ------------------------------------------------- copy an example prompt */
+
+function fallbackCopy(text) {
+  const box = document.createElement('textarea');
+  box.value = text;
+  box.setAttribute('readonly', '');
+  box.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+  document.body.appendChild(box);
+  box.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch { ok = false; }
+  box.remove();
+  return ok;
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return fallbackCopy(text);
+  }
+}
+
+for (const btn of document.querySelectorAll('.prompt__copy')) {
+  let restore = 0;
+  btn.addEventListener('click', async () => {
+    const text = btn.closest('.prompt')?.querySelector('.prompt__text')?.textContent.trim() || '';
+    if (!text) return;
+    const ok = await copyText(text);
+    btn.textContent = ok ? 'Copied' : 'Select it';
+    if (ok) btn.dataset.copied = 'yes'; else delete btn.dataset.copied;
+    clearTimeout(restore);
+    restore = setTimeout(() => {
+      btn.textContent = 'Copy';
+      delete btn.dataset.copied;
+    }, 1600);
+  });
 }
 
 /* ------------------------------------------------------------------ baton */

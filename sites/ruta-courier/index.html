@@ -8,9 +8,10 @@
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Archivo:wdth,wght@75..125,700..800&display=swap">
 <link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./baton-panel.css">
+<link rel="stylesheet" href="./baton-shell.css">
 <script>
   // Set the theme before first paint so a dark reader never sees a white flash.
   try {
@@ -20,122 +21,135 @@
 </script>
 </head>
 <body>
-<div class="wrap">
+<div class="shell">
 
-  <header class="masthead">
-    <div class="masthead__row">
-      <a class="wordmark" href="./">Ruta<span class="wordmark__mark"></span></a>
-      <div class="masthead__tools">
-        <span class="host" id="host-label">&mdash;</span>
-        <button type="button" class="theme" id="theme-toggle">Dark</button>
+  <aside class="side" aria-label="Your agent and the mission">
+
+    <div class="side__brand">
+      <a class="side__name" href="./">Ruta Courier<span class="spot" aria-hidden="true"></span></a>
+      <p class="side__place">Collections and delivery for printers and binderies.</p>
+      <div class="side__row">
+        <span class="side__host" id="host-label">&mdash;</span>
+        <button type="button" class="side__theme" id="theme-toggle">Dark</button>
       </div>
     </div>
-    <p class="lede">
-      Four vans and one bike. We collect finished work from printers and binderies and hand it to
-      whoever ordered it, inside three zones, at two speeds. The tracking id is issued when you
-      book, not when we arrive.
-    </p>
-    <dl class="figures" id="figures"></dl>
-  </header>
 
-  <div class="banner" id="no-webmcp" hidden>
-    <b>This browser has no WebMCP.</b>
-    The page works as an ordinary website, but it cannot hand tools to an agent. Two browsers do
-    today: the ChatGPT desktop app's built-in browser, and Chrome 149 or newer with
-    <code>chrome://flags/#enable-webmcp-testing</code> enabled.
-  </div>
+    <section id="mission-panel" class="side__mission"></section>
 
-  <section class="stack" aria-labelledby="h-mission">
-    <h2 class="head" id="h-mission">The job on the van</h2>
-    <div id="mission-panel"></div>
-  </section>
+    <section id="site-tools" class="side__tools"></section>
 
-  <section class="stack" aria-labelledby="h-tools">
-    <h2 class="head" id="h-tools">What this page offers an agent</h2>
-    <div id="site-tools" class="tools"></div>
-    <div class="agent-note">
-      <h3>For your agent</h3>
-      <p>
-        Two tools sit here on an ordinary visit. Arrive with a baton that already carries a signed
-        print leg and the quoting, window, booking and tracking tools appear for the length of the
-        mission.
+    <section class="side__agent">
+      <h2 class="side__heading">For your agent</h2>
+      <p class="side__note">
+        On an ordinary visit this page hands your agent two tools. Bring a baton that already
+        carries a signed print leg and the quoting, window, booking and tracking tools appear
+        with it.
       </p>
       <ul class="prompts">
-        <li>&ldquo;Price this baton's last leg standard and express, then book whichever still lands before the deadline.&rdquo;</li>
-        <li>&ldquo;Book the earliest collection window the day after the bindery finishes and give me the tracking id.&rdquo;</li>
+        <li class="prompt">
+          <span class="prompt__text">Price this baton's last leg standard and express, then book whichever one still lands before the deadline.</span>
+          <button type="button" class="prompt__copy">Copy</button>
+        </li>
+        <li class="prompt">
+          <span class="prompt__text">Book the earliest collection window the day after the bindery finishes and give me the tracking id.</span>
+          <button type="button" class="prompt__copy">Copy</button>
+        </li>
       </ul>
-    </div>
-  </section>
+    </section>
 
-  <section class="stack" aria-labelledby="h-rates">
-    <h2 class="head" id="h-rates">Zones and rates</h2>
-    <div class="panel">
-      <table class="grid">
-        <thead>
-          <tr>
-            <th scope="col">Zone</th>
-            <th scope="col" class="covers-col">Covers</th>
-            <th scope="col" class="num">Cut-off</th>
-            <th scope="col" class="num">Standard</th>
-            <th scope="col" class="num">Express</th>
-          </tr>
-        </thead>
-        <tbody id="rates"></tbody>
-      </table>
-      <p class="fineprint" id="rates-note"></p>
-    </div>
-  </section>
+  </aside>
 
-  <section class="stack" aria-labelledby="h-windows">
-    <h2 class="head" id="h-windows">Collection windows</h2>
-    <div class="panel">
-      <p class="panel__intro" id="windows-intro"></p>
-      <ul class="windows" id="windows"></ul>
-      <p class="fineprint">Book at least one working day ahead. A window that is full is full; we will say so rather than send a van that is not there.</p>
-    </div>
-  </section>
+  <main class="main">
 
-  <section class="stack" aria-labelledby="h-board">
-    <h2 class="head" id="h-board">On the road</h2>
-    <div class="panel">
-      <table class="grid">
-        <thead>
-          <tr>
-            <th scope="col">Parcel</th>
-            <th scope="col">Status</th>
-            <th scope="col" class="num">Due</th>
-          </tr>
-        </thead>
-        <tbody id="board"></tbody>
-      </table>
+    <div class="banner" id="no-webmcp" hidden>
+      <b>This browser has no WebMCP.</b>
+      The page still works as a website, but it cannot hand tools to an agent. Two browsers can
+      today: the ChatGPT desktop app's built-in browser, and Chrome 149 or newer with
+      <code>chrome://flags/#enable-webmcp-testing</code> turned on.
     </div>
-  </section>
 
-  <section class="stack" aria-labelledby="h-terms">
-    <h2 class="head" id="h-terms">House terms</h2>
-    <div class="panel">
-      <ul class="terms">
-        <li>Delivery legs only. We move finished work; we do not make it.</li>
-        <li>The mission must already carry a signed print leg, and a pickup address zone.</li>
-        <li>One parcel under 25 kg. Heavier jobs are split and priced per parcel.</li>
-        <li>Collection is booked at least one working day ahead. We do not collect on Sundays.</li>
-      </ul>
-      <div class="aside">
-        <h3>What we do with a baton</h3>
-        <p>
-          We read the copy count from the legs already on the baton and work out the weight, the
-          number of parcels and the day it lands. We check that against the money left and the
-          deadline before we take the job, sign our leg with our own key, and hand back a tracking
-          id that outlives the link.
-        </p>
+    <figure class="hero" id="hero">
+      <img class="hero__img" src="./assets/generated/courier-hero.webp" width="1600" height="1067"
+           alt="A small white delivery van parked on a cobbled Montevideo street at dawn, with a parcel on the kerb."
+           onerror="var h=document.getElementById('hero'); if (h) h.hidden = true;">
+    </figure>
+
+    <header class="intro">
+      <h1>Ruta Courier collects finished print work and delivers it to whoever ordered it.</h1>
+      <dl class="figures" id="figures"></dl>
+    </header>
+
+    <section class="stack" aria-labelledby="h-rates">
+      <h2 class="head" id="h-rates">Zones and rates</h2>
+      <div class="panel">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th scope="col">Zone</th>
+              <th scope="col" class="covers-col">Covers</th>
+              <th scope="col" class="num">Cut-off</th>
+              <th scope="col" class="num">Standard</th>
+              <th scope="col" class="num">Express</th>
+            </tr>
+          </thead>
+          <tbody id="rates"></tbody>
+        </table>
+        <p class="fineprint" id="rates-note"></p>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <footer class="foot">
-    <p>Ruta Courier is a fictional depot built for the Baton demo. The vans are invented; the
-    signatures are real.</p>
-  </footer>
+    <section class="stack" aria-labelledby="h-windows">
+      <h2 class="head" id="h-windows">Collection windows</h2>
+      <div class="panel">
+        <p class="panel__intro" id="windows-intro"></p>
+        <ul class="windows" id="windows"></ul>
+        <p class="fineprint">Book at least one working day ahead. When a window is full we say so instead of sending a van that is not there.</p>
+      </div>
+    </section>
+
+    <section class="stack" aria-labelledby="h-board">
+      <h2 class="head" id="h-board">On the road</h2>
+      <div class="panel">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th scope="col">Parcel</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="num">Due</th>
+            </tr>
+          </thead>
+          <tbody id="board"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="stack" aria-labelledby="h-terms">
+      <h2 class="head" id="h-terms">House terms</h2>
+      <div class="panel">
+        <ul class="terms">
+          <li>Delivery legs only. We move finished work and we do not make it.</li>
+          <li>The mission has to carry a signed print leg and a delivery zone.</li>
+          <li>One parcel under 25 kg. Heavier jobs are split and priced per parcel.</li>
+          <li>Collection is booked at least one working day ahead. We do not collect on Sundays.</li>
+        </ul>
+        <div class="aside">
+          <h3>What we do with a baton</h3>
+          <p>
+            We read the copy count off the legs already signed and work out the weight, the number
+            of parcels and the day it lands. We check that against the money left and the deadline
+            before taking the job, sign our leg with our own key, and hand back a tracking id that
+            outlives the link.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <p>Ruta Courier is a fictional depot built for the Baton demo. The vans are invented.
+      The signatures are real.</p>
+    </footer>
+
+  </main>
 
 </div>
 <script type="module" src="./site.js"></script>
