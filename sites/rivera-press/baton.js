@@ -503,9 +503,34 @@ export function mountBaton(siteConfig) {
 
   const hasWebMCP = typeof document.modelContext?.registerTool === 'function';
 
+  // Our own record of what is registered, so the tools box works even in
+  // browsers whose modelContext has no getTools() or toolchange event.
+  const registry = new Map();
+
   function register(def, signal) {
     if (!hasWebMCP) return; // ordinary browser: the page still works, it just grows no tools
-    document.modelContext.registerTool(def, { signal });
+    registry.set(def.name, def);
+    if (signal) signal.addEventListener('abort', () => { registry.delete(def.name); refreshToolsBox(); }, { once: true });
+    let result;
+    try {
+      result = document.modelContext.registerTool(def, { signal });
+    } catch (e) {
+      // Some implementations reject the options bag; register without it.
+      try {
+        result = document.modelContext.registerTool(def);
+        debug('registered ' + def.name + ' without options: ' + (e && e.message));
+      } catch (e2) {
+        registry.delete(def.name);
+        debug('could not register ' + def.name + ': ' + (e2 && e2.message));
+        return;
+      }
+    }
+    Promise.resolve(result).catch((e) => {
+      registry.delete(def.name);
+      debug('registerTool rejected ' + def.name + ': ' + (e && e.message));
+      refreshToolsBox();
+    });
+    refreshToolsBox();
   }
 
   async function refreshToolsBox() {
@@ -514,7 +539,13 @@ export function mountBaton(siteConfig) {
       toolsBox.innerHTML = '<div class="tools__count">No WebMCP in this browser</div>';
       return;
     }
-    const tools = await document.modelContext.getTools();
+    let tools = null;
+    try {
+      if (typeof document.modelContext.getTools === 'function') tools = await document.modelContext.getTools();
+    } catch (e) {
+      tools = null;
+    }
+    if (!Array.isArray(tools)) tools = [...registry.values()];
     const items = tools
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -774,16 +805,24 @@ export function mountBaton(siteConfig) {
     if (toolsBox) toolsBox.innerHTML = '<div class="tools__count">No WebMCP in this browser</div>';
     debug('document.modelContext.registerTool is missing — no tools registered');
   } else {
-    registerAlwaysOnTools();
-    // Current WebMCP implementations do not all expose the optional
-    // `toolchange` event. Tools still register synchronously, so the page can
-    // work without live tool-list updates in those browsers.
-    if (typeof document.modelContext.addEventListener === 'function') {
-      document.modelContext.addEventListener('toolchange', () => { refreshToolsBox(); });
+    try {
+      registerAlwaysOnTools();
+      // Not every WebMCP implementation exposes the optional toolchange event
+      // or getTools(); the page keeps its own registry and refreshes itself.
+      if (typeof document.modelContext.addEventListener === 'function') {
+        document.modelContext.addEventListener('toolchange', () => { refreshToolsBox(); });
+      }
+      render();
+      refreshToolsBox();
+      const caps = ['registerTool',
+        typeof document.modelContext.getTools === 'function' ? 'getTools' : 'no getTools',
+        typeof document.modelContext.addEventListener === 'function' ? 'toolchange' : 'no toolchange'].join(', ');
+      debug('WebMCP ready on ' + location.origin + ' (' + caps + ')');
+    } catch (e) {
+      render();
+      refreshToolsBox();
+      debug('WebMCP setup problem: ' + (e && e.message));
     }
-    render();
-    refreshToolsBox();
-    debug('WebMCP ready on ' + location.origin);
   }
 
   // A mission in the link wins over stored state, unless the stored copy is
