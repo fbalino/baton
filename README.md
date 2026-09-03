@@ -349,6 +349,83 @@ proves.
   three signatures and the page says so. It does not stop anyone from discarding the chain and
   starting a fresh mission.
 
+## What this does not solve
+
+Baton is three websites I built, agreeing on one small convention. The obvious question is whether
+it only works because the sites know each other, so here is the plain answer.
+
+- **The sites share a document format, not code.** At run time they share no database, no login, no
+  session and no server. Each one reads the mission out of the link, checks the earlier signatures
+  against the other origins' published keys, and registers its own tools under its own names. The
+  bindery does not know what the printer's tools are called and does not need to. What the three do
+  share is the shape of the mission, the rule for signing a leg, and the habit of publishing a public
+  key at `/.well-known/baton/key.json`. That is the same kind of agreement that makes a calendar
+  invite open in any calendar. Today only three sites have made it.
+- **The route is written in advance.** The first site puts the bindery's and the courier's addresses
+  into the mission. A real agent would have to find a bindery on its own, and neither WebMCP nor
+  Baton says anything about how an agent discovers which sites offer tools.
+- **An agent already remembers.** The conversation is the agent's memory, so "the agent forgets the
+  job between sites" is the weaker argument for Baton. The stronger one is what the agent's memory
+  cannot do. The bindery can check that the printer really signed for 40 copies at $380 without
+  taking the agent's word for it. The link outlives the conversation and can be handed to another
+  person or another agent. And the site itself knows the mission, which is why ten tools appear
+  only when a signed baton is aboard.
+- **Signatures prove authorship, not authority.** See the trust model above: a leg proves which
+  origin wrote it, against which header, and nothing about who was allowed to.
+- **The agent has to be pointed at the page.** In the ChatGPT desktop browser the model answered from
+  chat until the prompt said `@Browser` and "use the site tools on this page", and a navigation can
+  end its turn. That is the state of the clients, not of the pages, but it is what a person meets
+  today.
+- **The money is invented and the keys are demo keys.**
+
+## Where WebMCP is, and where I think it goes
+
+Checked on 3 September 2026. My own knowledge of the protocol stops in June 2026, so the facts
+below come from the sources linked, not from memory.
+
+**Where it is.**
+
+- WebMCP is a [Draft Community Group Report](https://webmachinelearning.github.io/webmcp/) of the
+  W3C Web Machine Learning Community Group, dated 2 September 2026, edited by people from Microsoft
+  and Google. It is not on the standards track. It grew out of
+  [MCP-B](https://www.arcade.dev/blog/web-mcp-alex-nahas-interview/), Alex Nahas's browser-side MCP,
+  which merged into the proposal in early 2026.
+- The API that shipped is the imperative one this repo uses, `document.modelContext.registerTool`,
+  renamed from `navigator.modelContext` around 10 August 2026. The declarative form, HTML attributes
+  on a `<form>`, is still an
+  [explainer](https://github.com/webmachinelearning/webmcp/blob/main/declarative-api-explainer.md)
+  with open questions about schemas and responses.
+- Chrome runs an origin trial from Chrome 149 to 156 and exposes the API locally behind
+  `chrome://flags/#enable-webmcp-testing`; Edge runs its own trial in Edge 150; Brave has it in Leo.
+  Firefox and Safari have open, unresolved
+  [standards-position](https://github.com/mozilla/standards-positions/issues/1412)
+  [issues](https://github.com/WebKit/standards-positions/issues/670). See the
+  [implementation status](https://github.com/webmachinelearning/webmcp/blob/main/implementation-status.md).
+- The ChatGPT desktop app's built-in browser [reads site tools](https://learn.chatgpt.com/docs/webmcp)
+  from the top-level page only, imperative API only, with GPT-5.6 Sol or Terra, and treats tool
+  definitions and results as untrusted content.
+- There is no discovery in the spec. Nothing tells an agent which sites have tools; third-party
+  directories such as those listed in
+  [awesome-webmcp](https://github.com/webmachinelearning/awesome-webmcp) are filling the gap. Tools
+  are scoped to their origin. Nothing in the spec or next to it signs or verifies what a site did
+  for a person; Cloudflare's
+  [Web Bot Auth](https://developers.cloudflare.com/bots/reference/bot-verification/web-bot-auth/)
+  signs agent traffic, which is a different problem.
+- Chrome's own [security guidance](https://developer.chrome.com/docs/ai/webmcp/secure-tools) exists
+  because prompt injection through tool descriptions and results is real and unsolved; the
+  `readOnlyHint` and `untrustedContentHint` annotations are the current answer.
+
+**Where I think it goes.** The first wins will be single sites with forms: checkouts, bookings,
+dashboards, anything where driving the page by clicking is fragile and a declared tool is
+reliable. The quiet advantage is that the browser already holds the person's logins, so an agent
+can act on a site as that person without anyone issuing API keys. The next layer, which the spec
+does not have, is work that crosses sites: how an agent finds the next site, how the job travels,
+and how the third site can trust what the first two did without a shared backend. Baton is a
+sketch of that layer, made of things that already exist: a JSON object in a link, a key file at a
+well-known path, and a signature per leg. If the protocol grows a `.well-known` for agents, a signed
+receipt for what a tool did, and a way to hand a task from one origin to another, then the three
+sites here are what a print shop, a bindery and a courier would look like the day after.
+
 ## Architecture
 
 Static pages, three hosts, one serverless signing function per origin, no database, no accounts.
