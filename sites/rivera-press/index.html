@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%238C2321'/%3E%3Cpath d='M9 23V9h7.6c2.9 0 4.6 1.6 4.6 4.1 0 2-1.1 3.4-3 3.9L23 23h-3.4l-3.5-5.4h-3V23H9zm3.1-7.9h4c1.4 0 2.2-.7 2.2-1.9s-.8-1.9-2.2-1.9h-4v3.8z' fill='%23FBF5EE'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,500;6..72,600&display=swap">
 <link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./baton-panel.css">
 <link rel="stylesheet" href="./baton-shell.css">
@@ -31,12 +31,6 @@
     <div class="side__brand">
       <a class="side__name" href="./">Rivera Press</a>
       <p class="side__place">Fine-art printing · Montevideo</p>
-      <div class="side__row">
-        <span class="side__host" id="host-label" title="This site's origin">—</span>
-        <button type="button" class="side__theme" id="theme-toggle" aria-pressed="false">
-          <span id="theme-label">Light</span>
-        </button>
-      </div>
     </div>
 
     <section id="mission-panel" class="side__mission" aria-label="The mission on this page"></section>
@@ -205,7 +199,11 @@
           <li>A held slot is released if the leg is not signed within 48 hours.</li>
         </ul>
       </details>
-      <p>Rivera Press · Ciudad Vieja, Montevideo</p>
+      <p class="footline">Rivera Press · Ciudad Vieja, Montevideo ·
+        <button type="button" class="footline__theme" id="theme-toggle" aria-pressed="false">
+          <span id="theme-label">Light</span>
+        </button>
+      </p>
     </footer>
 
   </main>

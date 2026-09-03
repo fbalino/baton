@@ -44,8 +44,6 @@ paintThemeButton();
 
 /* ------------------------------------------------------------------- page */
 
-$('host-label').textContent = location.host || 'file://';
-
 // The hero subtitle already says what the workshop does, so the facts line
 // under it stays empty and the CSS folds it away.
 $('facts').textContent = '';
