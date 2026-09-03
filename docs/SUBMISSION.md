@@ -128,6 +128,11 @@ Paste this on Rivera Press:
    inside the deadline. **Tap Confirm once.** Then it verifies the chain: three legs against three
    origins, $594 of $600.
 
+**About the video.** It is a scripted run of the same tool calls against the live sites, recorded in
+Chrome, so it shows the flow without a model's pauses. In the ChatGPT browser the agent sometimes ends
+its turn after asking for a tap; the tap still signs the leg and carries the mission to the next site
+by itself, and one word from you gets the agent going again.
+
 **If the agent pauses after the page changes.** In the ChatGPT desktop browser a navigation can end
 the agent's turn. If it stops after the browser has moved, type `continue` and nothing else. The
 brief on the page tells it which leg it is on and what that leg needs, so the job never has to be
