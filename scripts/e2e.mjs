@@ -153,6 +153,16 @@ async function callConfirming(page, name, input = {}) {
 // The waiter goes up before the call, so nothing can slip between the two.
 async function mintAndFollow(page, expectOrigin) {
   const navigated = page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 });
+  // The tap itself carries the baton now: with E2E_TAP_ONLY=1 nothing calls
+  // baton_mint, and the page has to move on its own after the Confirm tap.
+  if (process.env.E2E_TAP_ONLY === '1') {
+    await navigated;
+    await sleep(700);
+    check('  the browser moved there by itself after the tap, no mint call and no click',
+      page.url().startsWith(expectOrigin), page.url().slice(0, 40) + '…');
+    const role = /4182|norte/.test(expectOrigin) ? 'bind' : /4183|ruta/.test(expectOrigin) ? 'deliver' : 'print';
+    return { ok: true, done: false, navigating: true, next_role: role, next_url: page.url(), tap_only: true };
+  }
   const r = await call(page, 'baton_mint');
   check('  baton_mint says it is moving the browser', r.ok === true && r.done === false && r.navigating === true,
     String(r.next || '').slice(0, 96));
@@ -361,7 +371,8 @@ try {
   check('$220 left of the budget', r.mission?.remaining_usd === 220, '$' + r.mission?.remaining_usd);
   check('call 1 was pending, call 2 read the signed leg back', r.__first_status === 'pending' && r.leg?.sig);
   check('the page signed it through /api/sign, not with a key in the browser', r.signed_in === 'server', r.signed_in);
-  check('it sends the agent straight on to baton_mint', /baton_mint/.test(r.next || ''), String(r.next).slice(0, 96));
+  check('it tells the agent the page is moving on by itself and to inspect on arrival',
+    /moving to the .* by itself/.test(r.next || '') && /baton_inspect/.test(r.next || ''), String(r.next).slice(0, 96));
   check('the building line is gone now the row shows the signed summary',
     (await legStatusLine(page)) === '', await legStatusLine(page));
   console.log('  ' + await debugLine(page));

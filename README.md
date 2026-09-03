@@ -50,8 +50,8 @@ With nothing else typed, here is what happens.
    prints the instructions under "Instructions for every stop" and keeps a line under "this site"
    while the leg is built: `Order RP-1042 · proof approved · press day 3 Sep held · ready to sign`.
    Then the confirm card comes up, saying what is being signed and for how much. **Tap Confirm
-   once.** The line clears, the leg turns green, `baton_mint` runs, and a second and a half later the
-   browser takes itself to the bindery.
+   once.** The line clears, the leg turns green, and the page carries the mission to the bindery by
+   itself; the agent does not have to call anything.
 
 2. **Norte Bindery**, a site that has never seen this job. Nothing is typed here. The agent calls
    `baton_inspect`, reads the brief for this stop, and works from it. It quotes coptic binding with a
@@ -59,7 +59,7 @@ With nothing else typed, here is what happens.
    light card wrap at $190, because the instructions say to take the cheaper option when one does not
    fit. It never asks how many copies there are: it reads 40 and the money left off the signed print
    leg. It holds the first free bench day and asks for the signature. **Tap Confirm once.** The leg
-   is signed, `baton_mint` runs, and the browser moves to the courier.
+   is signed and the page moves to the courier by itself.
 
 3. **Ruta Courier.** Nothing is typed here either. The agent reads its brief, prices the last leg
    standard at $24, and books the collection that lands inside the 14 September deadline, the working

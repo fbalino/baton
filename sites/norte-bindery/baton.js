@@ -726,8 +726,11 @@ export function mountBaton(siteConfig) {
   const confirmKey = (toolName, input) => toolName + ':' + canonicalize(input ?? {});
 
   const pendingText = (toolName) =>
-    'Ask the operator to tap Confirm on the page (the card says what will be signed and for how much), ' +
-    'then call ' + toolName + ' again with the same input.';
+    'The operator must tap Confirm on the page; the card shows what will be signed and for how much. ' +
+    'Do not end your turn and do not ask in chat. Poll with baton_inspect every 3 seconds. ' +
+    'When the leg is signed the page moves to the next site by itself; call baton_inspect there and ' +
+    'follow brief.this_stop_must. If the route is finished, call baton_verify. ' +
+    '(Calling ' + toolName + ' again with the same input on this page also returns the signed leg.)';
 
   const cancelledText = (toolName) =>
     'The operator tapped Cancel on the page. Ask what to change, then call ' + toolName +
@@ -1224,14 +1227,20 @@ export function mountBaton(siteConfig) {
             mission.spent_usd = round2(mission.legs.reduce((a, l) => a + (Number(l.cost_usd) || 0), 0));
             setLegStatus(''); // the signed row shows the summary from here on
             const stop = nextStop(mission);
+            // The tap is the approval, so the tap carries the baton: the page
+            // shows the link and moves to the next site by itself. The agent does
+            // not have to call baton_mint, and a person who never says another
+            // word still sees the job arrive at the next company.
+            if (stop && !sameOrigin(stop.url)) carryToNextStop(stop, { stay: false, delayMs: 2500 });
             return {
               leg: { ...legWithoutSig, sig: signed.sig.slice(0, 12) + '…' },
               signed_in: signed.signed_in,
               mission: missionSummary(mission),
+              navigating: !!(stop && !sameOrigin(stop.url)),
               next: stop
-                ? 'Leg signed. Call baton_mint to carry the mission to the ' + siteWord(stop.role) +
-                  '; the browser moves there by itself, so call baton_inspect on arrival and arrange ' +
-                  workWord(stop.role) + ' without asking the operator to repeat the job.'
+                ? 'Leg signed. The page is moving to the ' + siteWord(stop.role) + ' by itself; ' +
+                  'call baton_inspect on arrival and arrange ' + workWord(stop.role) +
+                  ' without asking the operator to repeat the job.'
                 : 'Leg signed and the route is finished. Call baton_verify to check every signature.'
             };
           }
@@ -1240,6 +1249,23 @@ export function mountBaton(siteConfig) {
         return { ok: false, ...outcome };
       }
     }, signal);
+
+    // Carry the mission to a stop: show the link on the page and, unless asked to
+    // stay, follow it a moment later. Used by baton_mint and, since the operator's
+    // tap is the approval, by the tap itself, so a Confirm is all it takes.
+    function carryToNextStop(stop, { stay = false, delayMs = 1500 } = {}) {
+      const url = missionLink(stop.url, mission);
+      carryLink = { url, label: stop.role + ' at ' + host(stop.url) };
+      render();
+      if (!stay) {
+        debug('carrying the mission to ' + host(stop.url) + ' — the page moves in ' + (delayMs / 1000) + 's');
+        setTimeout(() => {
+          try { location.assign(url); } catch (e) { debug('could not follow the carry link: ' + ((e && e.message) || e)); }
+        }, delayMs);
+      }
+      return url;
+    }
+    const sameOrigin = (u) => { try { return new URL(u, location.href).origin === location.origin; } catch (e) { return false; } };
 
     register({
       name: 'baton_mint',
@@ -1263,20 +1289,18 @@ export function mountBaton(siteConfig) {
             next: 'Route complete. Call baton_verify to check every signature.'
           };
         }
-        const url = missionLink(stop.url, mission);
-        carryLink = { url, label: stop.role + ' at ' + host(stop.url) };
-        render();
-
-        // The page takes itself to the next site. The mission is in the link, so
-        // nothing is lost, and the agent finds the next leg's tools already
-        // registered instead of asking the person to click.
-        const stay = input?.stay === true;
-        if (!stay) {
-          debug('carrying the mission to ' + host(stop.url) + ' — the page moves in 1.5s');
-          setTimeout(() => {
-            try { location.assign(url); } catch (e) { debug('could not follow the carry link: ' + ((e && e.message) || e)); }
-          }, 1500);
+        if (sameOrigin(stop.url)) {
+          return {
+            ok: true,
+            done: false,
+            next_role: stop.role,
+            mission: missionSummary(mission),
+            note: 'This site is the next stop; the mission is already here.',
+            next: 'You are at the ' + siteWord(stop.role) + ' already. Call baton_inspect and follow brief.this_stop_must.'
+          };
         }
+        const stay = input?.stay === true;
+        const url = carryToNextStop(stop, { stay, delayMs: 1500 });
         return {
           ok: true,
           done: false,
