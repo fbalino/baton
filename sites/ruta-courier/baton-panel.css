@@ -474,6 +474,12 @@
 
 .baton__confirm { margin-top: 16px; }
 
+/* While a confirm card is up, the tamper link steps aside. The card is what the
+   operator is looking at, and without the two-line link the column stays one
+   screen tall on every site even with the longest mission text. The link comes
+   back the moment the card is answered. */
+.baton:has(.confirm) .tamper { display: none; }
+
 .confirm {
   border: 1px solid color-mix(in srgb, var(--baton-accent) 42%, var(--baton-line));
   border-radius: var(--baton-radius);
