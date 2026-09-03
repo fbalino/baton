@@ -48,9 +48,8 @@ html { scrollbar-gutter: stable; }
   --bleed-y: var(--main-pad-y, 40px);
 }
 
-/* The dark palette is declared twice on purpose: once for people who have
-   chosen dark in this page's switch, once for people whose system is dark and
-   who have not chosen light here. */
+/* Rivera is a light sheet for everyone. Dark is only ever reached through the
+   switch in the footer, so the system preference is deliberately not read. */
 
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -76,34 +75,6 @@ html { scrollbar-gutter: stable; }
   --bad: #EE8A78;
 
   --lift: 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-
-    --paper: #15130F;
-    --surface: #1C1915;
-    --surface-2: #252119;
-    --ink: #F1ECE3;
-    --ink-soft: #C9C1B4;
-    --ink-faint: #948C7F;
-    --line: #302B24;
-    --line-strong: #46403A;
-
-    --accent: #E08A7E;
-    --accent-hover: #EBA095;
-    --on-accent: #1D0F0D;
-    --accent-wash: #3A211B;
-
-    --ok: #79C79B;
-    --ok-wash: #1D2A22;
-    --warn: #D9AE5F;
-    --warn-wash: #2C2418;
-    --bad: #EE8A78;
-
-    --lift: 0 1px 2px rgba(0, 0, 0, 0.4);
-  }
 }
 
 /* What the Baton panel and the shell read. The sidebar sits on the same sheet
@@ -236,10 +207,10 @@ code, .mono { font-family: var(--font-mono); font-size: 0.87em; }
 .hero h1 {
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-weight: 500;
-  font-size: clamp(34px, 2.6vw, 48px);
-  line-height: 1.05;
-  letter-spacing: -0.01em;
+  font-weight: 300;
+  font-size: clamp(42px, 3.4vw, 64px);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
   margin: 0;
   max-width: 15ch;
 }
@@ -507,9 +478,13 @@ select {
 
 .order { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--lift); overflow: hidden; }
 .order__head {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
   padding: 11px 20px; border-bottom: 1px solid var(--line);
 }
+/* The status and the price read as one line. The pill's cap height is smaller
+   than the price's, so it is nudged up off the centre to sit optically level. */
+.order__meta { display: inline-flex; align-items: center; gap: 10px; }
+.order__meta .status { transform: translateY(-0.5px); }
 .order__id { font-family: var(--font-mono); font-size: 13.5px; color: var(--ink); }
 .order__price { font-family: var(--font-display); font-optical-sizing: auto; font-size: 22px; font-weight: 500; }
 .order__body { padding: 12px 20px 14px; }
@@ -588,6 +563,32 @@ table.catalog .paper__name { font-weight: 500; }
   margin: 0 0 8px;
 }
 
+/* ----------------------------------------------------------------- footer
+   The light/dark switch is a house detail, not a control the shop leads with,
+   so it sits at the end of the one footer line and is never louder than it. */
+
+.site-footer .footline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.footline__theme {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 160ms var(--ease-out), border-color 160ms var(--ease-out), transform 160ms var(--ease-out);
+}
+.footline__theme:active { transform: scale(0.97); }
+
 /* ----------------------------------------------------------------- motion
    Hover only where a real pointer can hover; press feedback everywhere.
    Transforms and opacity only, and nothing longer than 300ms. */
@@ -604,6 +605,7 @@ table.catalog .paper__name { font-weight: 500; }
   .pill span:hover { border-color: var(--ink-faint); }
   .main .step:hover .step__mark { border-color: var(--ink-faint); color: var(--ink-soft); }
   .main .step[aria-current="step"]:hover .step__mark { border-color: var(--accent); color: var(--accent); }
+  .footline__theme:hover { color: var(--ink); border-color: var(--line-strong); }
 }
 
 .btn:not([disabled]):active,
@@ -623,9 +625,9 @@ table.catalog .paper__name { font-weight: 500; }
 
 @media (prefers-reduced-motion: reduce) {
   .btn, .pill span, .day, .setcard__print, .setcard__print .print__img,
-  .setcard__name, .main .step .step__mark { transition: none; }
+  .setcard__name, .main .step .step__mark, .footline__theme { transition: none; }
   .btn:not([disabled]):active, .setcard:active, .day--open:active,
-  .pill input:active + span { transform: none; }
+  .pill input:active + span, .footline__theme:active { transform: none; }
   .setcard:hover .setcard__print .print__img { transform: none; }
   .order--new { animation: none; }
 }

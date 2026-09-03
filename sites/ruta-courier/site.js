@@ -22,11 +22,12 @@ const SAMPLE_COPIES = 40; // the parcel the published rate card is priced for
 
 /* ------------------------------------------------------------------ theme */
 
+// Ruta is a peach page for everyone: the stylesheet no longer follows the
+// system setting, so light is what a reader gets unless they ask for dark here.
 const root = document.documentElement;
 const themeBtn = $('theme-toggle');
-const systemDark = matchMedia('(prefers-color-scheme: dark)');
 
-const activeTheme = () => root.dataset.theme || (systemDark.matches ? 'dark' : 'light');
+const activeTheme = () => (root.dataset.theme === 'dark' ? 'dark' : 'light');
 
 function paintThemeButton() {
   const next = activeTheme() === 'dark' ? 'light' : 'dark';
@@ -40,12 +41,10 @@ themeBtn.addEventListener('click', () => {
   try { localStorage.setItem('ruta.theme', next); } catch { /* private mode */ }
   paintThemeButton();
 });
-systemDark.addEventListener('change', paintThemeButton);
 paintThemeButton();
 
 /* ------------------------------------------------------------------- page */
 
-$('host-label').textContent = location.host || 'file://';
 
 const standard = findSpeed('standard');
 const express = findSpeed('express');

@@ -280,16 +280,12 @@ function pageNow() {
 
 /* -------------------------------------------------------------- the page */
 
-el('host-label').textContent = location.host || 'file://';
-
 /* theme */
 
-function systemDark() {
-  return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches;
-}
+// Rivera is light for everyone; the system preference no longer picks the
+// theme, only the switch in the footer does.
 function currentTheme() {
-  const t = document.documentElement.dataset.theme;
-  return t === 'dark' || t === 'light' ? t : systemDark() ? 'dark' : 'light';
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 }
 function paintTheme() {
   const t = currentTheme();
@@ -599,8 +595,8 @@ function renderOrder() {
     '<div class="order' + (arriving ? ' order--new' : '') + '">',
     '  <div class="order__head">',
     '    <div><span class="order__id">' + esc(order.id) + '</span> · ' + esc(order.set) + '</div>',
-    '    <div><span class="status status--' + (st === 'quoted' ? 'wait' : 'ok') + '">' +
-           esc(STATUS_LABEL[st]) + '</span> <span class="order__price num">' + usd(order.quote.total_usd) + '</span></div>',
+    '    <div class="order__meta"><span class="status status--' + (st === 'quoted' ? 'wait' : 'ok') + '">' +
+           esc(STATUS_LABEL[st]) + '</span><span class="order__price num">' + usd(order.quote.total_usd) + '</span></div>',
     '  </div>',
     '  <div class="order__body">',
     '    <ul class="order__spec">',

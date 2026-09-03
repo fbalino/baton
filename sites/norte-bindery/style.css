@@ -8,7 +8,8 @@
    Navy is the workshop's colour, so navy is what the page opens in for
    everybody: the tokens on :root are the dark ones, and cream is the second
    theme the button switches to. No prefers-color-scheme block — the identity
-   is not a system setting.
+   is not a system setting. The switch itself rides at the end of the footer
+   line: it is the reader's preference, not part of the workshop's brand.
 
    The main column is one screen, not a scroll: a bleeding hero, a step strip,
    one panel at a time, a footer. No left accent borders anywhere: structure is
@@ -64,7 +65,7 @@ html { scrollbar-gutter: stable; }
   /* Geometry the shell reads. */
   --side-bg: var(--sunk);
   --side-pad: 16px;
-  --side-gap: 11px;
+  --side-gap: 9px;
   --main-pad-y: clamp(28px, 2.2vw, 40px);
 
   /* How far the hero reaches past the main column's padding. */
@@ -210,7 +211,7 @@ h1, h2, h3 { text-wrap: balance; }
   font-weight: 500;
   font-size: clamp(36px, 2.8vw, 52px);
   line-height: 1.02;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.05em;
   margin: 0;
   color: var(--cream-ink);
   font-optical-sizing: auto;
@@ -247,6 +248,45 @@ h1, h2, h3 { text-wrap: balance; }
 .hero__facts:empty { display: none; }
 
 .hero__cta { margin-top: 18px; }
+
+/* --------------------------------------------------- fitting 340px of side */
+
+/* At 340px the column has to hold the mission, twelve tool names and the
+   confirm card inside one 1080px screen, and it runs about twenty pixels long.
+   The air comes out of the figures grid and the confirm card, which have the
+   most of it; the tool names and the brand block are left alone. Each rule
+   needs one class more than the panel's own, because style.css is linked
+   before baton-panel.css. */
+
+.side .baton .baton__facts { margin: 7px 0 8px; }
+.side .baton .baton__facts .fact { padding: 4px 10px 5px; }
+.side .confirm { padding-top: 9px; padding-bottom: 9px; }
+
+/* ------------------------------------------------ the switch in the footer */
+
+/* A hairline pill at the end of "Norte Bindery · Montevideo". Its box is
+   shorter than the footer's own line box, so the footer keeps its height
+   whether the switch is there or not. */
+.foot__theme {
+  margin-left: 12px;
+  vertical-align: baseline;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  color: color-mix(in srgb, var(--gold-ink) 72%, var(--muted));
+  background: transparent;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  padding: 2px 9px;
+  cursor: pointer;
+  transition:
+    color 160ms var(--ease),
+    border-color 160ms var(--ease),
+    transform 160ms var(--ease);
+}
+.foot__theme:active { transform: scale(0.97); }
+.foot__theme:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 /* ------------------------------------------------------------- the buttons */
 
@@ -540,6 +580,10 @@ h1, h2, h3 { text-wrap: balance; }
   .main .btn--primary:hover { background: var(--burgundy-hover); border-color: var(--burgundy-hover); }
   .main .step:hover:not(:disabled) { color: var(--ink); }
   .main .step:hover:not(:disabled) .step__icon { color: var(--gold); }
+  .foot__theme:hover {
+    color: var(--gold-ink);
+    border-color: color-mix(in srgb, var(--gold) 40%, var(--line));
+  }
 }
 
 /* ------------------------------------------------------------ responsive */
@@ -593,7 +637,9 @@ h1, h2, h3 { text-wrap: balance; }
 @media (prefers-reduced-motion: reduce) {
   .main .step,
   .main .btn,
+  .foot__theme,
   .main .step__icon { transition-property: color, border-color, background-color; }
   .main .step:active:not(:disabled),
+  .foot__theme:active,
   .main .btn:active:not(:disabled) { transform: none; }
 }

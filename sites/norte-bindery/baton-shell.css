@@ -49,7 +49,7 @@
 
   :root {
     /* Geometry a site may tune. */
-    --side-width: 400px;
+    --side-width: 340px;
     --side-pad: 18px;
     --side-gap: 13px;
     --side-bg: var(--baton-card);
@@ -65,9 +65,9 @@
        custom property, so it is written out below rather than tokenised. */
   }
 
-  /* Below 1400 the sidebar gives 20px back to the page. */
+  /* Below 1400 the sidebar gives 10px back to the page. */
   @media (max-width: 1399.98px) {
-    :root { --side-width: 380px; }
+    :root { --side-width: 330px; }
   }
 
   html { scrollbar-gutter: stable; }

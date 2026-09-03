@@ -94,32 +94,6 @@ html { scrollbar-gutter: stable; }
   --bad: #E8776C;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-
-    --paper: #12162B;
-    --card: #1A1F3A;
-    --sunk: #0E1224;
-    --ink: #F5EFE8;
-    --ink-soft: #C9C4CF;
-    --muted: #8F94A8;
-    --line: #2A3052;
-    --line-soft: #232848;
-
-    --red: #FF5A45;
-    --red-hover: #FF7361;
-    --on-red: #1A0D0A;
-    --red-wash: #3A1A15;
-
-    --yellow: #F5C243;
-
-    --ok: #4FBE80;
-    --warn: #D9B25C;
-    --bad: #E8776C;
-  }
-}
-
 /* ------------------------------------------------------------------- base */
 
 * { box-sizing: border-box; }
@@ -178,18 +152,66 @@ h1, h2, h3 { text-wrap: balance; }
   color: color-mix(in srgb, var(--on-red) 80%, transparent);
 }
 
-.shell .side__row { margin-top: 2px; }
 
-.shell .side__host {
-  color: color-mix(in srgb, var(--on-red) 82%, transparent);
-  border-color: color-mix(in srgb, var(--on-red) 42%, transparent);
+/* ------------------------------------------------------- the footer line
+
+   The theme switch rides at the end of the single footer line. It used to sit
+   on the red band, where it took attention from the wordmark and cost the
+   sidebar a row it now needs for the tools. */
+
+.main .foot__line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.shell .side__theme {
-  color: var(--on-red);
-  border-color: color-mix(in srgb, var(--on-red) 48%, transparent);
+.main .foot__theme {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--muted);
   background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition:
+    color 160ms var(--ease),
+    border-color 160ms var(--ease),
+    transform 160ms var(--ease);
 }
+.main .foot__theme:active { transform: scale(0.97); }
+.main .foot__theme:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+
+/* -------------------------------------------------- sidebar density
+
+   Ruta has the longest tool names of the three sites, so in a 340px column the
+   twelve of them wrap onto seven rows. With the mission aboard and a confirm
+   card up that came to 1129px against a 1080px screen, so the column is set
+   tighter here than the library default. Only space changes: every type size,
+   face and colour stays where the library put it. baton-panel.css and
+   baton-shell.css load after this file, so each rule has to out-specify them. */
+
+.shell .side { gap: 10px; padding-bottom: 12px; }
+.shell .side__mission,
+.shell .side__tools { padding-top: 10px; }
+
+/* Twelve names over seven rows: the row rhythm is where the height is. */
+.side .tools__list { row-gap: 1px; }
+.side .tool { line-height: 1.42; }
+.side .tool:not(:last-child)::after { margin: 0 4px; }
+.side .tools__count { margin-bottom: 5px; }
+
+/* The facts grid is the tallest block in the column. The numbers keep their
+   size and their mono face, which is real data and earns it. */
+.side .baton__facts { margin: 8px 0; }
+.side .baton .baton__facts .fact { padding: 4px 10px 5px; }
+.side .baton .baton__facts dd { margin-top: 2px; }
+
+/* Three leg rows, one of them carrying this stop's brief. Two pixels each. */
+.side .leg { padding: 5px 10px; }
 
 /* ---------------------------------------------------------------- banner */
 
@@ -700,7 +722,7 @@ tr.row--new { animation: row-in 200ms var(--ease); }
   .btn--primary:hover:not(:disabled) { background: var(--red-hover); border-color: var(--red-hover); }
   .main .step:hover:not(:disabled) .step__label { color: var(--ink); }
   .main .step:hover:not([aria-current="step"]):not([data-done]) .step__disc { border-color: var(--muted); }
-  .shell .side__theme:hover { border-color: var(--on-red); }
+  .foot__theme:hover { color: var(--ink); border-color: var(--muted); }
 }
 
 /* ------------------------------------------------------------ responsive */
@@ -769,6 +791,8 @@ tr.row--new { animation: row-in 200ms var(--ease); }
   .btn,
   .main .step,
   .main .step__disc { transition-property: background-color, border-color, color; }
+  .main .foot__theme { transition-property: color, border-color; }
   .btn:active:not(:disabled),
+  .main .foot__theme:active,
   .main .step:active:not(:disabled) { transform: none; }
 }
