@@ -8,16 +8,17 @@
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap">
 <link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./baton-panel.css">
 <link rel="stylesheet" href="./baton-shell.css">
 <script>
-  // Set the theme before first paint so a dark reader never sees a white flash.
+  // Set the theme before first paint so a reader never sees the wrong flash.
+  // Navy is the default, so only a stored 'light' changes anything.
   try {
     var t = localStorage.getItem('norte.theme');
     if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
-  } catch (e) { /* private mode: follow the system setting */ }
+  } catch (e) { /* private mode: the navy default stands */ }
 </script>
 </head>
 <body>
@@ -27,10 +28,10 @@
 
     <div class="side__brand">
       <a class="side__name" href="./">Norte Bindery</a>
-      <p class="side__place">Hand binding for printers and small presses.</p>
+      <p class="side__place">Hand binding &middot; Montevideo</p>
       <div class="side__row">
         <span class="side__host" id="host-label">&mdash;</span>
-        <button type="button" class="side__theme" id="theme-toggle">Dark</button>
+        <button type="button" class="side__theme" id="theme-toggle">Light</button>
       </div>
     </div>
 
@@ -38,77 +39,57 @@
 
     <section id="site-tools" class="side__tools"></section>
 
-    <details class="side__agent">
-      <summary class="side__heading">For your agent</summary>
-      <p class="side__note">
-        On an ordinary visit this page hands your agent two tools. Bring a baton that already
-        carries a signed print leg and the quoting, diary and booking tools appear with it.
-      </p>
-      <ul class="prompts">
-        <li class="prompt">
-          <span class="prompt__text">Quote a coptic binding with a cloth board for the baton I am carrying, check it against the budget, then hold the first free bench day.</span>
-          <button type="button" class="prompt__copy">Copy</button>
-        </li>
-        <li class="prompt">
-          <span class="prompt__text">Compare the three bindings at this copy count and say which one leaves the most money for the courier.</span>
-          <button type="button" class="prompt__copy">Copy</button>
-        </li>
-      </ul>
-    </details>
-
   </aside>
 
   <main class="main">
 
     <div class="banner" id="no-webmcp" hidden>
-      <b>This browser has no WebMCP.</b>
-      The page still works as a website, but it cannot hand tools to an agent. Two browsers can
-      today: the ChatGPT desktop app's built-in browser, and Chrome 149 or newer with
-      <code>chrome://flags/#enable-webmcp-testing</code> turned on.
+      This browser has no WebMCP, so the agent cannot use the page&rsquo;s tools. Everything still
+      works by hand.
     </div>
 
-    <div class="lede">
-      <img class="lede__img" src="./assets/generated/bindery-hero.webp" width="1600" height="1067"
-           alt="A sewn text block clamped in a wooden finishing press, with bookcloth and grey board on the bench beside it."
-           onerror="this.remove()">
-      <div class="lede__text">
-        <h1>Norte Bindery sews and cases in books that other people print.</h1>
-        <p class="lede__facts" id="facts"></p>
+    <header class="hero">
+      <img class="hero__img" src="./assets/generated/bindery-hero.webp" width="1600" height="1067"
+           alt="A hand pulling linen thread through the sewn spine of an old text block on the bench."
+           decoding="async" onerror="this.remove()">
+      <div class="hero__card">
+        <h1 class="hero__title">Books deserve a longer life.</h1>
+        <p class="hero__rule" aria-hidden="true">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor"
+               stroke-width="1.1" stroke-linecap="round" focusable="false">
+            <path d="M8 1.6v12.8M2.5 4.8l11 6.4M13.5 4.8l-11 6.4"/>
+          </svg>
+          <span class="hero__rule-line"></span>
+        </p>
+        <p class="hero__sub">Hand binding, repair and editions made with patience.</p>
+        <p class="hero__facts" id="facts"></p>
+        <button type="button" class="btn btn--primary hero__cta" id="hero-cta">Bring us a book</button>
       </div>
-    </div>
+    </header>
 
     <nav class="steps" aria-label="Steps">
-      <button type="button" class="step" data-step="1" aria-current="step">1<span>Bindings and covers</span></button>
-      <button type="button" class="step" data-step="2">2<span>Bench day</span></button>
-      <button type="button" class="step" data-step="3">3<span>Leg</span></button>
+      <button type="button" class="step" data-step="1" aria-current="step"><svg class="step__icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4.5" y="3.5" width="15" height="17" rx="1.5"/><path d="M8 3.5v17"/></svg><b class="step__n">1</b><span>Bindings and covers</span></button>
+      <button type="button" class="step" data-step="2"><svg class="step__icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.6 17.4 18 6"/><path d="m3.8 20.2 2.8-2.8"/><circle cx="18.8" cy="5.2" r="1.5"/><path d="M17.2 4.1c-2.4-1-5 0-5 2 0 1.9 3 2.2 3 4 0 1.6-1.9 2.5-3.6 1.9"/></svg><b class="step__n">2</b><span>Bench day</span></button>
+      <button type="button" class="step" data-step="3"><svg class="step__icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5.6v13.8"/><path d="M12 5.6 4.2 7.6v11.6l7.8-1.8"/><path d="m12 5.6 7.8 2v11.6L12 17.4"/></svg><b class="step__n">3</b><span>Leg</span></button>
     </nav>
 
     <section class="panel" data-step="1" aria-label="Bindings and covers">
-      <div class="pair">
-        <div class="pair__col">
-          <h2 class="pair__head">Bindings</h2>
-          <table class="catalog">
-            <thead><tr><th scope="col">Style</th><th scope="col">How it is made</th><th scope="col" class="num">Per copy</th></tr></thead>
-            <tbody id="bindings"></tbody>
-          </table>
-        </div>
-        <div class="pair__col">
-          <h2 class="pair__head">Covers</h2>
-          <table class="catalog">
-            <thead><tr><th scope="col">Cover</th><th scope="col">How it is made</th><th scope="col" class="num">Per copy</th></tr></thead>
-            <tbody id="covers"></tbody>
-          </table>
+      <div class="grid">
+        <section class="group">
+          <h2 class="group__head">Bindings</h2>
+          <ul class="cards" id="bindings"></ul>
+        </section>
+        <section class="group group--split">
+          <h2 class="group__head">Covers</h2>
+          <ul class="cards cards--two" id="covers"></ul>
           <p class="fineprint">A quote is one binding plus one cover, times the copies on the baton.</p>
-        </div>
+        </section>
       </div>
       <div class="quote" id="quote-now" hidden></div>
     </section>
 
     <section class="panel" data-step="2" aria-label="Bench day" hidden>
-      <p class="panel__intro">
-        Three weeks ahead, two benches a day, closed Sundays. When a day is taken we name the
-        closest free ones instead of moving your booking.
-      </p>
+      <p class="panel__intro">Two benches a day, three weeks ahead, closed Sundays.</p>
       <ol class="diary" id="bench-diary"></ol>
       <ul class="key">
         <li><span class="dot dot--free"></span>Both benches free</li>
@@ -119,6 +100,7 @@
     </section>
 
     <section class="panel" data-step="3" aria-label="Leg" hidden>
+      <h2 class="group__head">The binding leg</h2>
       <dl class="sheet" id="leg-sheet"></dl>
       <p class="sheet__note" id="leg-note"></p>
     </section>
@@ -135,14 +117,10 @@
           <li>Binding legs only. We do not print and we do not deliver.</li>
           <li>The mission has to carry a signed print leg before we will quote.</li>
           <li>Ten copies minimum, five hundred maximum per booking.</li>
-          <li>A bench day is held against a quoted job, not against an empty date.</li>
+          <li>A bench day is held against a quoted job, not an empty date.</li>
         </ul>
-        <p>What we do with a baton: we read the copy count off the print leg, price the binding
-        against it, check the total against the money left, and sign our leg with our own key. The
-        printer's signature stays on the baton beside ours, and the courier can check both.</p>
       </details>
-      <p>Norte Bindery is a fictional workshop built for the Baton demo. The prices are invented.
-      The signatures are real.</p>
+      <p>Norte Bindery &middot; Montevideo</p>
     </footer>
 
   </main>

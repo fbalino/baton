@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rivera Press — fine-art print co-op, Montevideo</title>
-<meta name="description" content="A twelve-member print co-op in Montevideo. Editioned pigment prints on four papers, proofed before the press and scheduled by the day.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%239C2A21'/%3E%3Cpath d='M9 23V9h7.6c2.9 0 4.6 1.6 4.6 4.1 0 2-1.1 3.4-3 3.9L23 23h-3.4l-3.5-5.4h-3V23H9zm3.1-7.9h4c1.4 0 2.2-.7 2.2-1.9s-.8-1.9-2.2-1.9h-4v3.8z' fill='%23F6EFE4'/%3E%3C/svg%3E">
+<title>Rivera Press — fine-art printing, Montevideo</title>
+<meta name="description" content="Archival pigment prints and artist editions from Montevideo. Six sets, four papers, three sizes, proofed before the press and scheduled by the day.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%238C2321'/%3E%3Cpath d='M9 23V9h7.6c2.9 0 4.6 1.6 4.6 4.1 0 2-1.1 3.4-3 3.9L23 23h-3.4l-3.5-5.4h-3V23H9zm3.1-7.9h4c1.4 0 2.2-.7 2.2-1.9s-.8-1.9-2.2-1.9h-4v3.8z' fill='%23FBF5EE'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap">
 <link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./baton-panel.css">
 <link rel="stylesheet" href="./baton-shell.css">
@@ -30,7 +30,7 @@
 
     <div class="side__brand">
       <a class="side__name" href="./">Rivera Press</a>
-      <p class="side__place">Fine-art print co-op · Montevideo</p>
+      <p class="side__place">Fine-art printing · Montevideo</p>
       <div class="side__row">
         <span class="side__host" id="host-label" title="This site's origin">—</span>
         <button type="button" class="side__theme" id="theme-toggle" aria-pressed="false">
@@ -43,52 +43,44 @@
 
     <section id="site-tools" class="side__tools" aria-label="Site tools"></section>
 
-    <details class="side__agent">
-      <summary class="side__heading">For your agent</summary>
-      <p class="side__note">
-        If your browser has WebMCP, your agent can use the same tools we use behind the counter: the
-        catalogue, the quote, the order and its proof, and the press calendar. Tell it what you want
-        printed and it comes back with a price and a press day.
-      </p>
-      <ul class="prompts" id="prompts"></ul>
-    </details>
-
   </aside>
 
   <main class="main" id="main" tabindex="-1">
 
-    <div class="banner" id="no-webmcp" hidden>
-      <b>This browser has no WebMCP.</b>
-      Everything here still works by hand. An agent gets the tools in the ChatGPT desktop browser,
-      or in Chrome 149 and newer with <code>chrome://flags/#enable-webmcp-testing</code> turned on.
-    </div>
-
     <section class="hero">
-      <div class="hero__frame print" id="hero-frame">
+      <div class="hero__text">
+        <h1>Fine art printing, made to hold.</h1>
+        <p class="hero__sub">Archival pigment prints and artist editions from Montevideo.</p>
+        <button type="button" class="btn btn--primary hero__cta" id="start-project">Start a project</button>
+      </div>
+      <div class="hero__frame" id="hero-frame">
         <img class="print__img hero__img" id="hero-image"
              src="./assets/generated/press-hero.webp"
              width="1600" height="1067" decoding="async"
-             data-set="cerro_signals"
-             alt="The Rivera Press press room: two pigment presses and drying racks of prints.">
-      </div>
-      <div class="hero__text">
-        <h1>We print editions to order on two pigment presses in Ciudad Vieja.</h1>
-        <p class="hero__facts">Twelve printers off Calle Piedras · Presses run Tuesday to Saturday · Four papers, three sizes · Runs to 400 sheets</p>
+             alt="Hands lifting a printed sheet off the press bed at Rivera Press.">
       </div>
     </section>
 
     <nav class="steps" aria-label="Steps">
-      <button class="step" data-step="1" aria-current="step">1<span>Choose a set</span></button>
-      <button class="step" data-step="2">2<span>Specification and quote</span></button>
-      <button class="step" data-step="3">3<span>Proof and press day</span></button>
-      <button class="step" data-step="4">4<span>Order</span></button>
+      <button class="step" data-step="1" aria-current="step">
+        <span class="step__mark" aria-hidden="true"><svg class="step__icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r=".95" fill="currentColor" stroke="none"/><circle cx="12" cy="6.5" r=".95" fill="currentColor" stroke="none"/><circle cx="17.5" cy="6.5" r=".95" fill="currentColor" stroke="none"/><circle cx="6.5" cy="12" r=".95" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r=".95" fill="currentColor" stroke="none"/><circle cx="17.5" cy="12" r=".95" fill="currentColor" stroke="none"/><circle cx="6.5" cy="17.5" r=".95" fill="currentColor" stroke="none"/><circle cx="12" cy="17.5" r=".95" fill="currentColor" stroke="none"/><circle cx="17.5" cy="17.5" r=".95" fill="currentColor" stroke="none"/></svg></span><span class="step__n">1</span><span class="step__label">Choose a set</span>
+      </button>
+      <button class="step" data-step="2">
+        <span class="step__mark" aria-hidden="true"><svg class="step__icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4.25" y="4.25" width="12" height="9.5" rx="1.4"/><path d="M8.25 16.75H18a1.4 1.4 0 0 0 1.4-1.4V7.6"/><path d="M7.5 19.75H17"/></svg></span><span class="step__n">2</span><span class="step__label">Specification and quote</span>
+      </button>
+      <button class="step" data-step="3">
+        <span class="step__mark" aria-hidden="true"><svg class="step__icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18.4 10.6V5.6A1.6 1.6 0 0 0 16.8 4H7.2a1.6 1.6 0 0 0-1.6 1.6v12.8A1.6 1.6 0 0 0 7.2 20h3.6"/><path d="M9 8.4h6M9 11.9h4"/><path d="m13.6 17.1 2.2 2.2 3.8-3.9"/></svg></span><span class="step__n">3</span><span class="step__label">Proof and press day</span>
+      </button>
+      <button class="step" data-step="4">
+        <span class="step__mark" aria-hidden="true"><svg class="step__icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 8.3 12 4.6l7.4 3.7v7.4L12 19.4l-7.4-3.7z"/><path d="M4.6 8.3 12 12l7.4-3.7M12 12v7.4"/></svg></span><span class="step__n">4</span><span class="step__label">Order</span>
+      </button>
     </nav>
 
+    <div class="banner" id="no-webmcp" hidden>
+      This browser has no WebMCP, so the agent cannot use the page's tools. Everything still works by hand.
+    </div>
+
     <section class="panel" data-step="1" aria-label="Choose a set">
-      <div class="panel__head">
-        <h2>The six sets</h2>
-        <p class="panel__sub">Printed to order from the original files. Editions are counted across all sizes.</p>
-      </div>
       <div class="filterbar" id="set-filter" hidden>
         <span id="set-filter-text">Showing every set.</span>
         <button type="button" class="link" id="set-filter-clear">Show all six</button>
@@ -99,7 +91,6 @@
     <section class="panel" data-step="2" aria-label="Specification and quote" hidden>
       <div class="panel__head">
         <h2>Specification and quote</h2>
-        <p class="panel__sub">The price shown here is the price the tools quote.</p>
       </div>
 
       <div class="builder">
@@ -151,7 +142,7 @@
     <section class="panel" data-step="3" aria-label="Proof and press day" hidden>
       <div class="panel__head">
         <h2>Proof and press day</h2>
-        <p class="panel__sub">A press day cannot be held until the proof is approved. Sunday and Monday the bays are cold.</p>
+        <p class="panel__sub">A press day is held once the proof is approved.</p>
       </div>
 
       <div class="stage">
@@ -172,7 +163,6 @@
     <section class="panel" data-step="4" aria-label="Order" hidden>
       <div class="panel__head">
         <h2>Order</h2>
-        <p class="panel__sub">Where the print leg stands, and the numbers behind it.</p>
       </div>
 
       <div id="order-card"></div>
@@ -215,7 +205,7 @@
           <li>A held slot is released if the leg is not signed within 48 hours.</li>
         </ul>
       </details>
-      <p>Rivera Press is a fictional co-op built for the Baton demo. Twelve printers, Ciudad Vieja, Montevideo. The prints and the press room are generated images.</p>
+      <p>Rivera Press · Ciudad Vieja, Montevideo</p>
     </footer>
 
   </main>

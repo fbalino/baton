@@ -5,46 +5,76 @@
    the tools list. This file hands both of them the workshop's colours and type
    through --baton-* / --font-*, and then styles the business in .main.
 
-   The main column is one screen, not a scroll: a compact hero row, a step bar,
+   Navy is the workshop's colour, so navy is what the page opens in for
+   everybody: the tokens on :root are the dark ones, and cream is the second
+   theme the button switches to. No prefers-color-scheme block — the identity
+   is not a system setting.
+
+   The main column is one screen, not a scroll: a bleeding hero, a step strip,
    one panel at a time, a footer. No left accent borders anywhere: structure is
    hairlines and surface tone. */
 
 html { scrollbar-gutter: stable; }
 
-/* ------------------------------------------------------------------ light */
+/* ------------------------------------------------------------ navy (default) */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --paper: #f3f1ec;         /* the page */
-  --card: #ffffff;          /* raised: panels and the sidebar */
-  --sunk: #ece9e2;          /* recessed: quiet rows, prompt cards */
-  --ink: #191b21;
-  --ink-soft: #474c58;
-  --muted: #6c7180;
-  --line: #dbd8d0;
-  --line-soft: #e9e6df;
+  --paper: #0F1D33;         /* the page */
+  --card: #142541;          /* raised: panels, cards, day tiles */
+  --sunk: #0B1729;          /* recessed: the sidebar, taken days */
+  --ink: #F1EADC;           /* cream */
+  --ink-soft: #CFC7B6;
+  --muted: #98A0B0;
+  --line: color-mix(in srgb, #C9A24A 26%, #24365A);
+  --line-soft: #1C2D4C;
 
-  --accent: #2b4a86;        /* bookcloth blue */
-  --accent-hover: #223c6f;
-  --accent-on: #ffffff;
-  --accent-wash: #e7edf8;
-  --board: #8b8d86;         /* greyboard */
+  --gold: #C9A24A;
+  --gold-ink: #C9A24A;      /* gold that still reads as small text */
+  --gold-wash: color-mix(in srgb, #C9A24A 16%, #142541);
 
-  --ok: #1c6a3f;
-  --warn: #85610f;
-  --bad: #a52a20;
+  --accent: var(--gold);
+  --accent-on: #0F1D33;
+
+  --burgundy: #5E1F2E;
+  --burgundy-hover: #6E2536;
+  --burgundy-ink: #F1EADC;
+
+  --ok: #6FCF97;
+  --warn: #E2B85C;
+  --bad: #E8776C;
+
+  /* The cream plate: the hero card and the quote card are cream in both
+     themes, so their colours do not flip with the rest of the page. */
+  --cream: #F1EADC;
+  --cream-ink: #14213A;
+  --cream-ink-soft: #3E4A63;
+  --cream-muted: #6E7688;
+  --cream-line: #D9CFB8;
+  --cream-gold: #A8842F;
 
   --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --font-display: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-display: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
 
-  --radius: 10px;
+  --radius: 3px;
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
 
-  /* What the shell and the panel read. */
-  --baton-accent: var(--accent);
+  /* Geometry the shell reads. */
+  --side-bg: var(--sunk);
+  --side-pad: 16px;
+  --side-gap: 11px;
+  --main-pad-y: clamp(28px, 2.2vw, 40px);
+
+  /* How far the hero reaches past the main column's padding. */
+  --bleed-x: var(--main-pad-x);
+  --bleed-y: var(--main-pad-y);
+
+  /* What the shell and the mission panel read. */
+  --baton-accent: var(--gold);
   --baton-ink: var(--ink);
-  --baton-paper: var(--sunk);
+  --baton-paper: var(--card);
   --baton-line: var(--line);
   --baton-muted: var(--muted);
   --baton-card: var(--card);
@@ -55,54 +85,29 @@ html { scrollbar-gutter: stable; }
   --baton-radius: var(--radius);
 }
 
-/* ------------------------------------------------------------------- dark */
+/* ------------------------------------------------------------------- cream */
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
+:root[data-theme="light"] {
+  color-scheme: light;
 
-  --paper: #14161b;
-  --card: #1b1e25;
-  --sunk: #22262e;
-  --ink: #e9eaef;
-  --ink-soft: #b4b9c4;
-  --muted: #8b929f;
-  --line: #2d313b;
-  --line-soft: #24272f;
+  --paper: #F1EADC;
+  --card: #FAF6EC;
+  --sunk: #E7DFCC;
+  --ink: #14213A;
+  --ink-soft: #3E4A63;
+  --muted: #6E7688;
+  --line: #D9CFB8;
+  --line-soft: #E6DECB;
 
-  --accent: #8fadde;
-  --accent-hover: #a7c0ea;
-  --accent-on: #101319;
-  --accent-wash: #1f2839;
-  --board: #757a86;
+  --gold: #A8842F;
+  --gold-ink: #7A5F1E;
+  --gold-wash: color-mix(in srgb, #A8842F 14%, #FAF6EC);
 
-  --ok: #57b981;
-  --warn: #d3a53c;
-  --bad: #e8776c;
-}
+  --accent-on: #FFFFFF;
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-
-    --paper: #14161b;
-    --card: #1b1e25;
-    --sunk: #22262e;
-    --ink: #e9eaef;
-    --ink-soft: #b4b9c4;
-    --muted: #8b929f;
-    --line: #2d313b;
-    --line-soft: #24272f;
-
-    --accent: #8fadde;
-    --accent-hover: #a7c0ea;
-    --accent-on: #101319;
-    --accent-wash: #1f2839;
-    --board: #757a86;
-
-    --ok: #57b981;
-    --warn: #d3a53c;
-    --bad: #e8776c;
-  }
+  --ok: #1C6A3F;
+  --warn: #85610F;
+  --bad: #A52A20;
 }
 
 /* ------------------------------------------------------------------- base */
@@ -119,13 +124,29 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-a { color: var(--accent); }
+a { color: var(--gold-ink); }
 code { font-family: var(--font-mono); font-size: 0.9em; }
 .muted { color: var(--muted); }
 
 h1, h2, h3 { text-wrap: balance; }
 
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 3px; }
+
+/* ---------------------------------------------------------------- sidebar */
+
+.shell .side__name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+}
+/* The place line is a <p>, and the shell's margin reset only reaches the
+   sidebar's own children, so it arrives with 25px of user-agent margin. */
+.shell .side__place { margin: 0; color: var(--muted); font-size: 12.5px; }
+.shell .side__brand { gap: 7px; }
 
 /* ---------------------------------------------------------------- banner */
 
@@ -133,84 +154,276 @@ h1, h2, h3 { text-wrap: balance; }
   border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line));
   background: var(--card);
   border-radius: var(--radius);
-  padding: 13px 16px;
-  margin: 0 0 18px;
+  padding: 11px 15px;
+  margin: 0 0 16px;
   color: var(--ink-soft);
   font-size: 14px;
 }
-.banner b { display: block; margin-bottom: 3px; color: var(--ink); }
 
-/* -------------------------------------------------------------- hero row */
+/* ------------------------------------------------------------------- hero */
 
-.lede {
+.hero {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 24px;
-  margin: 0 0 22px;
-}
-.lede__img {
-  flex: none;
-  width: 212px;
-  height: 134px;
-  object-fit: cover;
-  object-position: center;
-  border-radius: var(--radius);
-  border: 1px solid var(--line);
+  height: 334px;
+  overflow: hidden;
   background: var(--sunk);
+  margin: calc(var(--bleed-y) * -1) calc(var(--bleed-x) * -1) 0;
 }
-.lede__text { min-width: 0; }
-.lede h1 {
+.banner:not([hidden]) + .hero { margin-top: 0; }
+
+.hero__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 64% 42%;
+}
+
+/* Darkens towards the left so the cream card sits on tone, not on a photo. */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to right,
+    rgba(11, 23, 41, 0.88) 0%,
+    rgba(11, 23, 41, 0.62) 26%,
+    rgba(11, 23, 41, 0.20) 52%,
+    rgba(11, 23, 41, 0) 74%);
+}
+
+.hero__card {
+  position: relative;
+  z-index: 1;
+  width: min(440px, 100%);
+  background: var(--cream);
+  color: var(--cream-ink);
+  padding: 24px 28px 26px;
+  border-radius: 2px;
+}
+
+.hero__title {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(24px, 2.1vw, 30px);
-  line-height: 1.17;
-  letter-spacing: -0.015em;
+  font-weight: 500;
+  font-size: clamp(36px, 2.8vw, 52px);
+  line-height: 1.02;
+  letter-spacing: -0.005em;
   margin: 0;
-  max-width: 34ch;
+  color: var(--cream-ink);
   font-optical-sizing: auto;
 }
-.lede__facts { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+
+.hero__rule {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 14px 0 0;
+  color: var(--cream-gold);
+}
+.hero__rule-line {
+  display: block;
+  width: 132px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+.hero__sub {
+  margin: 10px 0 0;
+  font-size: 15.5px;
+  line-height: 1.45;
+  color: var(--cream-ink-soft);
+  max-width: 34ch;
+}
+
+.hero__facts {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--cream-muted);
+}
+.hero__facts:empty { display: none; }
+
+.hero__cta { margin-top: 18px; }
+
+/* ------------------------------------------------------------- the buttons */
+
+.main .btn {
+  border-radius: var(--radius);
+  background: var(--card);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.main .btn--primary {
+  background: var(--burgundy);
+  border-color: var(--burgundy);
+  color: var(--burgundy-ink);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* ------------------------------------------------------------- step strip */
+
+.main .steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 16px 0 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.main .step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  /* The number is in the button text for the tests; the eye reads the icon. */
+  font-size: 0;
+  line-height: 0;
+  padding: 10px 12px 12px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 160ms var(--ease), transform 160ms var(--ease);
+}
+.main .step + .step { border-left: 1px solid color-mix(in srgb, var(--gold) 22%, transparent); }
+
+.main .step__n { display: none; }
+
+.main .step__icon {
+  display: block;
+  color: color-mix(in srgb, var(--gold) 46%, transparent);
+  transition: color 160ms var(--ease);
+}
+
+.main .step > span {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.15;
+  letter-spacing: 0.005em;
+  color: inherit;
+}
+
+.main .step[aria-current="step"] { color: var(--ink); }
+.main .step[aria-current="step"] .step__icon { color: var(--gold); }
+.main .step[data-done] { color: var(--ink-soft); }
+.main .step[data-done] .step__icon { color: color-mix(in srgb, var(--gold) 72%, transparent); }
+
+/* The check never changes the strip's height. */
+.main .step[data-done]::after,
+.main .step.is-done::after {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--ok);
+}
+
+.main .step:active:not(:disabled) { transform: scale(0.97); }
+.main .step:focus-visible { outline: 2px solid var(--gold); outline-offset: -3px; border-radius: 3px; }
 
 /* --------------------------------------------------------------- panels */
 
-.panel {
+.main .panel[data-step] {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 16px 18px;
+  min-height: 458px;
 }
-.panel[hidden] { display: none; }
-.panel__intro { margin: 0 0 14px; font-size: 15px; line-height: 1.55; color: var(--ink-soft); max-width: 74ch; }
+.main .panel[data-step][hidden] { display: none; }
 
-.fineprint { margin: 12px 0 0; font-size: 13px; color: var(--muted); max-width: 66ch; }
+.panel__intro { margin: 0 0 12px; font-size: 14px; line-height: 1.5; color: var(--muted); }
 
-/* --------------------------------------------- step 1: the two catalogues */
-
-.pair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  align-items: start;
-}
-.pair__head {
+.group__head {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 17px;
-  letter-spacing: -0.01em;
-  margin: 0 0 8px;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: 0.005em;
+  margin: 0 0 12px;
+  color: var(--ink);
   font-optical-sizing: auto;
 }
 
-table.catalog { width: 100%; border-collapse: collapse; }
-table.catalog th,
-table.catalog td { text-align: left; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
-table.catalog th { font-size: 12.5px; font-weight: 500; color: var(--muted); }
-table.catalog tbody tr:last-child td { border-bottom: 0; }
-table.catalog td.num,
-table.catalog th.num { text-align: right; white-space: nowrap; padding-right: 0; }
-table.catalog td.num { font-family: var(--font-mono); font-size: 13.5px; font-variant-numeric: tabular-nums; }
-table.catalog .name { font-weight: 600; }
-table.catalog .how { color: var(--ink-soft); font-size: 14px; }
+.fineprint { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+/* ------------------------------------------ step 1: the bindings and covers */
+
+.grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 0 26px;
+  align-items: start;
+}
+.group { min-width: 0; }
+.group--split { border-left: 1px solid var(--line-soft); padding-left: 26px; }
+.group--split .fineprint { margin-top: 10px; }
+
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.cards--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.card { min-width: 0; outline: none; }
+.card:focus-visible,
+.card:focus { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 3px; }
+
+.card__frame {
+  aspect-ratio: 4 / 5;
+  max-height: 180px;
+  margin: 0 0 9px;
+  overflow: hidden;
+  background: var(--sunk);
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+}
+.card__img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.card__name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.15;
+  letter-spacing: 0.004em;
+  margin: 0;
+  color: var(--ink);
+  font-optical-sizing: auto;
+}
+.card__how {
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.card__price {
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-ink);
+}
+.card__per { font-family: var(--font-sans); font-size: 12.5px; color: var(--muted); }
 
 /* ------------------------------------------------- the quote on the page */
 
@@ -219,31 +432,35 @@ table.catalog .how { color: var(--ink-soft); font-size: 14px; }
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
-  margin: 18px 0 0;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
+  margin: 14px 0 0;
+  padding: 13px 17px;
+  background: var(--cream);
+  color: var(--cream-ink);
+  border: 1px solid color-mix(in srgb, #14213A 12%, var(--cream));
+  border-radius: 2px;
 }
 .quote[hidden] { display: none; }
 .quote__total {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 27px;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: 0;
+  font-variant-numeric: lining-nums tabular-nums;
   font-optical-sizing: auto;
 }
 .quote__body { flex: 1; min-width: 200px; }
-.quote__line { font-size: 15px; }
-.quote__sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.quote__line { font-size: 15px; line-height: 1.4; }
+.quote__sub { font-size: 13px; color: var(--cream-muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
 .quote__fit {
   font-size: 13px;
   padding: 4px 11px;
   border-radius: 999px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--cream-line);
   white-space: nowrap;
 }
-.quote__fit--ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }
-.quote__fit--bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+.quote__fit--ok { color: #1C6A3F; border-color: color-mix(in srgb, #1C6A3F 40%, var(--cream-line)); }
+.quote__fit--bad { color: #A52A20; border-color: color-mix(in srgb, #A52A20 45%, var(--cream-line)); }
 
 /* --------------------------------------------------- step 2: bench diary */
 
@@ -256,8 +473,8 @@ table.catalog .how { color: var(--ink-soft); font-size: 14px; }
   gap: 6px;
 }
 .day {
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
   padding: 8px 6px 9px;
   text-align: center;
   background: var(--card);
@@ -268,51 +485,83 @@ table.catalog .how { color: var(--ink-soft); font-size: 14px; }
   display: block;
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 19px;
+  font-size: 20px;
   line-height: 1.2;
   margin-top: 2px;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: lining-nums tabular-nums;
   font-optical-sizing: auto;
 }
 .day__state { display: block; font-size: 12px; line-height: 1.3; margin-top: 3px; color: var(--muted); }
 
-.day--free { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
-.day--free .day__state { color: var(--accent); }
-.day--half { background: var(--accent-wash); }
+.day--free { border-color: color-mix(in srgb, var(--gold) 55%, transparent); }
+.day--free .day__state { color: var(--gold-ink); }
+.day--half { background: var(--gold-wash); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.day--half .day__state { color: var(--gold-ink); }
 .day--full { background: var(--sunk); color: var(--muted); }
 .day--full .day__num { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
 .day--closed { background: transparent; border-style: dashed; color: var(--muted); }
-.day--closed .day__num { color: var(--board); }
+.day--closed .day__num { color: var(--muted); }
 
 .key { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 14px 0 0; padding: 0; font-size: 13px; color: var(--ink-soft); }
 .key li { display: flex; align-items: center; gap: 7px; }
-.dot { width: 10px; height: 10px; border-radius: 3px; border: 1px solid var(--line); display: inline-block; flex: none; }
-.dot--free { border-color: var(--accent); background: var(--card); }
-.dot--half { background: var(--accent-wash); border-color: var(--accent); }
+.dot { width: 10px; height: 10px; border-radius: 2px; border: 1px solid var(--line); display: inline-block; flex: none; }
+.dot--free { border-color: var(--gold); background: var(--card); }
+.dot--half { background: var(--gold-wash); border-color: var(--gold); }
 .dot--full { background: var(--sunk); }
 .dot--closed { border-style: dashed; background: transparent; }
 
 /* ------------------------------------------------ step 3: what gets signed */
 
-.sheet { margin: 0; max-width: 680px; }
-.sheet__row { display: flex; gap: 22px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+.sheet { margin: 0; }
+.sheet__row { display: flex; gap: 22px; padding: 10px 0; border-bottom: 1px solid color-mix(in srgb, var(--gold) 18%, var(--line-soft)); }
 .sheet__row:first-child { padding-top: 0; }
 .sheet__row:last-child { border-bottom: 0; }
-.sheet dt { flex: none; width: 130px; color: var(--muted); font-size: 14px; padding-top: 2px; }
-.sheet dd { margin: 0; font-size: 16px; }
-.sheet__note { margin: 16px 0 0; font-size: 14px; color: var(--muted); max-width: 76ch; }
+.sheet dt { flex: none; width: 130px; color: var(--muted); font-size: 14px; padding-top: 3px; }
+.sheet dd { margin: 0; font-size: 16px; color: var(--ink); }
+.sheet__note { margin: 16px 0 0; font-size: 13.5px; color: var(--muted); max-width: 76ch; }
 .sheet__note--signed { color: var(--ok); }
+
+/* The panel has a fixed height so the Back/Next row never moves. Rather than
+   leave the bottom of it empty, the diary and the signed sheet grow into it. */
+@media (min-width: 960px) {
+  .main .panel[data-step="2"],
+  .main .panel[data-step="3"] { display: flex; flex-direction: column; }
+  .main .panel[data-step="2"] .diary { flex: 1; grid-auto-rows: 1fr; align-content: stretch; }
+  .main .panel[data-step="2"] .day { display: flex; flex-direction: column; justify-content: center; }
+  .main .panel[data-step="3"] .sheet { flex: 1; display: flex; flex-direction: column; }
+  .main .panel[data-step="3"] .sheet__row { flex: 1; align-items: center; }
+}
 
 /* ----------------------------------------------------------------- hover */
 
 @media (hover: hover) and (pointer: fine) {
-  a:hover { color: var(--accent-hover); }
+  a:hover { color: var(--gold); }
+  .main .btn:hover { border-color: var(--gold); }
+  .main .btn--primary:hover { background: var(--burgundy-hover); border-color: var(--burgundy-hover); }
+  .main .step:hover:not(:disabled) { color: var(--ink); }
+  .main .step:hover:not(:disabled) .step__icon { color: var(--gold); }
 }
 
 /* ------------------------------------------------------------ responsive */
 
+/* Between the two-column breakpoint and the 1920 camera the covers heading
+   takes a second line, so the panel is taller and the Back/Next row still has
+   to stand still between steps. */
+@media (min-width: 960px) and (max-width: 1599.98px) {
+  .main .panel[data-step] { min-height: 496px; }
+}
+
 @media (max-width: 1279.98px) {
-  .pair { grid-template-columns: 1fr; gap: 22px; }
+  .card__frame { max-height: 150px; }
+}
+
+@media (max-width: 959.98px) {
+  :root { --bleed-x: 20px; --bleed-y: 28px; }
+  .hero { height: 300px; }
+  .grid { grid-template-columns: 1fr; gap: 22px; }
+  .group--split { border-left: 0; padding-left: 0; border-top: 1px solid var(--line-soft); padding-top: 20px; }
+  .main .panel[data-step] { min-height: 0; }
+  .main .steps { margin-top: 20px; }
 }
 
 @media (max-width: 720px) {
@@ -320,15 +569,31 @@ table.catalog .how { color: var(--ink-soft); font-size: 14px; }
 }
 
 @media (max-width: 560px) {
-  .lede { flex-direction: column; align-items: stretch; gap: 16px; }
-  .lede__img { width: 100%; height: 156px; }
-  .panel { padding: 16px; }
+  .hero { height: auto; padding: 150px 0 0; }
+  .hero__card { width: 100%; padding: 20px 20px 22px; }
+  .hero__sub { max-width: none; }
+  .main .step > span { font-size: 14px; }
+  .main .panel[data-step] { padding: 14px; }
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card__frame { max-height: 200px; }
+  .group--split .group__head { flex-direction: column; align-items: flex-start; gap: 5px; }
   .diary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .day__num { font-size: 18px; }
   .sheet__row { gap: 14px; }
   .sheet dt { width: 96px; }
+  .quote { padding: 14px; gap: 12px; }
 }
 
 @media (max-width: 380px) {
   .diary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* -------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .main .step,
+  .main .btn,
+  .main .step__icon { transition-property: color, border-color, background-color; }
+  .main .step:active:not(:disabled),
+  .main .btn:active:not(:disabled) { transform: none; }
 }

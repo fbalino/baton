@@ -345,7 +345,15 @@ if (navNext) navNext.addEventListener('click', () => goToStep(step + 1));
 
 /* one-time content */
 
-wirePrints(el('hero-frame'));
+// The hero is a photograph of the press room, not a print from a set: there is
+// no drawn stand-in for it, so a missing file takes the frame off the page
+// rather than leaving a broken image in the corner of the hero.
+{
+  const heroImg = el('hero-image');
+  const dropHero = () => { const f = el('hero-frame'); if (f) f.hidden = true; };
+  if (heroImg.complete && heroImg.naturalWidth === 0) dropHero();
+  else heroImg.addEventListener('error', dropHero, { once: true });
+}
 
 el('papers-body').innerHTML = PAPERS.map((p) =>
   '<tr><td class="paper__name">' + esc(p.name) + '</td><td class="muted">' + esc(p.character) + '</td>' +
@@ -360,28 +368,12 @@ el('finishes-list').innerHTML = FINISHES.map((f) =>
   '<div class="note">' + esc(f.note) + '</div></li>'
 ).join('');
 
-const PROMPTS = [
-  'Quote 40 prints of Cerro Signals at 20x30 on Photo Rag, open the order and approve the proof.',
-  'Hold the first free press day for that order, then start a mission with a $900 budget for delivery by ' +
-    addDays(todayISO(), 18) + ' and carry it to the bindery.'
-];
-
-el('prompts').innerHTML = PROMPTS.map((p) =>
-  '<li class="prompt"><span class="prompt__text">' + esc(p) + '</span>' +
-  '<button type="button" class="prompt__copy" data-copy="' + esc(p) + '">Copy</button></li>'
-).join('');
-
-el('prompts').addEventListener('click', async (e) => {
-  const btn = e.target.closest('.prompt__copy');
-  if (!btn) return;
-  try {
-    await navigator.clipboard.writeText(btn.dataset.copy);
-    btn.textContent = 'Copied';
-    btn.dataset.copied = '';
-  } catch {
-    btn.textContent = 'Select it';
-  }
-  setTimeout(() => { btn.textContent = 'Copy'; delete btn.dataset.copied; }, 1600);
+// The hero button is a real control: it opens step 1 and puts the keyboard on
+// the first set, so the page starts where the work starts.
+el('start-project').addEventListener('click', () => {
+  goToStep(1);
+  const first = el('sets-grid').querySelector('[data-pick]');
+  if (first) first.focus();
 });
 
 /* form skeleton */
@@ -502,9 +494,11 @@ function renderSets() {
       '<article class="setcard' + (state.form.set === s.id ? ' setcard--picked' : '') + '">',
       '  <div class="setcard__art">' + printFrame(s, { className: 'setcard__print' }) + '</div>',
       '  <div class="setcard__body">',
-      '    <div class="setcard__name">' + esc(s.name) + '</div>',
-      '    <div class="setcard__meta">' + s.prints + ' prints · edition of ' + s.edition + ' · set from ' + usd(from.total_usd) + '</div>',
-      '    <button type="button" class="btn btn--small" data-pick="' + s.id + '">Use this set</button>',
+      '    <button type="button" class="setcard__pick" data-pick="' + s.id + '"',
+      '            aria-pressed="' + (state.form.set === s.id ? 'true' : 'false') + '">',
+      '      <span class="setcard__name">' + esc(s.name) + '</span>',
+      '    </button>',
+      '    <div class="setcard__meta">' + s.prints + ' prints · edition of ' + s.edition + ' · from ' + usd(from.total_usd) + '</div>',
       '  </div>',
       '</article>'
     ].join('');

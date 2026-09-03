@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "job_id": "baton-sites-v2",
+  "status": "completed",
+  "manifest": "/Users/fernandobalino/Projects/baton/.orchestrator/image-jobs/baton-sites-v2.md",
+  "manifest_sha256": "a66b92e39b595e0007a37f8ad08f7324292844c7a7f23b35a4d04e7882b2546f",
+  "project_root": "/Users/fernandobalino/Projects/baton",
+  "codex_session_id": "01a0655f-4560-7a02-932e-321c4d85bdad",
+  "outputs": [
+    {
+      "id": "press-hero",
+      "path": "sites/rivera-press/assets/generated/v2/press-hero.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2291641,
+      "format": "png",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "bindery-hero",
+      "path": "sites/norte-bindery/assets/generated/v2/bindery-hero.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2177853,
+      "format": "png",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "courier-hero",
+      "path": "sites/ruta-courier/assets/generated/v2/courier-hero.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2807864,
+      "format": "png",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "set-cerro-signals",
+      "path": "sites/rivera-press/assets/generated/v2/set-cerro-signals.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2107879,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "set-rambla-nocturne",
+      "path": "sites/rivera-press/assets/generated/v2/set-rambla-nocturne.png",
+      "required": true,
+      "exists": true,
+      "bytes": 1826037,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "set-salt-field",
+      "path": "sites/rivera-press/assets/generated/v2/set-salt-field.png",
+      "required": true,
+      "exists": true,
+      "bytes": 1838984,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "set-palermo-grid",
+      "path": "sites/rivera-press/assets/generated/v2/set-palermo-grid.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2277419,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "set-winter-ferry",
+      "path": "sites/rivera-press/assets/generated/v2/set-winter-ferry.png",
+      "required": true,
+      "exists": true,
+      "bytes": 1865804,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "set-marea-baja",
+      "path": "sites/rivera-press/assets/generated/v2/set-marea-baja.png",
+      "required": true,
+      "exists": true,
+      "bytes": 1916730,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "bind-coptic",
+      "path": "sites/norte-bindery/assets/generated/v2/bind-coptic.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2042230,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "bind-japanese-stab",
+      "path": "sites/norte-bindery/assets/generated/v2/bind-japanese-stab.png",
+      "required": true,
+      "exists": true,
+      "bytes": 1749718,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "bind-saddle-folio",
+      "path": "sites/norte-bindery/assets/generated/v2/bind-saddle-folio.png",
+      "required": true,
+      "exists": true,
+      "bytes": 1767911,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "cover-cloth-board",
+      "path": "sites/norte-bindery/assets/generated/v2/cover-cloth-board.png",
+      "required": true,
+      "exists": true,
+      "bytes": 1921589,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    },
+    {
+      "id": "cover-light-card",
+      "path": "sites/norte-bindery/assets/generated/v2/cover-light-card.png",
+      "required": true,
+      "exists": true,
+      "bytes": 1746886,
+      "format": "png",
+      "width": 1024,
+      "height": 1280
+    }
+  ],
+  "worker": {
+    "status": "completed",
+    "provider": "codex",
+    "session_id": "01a0655f-4560-7a02-932e-321c4d85bdad",
+    "auth_mode": "chatgpt",
+    "subscription_first": true,
+    "result": {
+      "status": "completed",
+      "summary": "Generated all 14 declared PNG assets using the built-in image generator. The final prompt set followed the manifest\u2019s per-image prompts, shared visual direction, dimensions, reference roles, integration notes, and exclusions.",
+      "artifacts": [
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/press-hero.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/v2/bindery-hero.png",
+        "/Users/fernandobalino/Projects/baton/sites/ruta-courier/assets/generated/v2/courier-hero.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/set-cerro-signals.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/set-rambla-nocturne.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/set-salt-field.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/set-palermo-grid.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/set-winter-ferry.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/set-marea-baja.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/v2/bind-coptic.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/v2/bind-japanese-stab.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/v2/bind-saddle-folio.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/v2/cover-cloth-board.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/v2/cover-light-card.png"
+      ],
+      "changed_files": [
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/press-hero.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/v2/bindery-hero.png",
+        "/Users/fernandobalino/Projects/baton/sites/ruta-courier/assets/generated/v2/courier-hero.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/set-cerro-signals.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/set-rambla-nocturne.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/set-salt-field.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/set-palermo-grid.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/set-winter-ferry.png",
+        "/Users/fernandobalino/Projects/baton/sites/rivera-press/assets/generated/v2/set-marea-baja.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/v2/bind-coptic.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/v2/bind-japanese-stab.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/v2/bind-saddle-folio.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/v2/cover-cloth-board.png",
+        "/Users/fernandobalino/Projects/baton/sites/norte-bindery/assets/generated/v2/cover-light-card.png"
+      ],
+      "commands_run": [
+        "Validated the manifest SHA-256 and output preconditions",
+        "Opened all nine supplied references before generation",
+        "Generated 14 images with the built-in image-generation capability",
+        "Normalized portrait assets to exactly 1024\u00d71280",
+        "Reopened and visually inspected every final image",
+        "Checked PNG encoding, dimensions, non-empty file sizes, checksums, and manifest immutability"
+      ],
+      "verification": "All files are valid, non-empty RGB PNGs. Heroes are exactly 1536\u00d71024; the 11 cards are exactly 1024\u00d71280. Visual inspection confirmed suitable composition, lighting and materials; recognizable artwork reproduction; clear binding details; and no visible interface overlays, text, logos, labels, watermarks or exposed faces. References used: press-hero\u2014mockup-rivera-press; bindery-hero\u2014mockup-norte-bindery; courier-hero\u2014mockup-ruta-courier; set-cerro-signals\u2014art-cerro-signals; set-rambla-nocturne\u2014art-rambla-nocturne; set-salt-field\u2014art-salt-field; set-palermo-grid\u2014art-palermo-grid; set-winter-ferry\u2014art-winter-ferry; set-marea-baja\u2014art-marea-baja. No reference was specified or used for bind-coptic, bind-japanese-stab, bind-saddle-folio, cover-cloth-board, or cover-light-card. The manifest remains unchanged and still hashes to a66b92e39b595e0007a37f8ad08f7324292844c7a7f23b35a4d04e7882b2546f.",
+      "needs_user": false,
+      "next_action": "None."
+    },
+    "usage": {
+      "input_tokens": 1231006,
+      "cached_input_tokens": 1090944,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 13637,
+      "reasoning_output_tokens": 3234
+    },
+    "event_errors": [
+      "Skill descriptions were shortened to fit the skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest.",
+      "Falling back from WebSockets to HTTPS transport. stream disconnected before completion: websocket closed by server before response.completed"
+    ],
+    "returncode": 0
+  },
+  "created_at": "2026-09-03T03:59:52.584147+00:00"
+}

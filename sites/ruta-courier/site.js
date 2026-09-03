@@ -54,25 +54,34 @@ const sampleWeight = priceDelivery({ speed: standard, zone: ZONES[0], copies: SA
 $('facts').textContent = [
   DEPOT.vans + ' vans and ' + DEPOT.bikes + ' bike',
   ZONES.length + ' zones',
-  SPEEDS.length + ' speeds',
   'parcels to ' + DEPOT.max_parcel_kg + ' kg'
 ].join(' · ');
 
-$('rates').innerHTML = ZONES.map((z) => {
+const days = (n) => n + ' day' + (n === 1 ? '' : 's');
+
+// One card per zone: the name, what it covers, the two prices with express in
+// red, and the cut-off. The first card takes focus when the hero button sends
+// the reader here, so the button is a real control rather than a scroll.
+$('rates').innerHTML = ZONES.map((z, i) => {
   const s = priceDelivery({ speed: standard, zone: z, copies: SAMPLE_COPIES });
   const e = priceDelivery({ speed: express, zone: z, copies: SAMPLE_COPIES });
-  return '<tr>' +
-    '<td class="name">' + z.name + '</td>' +
-    '<td class="covers covers-col">' + z.covers + '</td>' +
-    '<td class="num">' + z.cutoff + '</td>' +
-    '<td class="num price">' + usd(s.cost_usd) + '<br><span class="covers">' + s.transit_days + ' days</span></td>' +
-    '<td class="num price price--express">' + usd(e.cost_usd) + '<br><span class="covers">' + e.transit_days + ' day' + (e.transit_days === 1 ? '' : 's') + '</span></td>' +
-    '</tr>';
+  return '<li class="zone"' + (i === 0 ? ' tabindex="-1"' : '') + '>' +
+    '<h3 class="zone__name">' + z.name + '</h3>' +
+    '<p class="zone__covers">' + z.covers + '</p>' +
+    '<div class="zone__prices">' +
+      '<div class="zone__row"><span class="zone__speed">Standard</span>' +
+        '<span class="zone__price">' + usd(s.cost_usd) + '</span>' +
+        '<span class="zone__days">' + days(s.transit_days) + '</span></div>' +
+      '<div class="zone__row zone__row--express"><span class="zone__speed">Express</span>' +
+        '<span class="zone__price">' + usd(e.cost_usd) + '</span>' +
+        '<span class="zone__days">' + days(e.transit_days) + '</span></div>' +
+    '</div>' +
+    '<p class="zone__cutoff">Cut-off ' + z.cutoff + '</p>' +
+  '</li>';
 }).join('');
 
 $('rates-note').textContent =
-  'Priced for a ' + SAMPLE_COPIES + '-copy parcel, about ' + sampleWeight + ' kg. ' +
-  'A quote against a real baton uses the copy count already signed onto it.';
+  'Priced for a ' + SAMPLE_COPIES + '-copy parcel, about ' + sampleWeight + ' kg.';
 
 function drawWindows(dateISO) {
   const windows = pickupWindows(dateISO);
@@ -92,6 +101,20 @@ function drawWindows(dateISO) {
 const bookedHere = [];
 const arrived = new Set(); // rows that have already played their entrance
 
+// How far along the four checkpoints named in the table head each status is:
+// picked up, in transit, on the way, delivered.
+const STAGES = ['Picked up', 'In transit', 'On the way', 'Delivered'];
+const REACHED = { booked: 0, collected: 1, 'in transit': 2, 'out for delivery': 3, delivered: 4 };
+
+function trackCell(status) {
+  const on = REACHED[status] ?? 0;
+  const dots = STAGES.map((label, i) =>
+    '<span class="track__dot' + (i < on ? ' track__dot--on' : '') + '" title="' + label + '"></span>').join('');
+  return '<td class="track-col"><span class="track" data-on="' + on + '" role="img" aria-label="' +
+    (on ? STAGES.slice(0, on).join(', ') : 'not collected yet') + '">' +
+    '<span class="track__rail"></span><span class="track__fill"></span>' + dots + '</span></td>';
+}
+
 function drawBoard() {
   const today = todayISO();
   const rows = [...bookedHere, ...boardParcels(today)].map((p) => {
@@ -101,6 +124,7 @@ function drawBoard() {
     return '<tr' + (fresh ? ' class="row--new"' : '') + '>' +
       '<td><div class="tid">' + p.tracking_id + '</div>' +
       '<div class="covers">' + p.route + '</div></td>' +
+      trackCell(p.status) +
       '<td><span class="status' + cls + '">' + p.status + '</span></td>' +
       '<td class="num">' + p.delivery_date + '</td>' +
       '</tr>';
@@ -141,6 +165,13 @@ const markFinished = (n) => { finished.add(Number(n)); goToStep(currentStep); };
 for (const b of stepBtns) b.addEventListener('click', () => goToStep(b.dataset.step));
 backBtn.addEventListener('click', () => goToStep(currentStep - 1));
 nextBtn.addEventListener('click', () => goToStep(currentStep + 1));
+
+// The hero button is a control, not a scroll: it opens the rate card and puts
+// the reader on the first zone.
+$('hero-cta').addEventListener('click', () => {
+  goToStep(1);
+  document.querySelector('#rates .zone')?.focus();
+});
 
 /* ---- the agent's tools move the same steps the buttons do ---------------
    Wrapping registerTool means the library's own tools count too: the page
@@ -214,46 +245,6 @@ function drawQuote() {
     '</div>' +
     '<div class="quote__fit quote__fit--' + (q.fits ? 'ok' : 'bad') + '">' +
       (q.fits ? 'fits the money left and the deadline' : 'outside the mission constraints') + '</div>';
-}
-
-/* ------------------------------------------------- copy an example prompt */
-
-function fallbackCopy(text) {
-  const box = document.createElement('textarea');
-  box.value = text;
-  box.setAttribute('readonly', '');
-  box.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
-  document.body.appendChild(box);
-  box.select();
-  let ok = false;
-  try { ok = document.execCommand('copy'); } catch { ok = false; }
-  box.remove();
-  return ok;
-}
-
-async function copyText(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    return fallbackCopy(text);
-  }
-}
-
-for (const btn of document.querySelectorAll('.prompt__copy')) {
-  let restore = 0;
-  btn.addEventListener('click', async () => {
-    const text = btn.closest('.prompt')?.querySelector('.prompt__text')?.textContent.trim() || '';
-    if (!text) return;
-    const ok = await copyText(text);
-    btn.textContent = ok ? 'Copied' : 'Select it';
-    if (ok) btn.dataset.copied = 'yes'; else delete btn.dataset.copied;
-    clearTimeout(restore);
-    restore = setTimeout(() => {
-      btn.textContent = 'Copy';
-      delete btn.dataset.copied;
-    }, 1600);
-  });
 }
 
 /* ------------------------------------------------------------------ baton */
