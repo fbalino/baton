@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "job_id": "baton-courier-logo-v1",
+  "status": "completed",
+  "manifest": "/Users/fernandobalino/Projects/baton/.orchestrator/image-jobs/baton-courier-logo-v1.md",
+  "manifest_sha256": "5afe29f55ed202fa6d606dd228bf9e86b7c9763033b45e6808e8be16c1aba1ab",
+  "project_root": "/Users/fernandobalino/Projects/baton",
+  "codex_session_id": "01a06565-5b28-72d0-a5fe-32ef6f942b3d",
+  "outputs": [
+    {
+      "id": "courier-hero-logo",
+      "path": "sites/ruta-courier/assets/generated/v2/courier-hero-logo.png",
+      "required": true,
+      "exists": true,
+      "bytes": 2839407,
+      "format": "png",
+      "width": 1536,
+      "height": 1024
+    }
+  ],
+  "worker": {
+    "status": "completed",
+    "provider": "codex",
+    "session_id": "01a06565-5b28-72d0-a5fe-32ef6f942b3d",
+    "auth_mode": "chatgpt",
+    "subscription_first": true,
+    "result": {
+      "status": "completed",
+      "summary": "Generated the requested Ruta Courier hero image using the built-in image capability.",
+      "artifacts": [
+        "/Users/fernandobalino/Projects/baton/sites/ruta-courier/assets/generated/v2/courier-hero-logo.png"
+      ],
+      "changed_files": [
+        "/Users/fernandobalino/Projects/baton/sites/ruta-courier/assets/generated/v2/courier-hero-logo.png"
+      ],
+      "commands_run": [
+        "Verified the manifest checksum.",
+        "Inspected both reference images.",
+        "Generated and copied the selected image to the declared path.",
+        "Reopened the final output and checked its file properties."
+      ],
+      "verification": "Opened the final PNG at original resolution. It is 1536\u00d71024 RGB PNG; both wordmarks visibly read RUTA / COURIER with white lettering on the jacket and red lettering on the cargo box; the blank white label is present; both marks remain in the right two-thirds; the rider, bicycle, street, tower, lighting, colors, and framing remain visually consistent; no face, readable licence plate, unrelated text, UI, or watermark is visible. The manifest SHA-256 remains 5afe29f55ed202fa6d606dd228bf9e86b7c9763033b45e6808e8be16c1aba1ab.",
+      "needs_user": false,
+      "next_action": "None."
+    },
+    "usage": {
+      "input_tokens": 276594,
+      "cached_input_tokens": 239488,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2903,
+      "reasoning_output_tokens": 673
+    },
+    "event_errors": [
+      "Skill descriptions were shortened to fit the skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest."
+    ],
+    "returncode": 0
+  },
+  "created_at": "2026-09-03T03:54:31.607678+00:00"
+}

@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ruta Courier — collections and delivery</title>
-<meta name="description" content="Four vans and a bike. Three zones, two speeds, a tracking id at booking. We collect finished work and hand it to whoever ordered it.">
+<title>Ruta Courier — same-day delivery in Montevideo</title>
+<meta name="description" content="Same-day delivery by people who know every corner. Three zones, two speeds, a tracking id at booking.">
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Archivo:wdth,wght@75..125,700..800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Manrope:wght@500;700;800&family=Archivo:ital,wdth,wght@1,75..125,700..800&display=swap">
 <link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./baton-panel.css">
 <link rel="stylesheet" href="./baton-shell.css">
@@ -26,8 +26,8 @@
   <aside class="side" aria-label="Your agent and the mission">
 
     <div class="side__brand">
-      <a class="side__name" href="./">Ruta Courier<span class="spot" aria-hidden="true"></span></a>
-      <p class="side__place">Collections and delivery for printers and binderies.</p>
+      <a class="side__name" href="./">Ruta Courier</a>
+      <p class="side__place">Same-day delivery · Montevideo</p>
       <div class="side__row">
         <span class="side__host" id="host-label">&mdash;</span>
         <button type="button" class="side__theme" id="theme-toggle">Dark</button>
@@ -38,69 +38,54 @@
 
     <section id="site-tools" class="side__tools"></section>
 
-    <details class="side__agent">
-      <summary class="side__heading">For your agent</summary>
-      <p class="side__note">
-        On an ordinary visit this page hands your agent two tools. Bring a baton that already
-        carries a signed print leg and the quoting, window, booking and tracking tools appear
-        with it.
-      </p>
-      <ul class="prompts">
-        <li class="prompt">
-          <span class="prompt__text">Price this baton's last leg standard and express, then book whichever one still lands before the deadline.</span>
-          <button type="button" class="prompt__copy">Copy</button>
-        </li>
-        <li class="prompt">
-          <span class="prompt__text">Book the earliest collection window the day after the bindery finishes and give me the tracking id.</span>
-          <button type="button" class="prompt__copy">Copy</button>
-        </li>
-      </ul>
-    </details>
-
   </aside>
 
   <main class="main">
 
     <div class="banner" id="no-webmcp" hidden>
-      <b>This browser has no WebMCP.</b>
-      The page still works as a website, but it cannot hand tools to an agent. Two browsers can
-      today: the ChatGPT desktop app's built-in browser, and Chrome 149 or newer with
-      <code>chrome://flags/#enable-webmcp-testing</code> turned on.
+      This browser has no WebMCP, so the agent cannot use the page's tools. Everything still works by hand.
     </div>
 
-    <div class="lede">
-      <img class="lede__img" src="./assets/generated/courier-hero.webp" width="1600" height="1067"
-           alt="A small white delivery van parked on a cobbled Montevideo street at dawn, with a parcel on the kerb."
-           onerror="this.remove()">
-      <div class="lede__text">
-        <h1>Ruta Courier collects finished print work and delivers it to whoever ordered it.</h1>
-        <p class="lede__facts" id="facts"></p>
+    <section class="hero" aria-label="Ruta Courier">
+      <div class="hero__text">
+        <h1>Montevideo, on the move<span class="dot">.</span></h1>
+        <p class="hero__sub">Same-day delivery by people who know every corner.</p>
+        <button type="button" class="btn btn--primary hero__cta" id="hero-cta">
+          Get a quote
+          <svg class="hero__arrow" width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <p class="hero__facts" id="facts"></p>
       </div>
+      <img class="hero__img" src="./assets/generated/courier-hero.webp" width="1600" height="1067"
+           decoding="async"
+           alt="A Ruta Courier rider on a cargo bike on a Montevideo avenue in the late afternoon."
+           onerror="this.remove()">
+    </section>
+
+    <div class="route" aria-hidden="true">
+      <span class="route__end"></span>
+      <span class="route__solid"></span>
+      <span class="route__dots"></span>
+      <span class="route__solid"></span>
+      <span class="route__end"></span>
     </div>
 
     <nav class="steps" aria-label="Steps">
-      <button type="button" class="step" data-step="1" aria-current="step">1<span>Zones and rates</span></button>
-      <button type="button" class="step" data-step="2">2<span>Collection</span></button>
-      <button type="button" class="step" data-step="3">3<span>On the road</span></button>
+      <button type="button" class="step" data-step="1" aria-current="step"><span class="step__disc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z"/><circle cx="12" cy="9.8" r="2.6"/></svg></span><i class="step__n">1</i><span class="step__label">Zones and rates</span></button>
+      <button type="button" class="step" data-step="2"><span class="step__disc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.3v5l3.2 1.9"/></svg></span><i class="step__n">2</i><span class="step__label">Collection</span></button>
+      <button type="button" class="step" data-step="3"><span class="step__disc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 6.4h10.9v9.1H2.6z"/><path d="M13.5 9.6h3.7l3.2 3.1v2.8h-6.9z"/><circle cx="7" cy="17.3" r="1.8"/><circle cx="16.6" cy="17.3" r="1.8"/></svg></span><i class="step__n">3</i><span class="step__label">On the road</span></button>
     </nav>
 
     <section class="panel" data-step="1" aria-label="Zones and rates">
       <div class="split">
-        <table class="grid">
-          <thead>
-            <tr>
-              <th scope="col">Zone</th>
-              <th scope="col" class="covers-col">Covers</th>
-              <th scope="col" class="num">Cut-off</th>
-              <th scope="col" class="num">Standard</th>
-              <th scope="col" class="num">Express</th>
-            </tr>
-          </thead>
-          <tbody id="rates"></tbody>
-        </table>
+        <div class="split__main">
+          <ul class="zones" id="rates"></ul>
+          <p class="fineprint" id="rates-note"></p>
+        </div>
         <div class="split__side">
           <div class="quote" id="quote-now" hidden></div>
-          <p class="fineprint" id="rates-note"></p>
         </div>
       </div>
     </section>
@@ -112,16 +97,26 @@
     </section>
 
     <section class="panel" data-step="3" aria-label="On the road" hidden>
-      <table class="grid">
+      <div class="card">
+      <table class="grid board">
         <thead>
           <tr>
             <th scope="col">Parcel</th>
+            <th scope="col" class="track-col">
+              <span class="track track--head">
+                <span class="track__label">Picked up</span>
+                <span class="track__label">In transit</span>
+                <span class="track__label">On the way</span>
+                <span class="track__label">Delivered</span>
+              </span>
+            </th>
             <th scope="col">Status</th>
             <th scope="col" class="num">Due</th>
           </tr>
         </thead>
         <tbody id="board"></tbody>
       </table>
+      </div>
     </section>
 
     <div class="steps__nav">
@@ -138,12 +133,8 @@
           <li>One parcel under 25 kg. Heavier jobs are split and priced per parcel.</li>
           <li>Collection is booked at least one working day ahead. We do not collect on Sundays.</li>
         </ul>
-        <p>What we do with a baton: we read the copy count off the legs already signed and work out
-        the weight, the parcels and the day it lands. We check that against the money left and the
-        deadline, sign our leg with our own key, and hand back a tracking id that outlives the link.</p>
       </details>
-      <p>Ruta Courier is a fictional depot built for the Baton demo. The vans are invented.
-      The signatures are real.</p>
+      <p>Ruta Courier · Montevideo</p>
     </footer>
 
   </main>

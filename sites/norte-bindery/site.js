@@ -23,9 +23,10 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 
 const root = document.documentElement;
 const themeBtn = $('theme-toggle');
-const systemDark = matchMedia('(prefers-color-scheme: dark)');
 
-const activeTheme = () => root.dataset.theme || (systemDark.matches ? 'dark' : 'light');
+// Navy is the workshop's colour, so navy is the page's default for everyone.
+// The switch offers the cream theme and the button names the one it goes to.
+const activeTheme = () => (root.dataset.theme === 'light' ? 'light' : 'dark');
 
 function paintThemeButton() {
   const next = activeTheme() === 'dark' ? 'light' : 'dark';
@@ -39,29 +40,43 @@ themeBtn.addEventListener('click', () => {
   try { localStorage.setItem('norte.theme', next); } catch { /* private mode */ }
   paintThemeButton();
 });
-systemDark.addEventListener('change', paintThemeButton);
 paintThemeButton();
 
 /* ------------------------------------------------------------------- page */
 
 $('host-label').textContent = location.host || 'file://';
 
-$('facts').textContent = [
-  WORKSHOP.benches + ' benches',
-  BINDINGS.length + ' bindings',
-  WORKSHOP.min_quantity + ' to ' + WORKSHOP.max_quantity + ' copies a booking',
-  'working since ' + WORKSHOP.founded
-].join(' · ');
+// The hero subtitle already says what the workshop does, so the facts line
+// under it stays empty and the CSS folds it away.
+$('facts').textContent = '';
 
-$('bindings').innerHTML = BINDINGS.map((b) =>
-  '<tr><td class="name">' + b.name + '</td><td class="how">' + b.notes + '</td>' +
-  '<td class="num">' + usd(b.per_copy) + '</td></tr>'
-).join('');
+// Step 1 is a shelf, not a table: a picture of the binding, its name, how it is
+// made, and what it costs a copy. The five images are not in the tree yet, so
+// each one removes its own frame if it 404s and the card stays text-only.
+const cardHTML = (x) =>
+  '<li class="card" tabindex="-1">' +
+    (x.image
+      ? '<div class="card__frame">' +
+          '<img class="card__img" src="' + x.image + '" width="1000" height="1250" ' +
+          'alt="' + esc(x.name) + '" loading="lazy" decoding="async" ' +
+          'onerror="this.closest(\'.card__frame\').remove()">' +
+        '</div>'
+      : '') +
+    '<h3 class="card__name">' + esc(x.name) + '</h3>' +
+    '<p class="card__how">' + esc(x.notes) + '</p>' +
+    '<p class="card__price">' + usd(x.per_copy) + '<span class="card__per"> a copy</span></p>' +
+  '</li>';
 
-$('covers').innerHTML = COVERS.map((c) =>
-  '<tr><td class="name">' + c.name + '</td><td class="how">' + c.notes + '</td>' +
-  '<td class="num">' + usd(c.per_copy) + '</td></tr>'
-).join('');
+$('bindings').innerHTML = BINDINGS.map(cardHTML).join('');
+$('covers').innerHTML = COVERS.map(cardHTML).join('');
+
+// The hero button is a real control: it opens step 1 and puts the reader on the
+// first binding.
+$('hero-cta').addEventListener('click', () => {
+  goToStep(1);
+  const first = document.querySelector('#bindings .card');
+  if (first) first.focus({ preventScroll: true });
+});
 
 /* ------------------------------------------------------- what this visit did */
 
@@ -239,46 +254,6 @@ function drawLeg() {
   }
 }
 
-/* ------------------------------------------------- copy an example prompt */
-
-function fallbackCopy(text) {
-  const box = document.createElement('textarea');
-  box.value = text;
-  box.setAttribute('readonly', '');
-  box.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
-  document.body.appendChild(box);
-  box.select();
-  let ok = false;
-  try { ok = document.execCommand('copy'); } catch { ok = false; }
-  box.remove();
-  return ok;
-}
-
-async function copyText(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    return fallbackCopy(text);
-  }
-}
-
-for (const btn of document.querySelectorAll('.prompt__copy')) {
-  let restore = 0;
-  btn.addEventListener('click', async () => {
-    const text = btn.closest('.prompt')?.querySelector('.prompt__text')?.textContent.trim() || '';
-    if (!text) return;
-    const ok = await copyText(text);
-    btn.textContent = ok ? 'Copied' : 'Select it';
-    if (ok) btn.dataset.copied = 'yes'; else delete btn.dataset.copied;
-    clearTimeout(restore);
-    restore = setTimeout(() => {
-      btn.textContent = 'Copy';
-      delete btn.dataset.copied;
-    }, 1600);
-  });
-}
-
 /* ------------------------------------------------------------------ baton */
 
 const baton = mountBaton({
@@ -369,8 +344,8 @@ baton.registerWhenMissionAboard((signal, register) => {
     execute: async () => ({
       ok: true,
       currency: 'USD',
-      bindings: BINDINGS,
-      covers: COVERS,
+      bindings: BINDINGS.map(({ image, ...b }) => b),
+      covers: COVERS.map(({ image, ...c }) => c),
       pricing: 'binding per copy + cover per copy, times the copies on the baton',
       next: 'Price one with quote_binding_for_mission, passing a binding and a cover.'
     })

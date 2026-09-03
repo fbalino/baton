@@ -13,3 +13,7 @@ keys/
 # Codex image originals (large PNGs); the sites ship the .webp derivatives
 .orchestrator/image-results/originals/
 .netlify/
+
+# Reference images handed to Codex (mockups and artworks from Downloads)
+.orchestrator/references/
+.orchestrator/image-results/originals-v2/

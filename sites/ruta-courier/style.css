@@ -5,10 +5,14 @@
    the tools list. This file hands both of them the depot's colours and type
    through --baton-* / --font-*, and then styles the business in .main.
 
-   The main column is one screen, not a scroll: a compact hero row, a step bar,
-   one panel at a time, a footer. High contrast, and one orange that only ever
-   marks something: express, an open window, a parcel on the road. No left
-   accent borders anywhere. */
+   Peach page, white cards, navy type, one red. Red is the only colour that
+   means something: the brand bar, the primary button, express prices, an open
+   collection window, a parcel that has moved. Yellow appears once, on the step
+   discs. Structure is hairlines and surface tone. No left accent borders, no
+   shadows past a 1px lift.
+
+   The main column is one screen, not a scroll: a bleeding hero, the route line,
+   a step strip, one panel at a time, a footer. */
 
 html { scrollbar-gutter: stable; }
 
@@ -17,38 +21,47 @@ html { scrollbar-gutter: stable; }
 :root {
   color-scheme: light;
 
-  --paper: #f6f6f4;         /* the page */
-  --card: #ffffff;          /* raised: panels and the sidebar */
-  --sunk: #eeeeeb;          /* recessed: quiet rows, prompt cards */
-  --ink: #0d0e10;
-  --ink-soft: #41444a;
-  --muted: #6a6e75;
-  --line: #d5d6d3;
-  --line-soft: #e6e6e3;
+  --paper: #FBF0E7;         /* the page */
+  --card: #FFFFFF;          /* raised: cards and the sidebar */
+  --sunk: #F6E6DA;          /* recessed: quiet rows, future steps */
+  --ink: #1B2140;
+  --ink-soft: #3F4566;
+  --muted: #6B7085;
+  --line: #EBDCD0;
+  --line-soft: #F2E7DD;
 
-  --signal: #cf4408;        /* the one colour that means something */
-  --signal-hover: #b03a06;
-  --signal-on: #ffffff;
-  --signal-wash: #fcece3;
+  --red: #E5341F;           /* the one colour that means something */
+  --red-hover: #C92B18;
+  --on-red: #FFFFFF;
+  --red-wash: #FBE3DE;
 
-  --ok: #17663a;
-  --warn: #8a5a10;
-  --bad: #9e2318;
+  --yellow: #F5C243;        /* the step discs, and nothing else */
+
+  --ok: #1F7A45;
+  --warn: #8A5A10;
+  --bad: #B3261E;
 
   --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --font-display: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-head: "Manrope", "Geist", -apple-system, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  --font-word: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
-  --radius: 6px;
+  --radius: 10px;
+  --radius-card: 14px;
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* The shell's geometry, tuned so the fixed camera holds one screen. */
+  --main-pad-y: 40px;
+  --side-bg: var(--card);
 
   /* What the shell and the panel read. */
-  --baton-accent: var(--signal);
+  --baton-accent: var(--red);
   --baton-ink: var(--ink);
   --baton-paper: var(--sunk);
   --baton-line: var(--line);
   --baton-muted: var(--muted);
   --baton-card: var(--card);
-  --baton-on-accent: var(--signal-on);
+  --baton-on-accent: var(--on-red);
   --baton-ok: var(--ok);
   --baton-warn: var(--warn);
   --baton-bad: var(--bad);
@@ -60,46 +73,50 @@ html { scrollbar-gutter: stable; }
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --paper: #0b0c0d;
-  --card: #141618;
-  --sunk: #1c1f21;
-  --ink: #f3f3f1;
-  --ink-soft: #b8bbc0;
-  --muted: #888d93;
-  --line: #2a2d30;
-  --line-soft: #202325;
+  --paper: #12162B;
+  --card: #1A1F3A;
+  --sunk: #0E1224;
+  --ink: #F5EFE8;
+  --ink-soft: #C9C4CF;
+  --muted: #8F94A8;
+  --line: #2A3052;
+  --line-soft: #232848;
 
-  --signal: #ff7a33;
-  --signal-hover: #ff9257;
-  --signal-on: #17110c;
-  --signal-wash: #2a1a0e;
+  --red: #FF5A45;
+  --red-hover: #FF7361;
+  --on-red: #1A0D0A;
+  --red-wash: #3A1A15;
 
-  --ok: #4fbe80;
-  --warn: #d9b25c;
-  --bad: #e8776c;
+  --yellow: #F5C243;
+
+  --ok: #4FBE80;
+  --warn: #D9B25C;
+  --bad: #E8776C;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --paper: #0b0c0d;
-    --card: #141618;
-    --sunk: #1c1f21;
-    --ink: #f3f3f1;
-    --ink-soft: #b8bbc0;
-    --muted: #888d93;
-    --line: #2a2d30;
-    --line-soft: #202325;
+    --paper: #12162B;
+    --card: #1A1F3A;
+    --sunk: #0E1224;
+    --ink: #F5EFE8;
+    --ink-soft: #C9C4CF;
+    --muted: #8F94A8;
+    --line: #2A3052;
+    --line-soft: #232848;
 
-    --signal: #ff7a33;
-    --signal-hover: #ff9257;
-    --signal-on: #17110c;
-    --signal-wash: #2a1a0e;
+    --red: #FF5A45;
+    --red-hover: #FF7361;
+    --on-red: #1A0D0A;
+    --red-wash: #3A1A15;
 
-    --ok: #4fbe80;
-    --warn: #d9b25c;
-    --bad: #e8776c;
+    --yellow: #F5C243;
+
+    --ok: #4FBE80;
+    --warn: #D9B25C;
+    --bad: #E8776C;
   }
 }
 
@@ -112,26 +129,66 @@ body {
   background: var(--paper);
   color: var(--ink);
   font: 15px/1.55 var(--font-sans);
+  font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-a { color: var(--signal); }
+a { color: var(--red); }
 code { font-family: var(--font-mono); font-size: 0.9em; }
 .muted { color: var(--muted); }
 
 h1, h2, h3 { text-wrap: balance; }
 
-:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; border-radius: 3px; }
+:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; border-radius: 3px; }
 
-/* The one place the depot's orange shows in the sidebar: after the name. */
-.spot {
-  display: inline-block;
-  width: 0.42em;
-  height: 0.42em;
-  margin-left: 0.3em;
-  vertical-align: 0.04em;
-  background: var(--signal);
+/* -------------------------------------------------------- the red brand bar
+
+   The mockup's masthead, folded into the sidebar: a red band that bleeds to the
+   column's edges, with the wordmark, the city line and the two controls on it.
+   Higher specificity than the shell, which owns .side__brand and .side__name. */
+
+.shell .side__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: calc(-1 * var(--side-pad)) calc(-1 * var(--side-pad)) 0;
+  padding: 10px var(--side-pad) 11px;
+  background: var(--red);
+}
+
+.shell .side__name {
+  font-family: var(--font-word);
+  font-style: italic;
+  font-weight: 800;
+  font-stretch: 110%;
+  font-size: 17px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--on-red);
+  text-decoration: none;
+}
+.shell .side__name:focus-visible { outline: 2px solid var(--on-red); outline-offset: 3px; border-radius: 4px; }
+
+.shell .side__place {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--on-red) 80%, transparent);
+}
+
+.shell .side__row { margin-top: 2px; }
+
+.shell .side__host {
+  color: color-mix(in srgb, var(--on-red) 82%, transparent);
+  border-color: color-mix(in srgb, var(--on-red) 42%, transparent);
+}
+
+.shell .side__theme {
+  color: var(--on-red);
+  border-color: color-mix(in srgb, var(--on-red) 48%, transparent);
+  background: transparent;
 }
 
 /* ---------------------------------------------------------------- banner */
@@ -140,193 +197,578 @@ h1, h2, h3 { text-wrap: balance; }
   border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line));
   background: var(--card);
   border-radius: var(--radius);
-  padding: 13px 16px;
-  margin: 0 0 18px;
+  padding: 11px 15px;
+  margin: 0 0 16px;
   color: var(--ink-soft);
   font-size: 14px;
 }
-.banner b { display: block; margin-bottom: 3px; color: var(--ink); }
 
-/* -------------------------------------------------------------- hero row */
+/* ------------------------------------------------------------------- hero
 
-.lede {
+   Bleeds to the top of the page and the outer edge of the column: the text
+   holds the left 45%, the photograph fills the rest and is cut on a diagonal,
+   as in the mockup. */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);
+  align-items: center;
+  height: 300px;
+  margin: calc(-1 * var(--main-pad-y)) calc(-1 * var(--main-pad-x)) 0 0;
+}
+
+/* If the no-WebMCP line is showing, the hero cannot also start at the top. */
+.main:has(#no-webmcp:not([hidden])) .hero { margin-top: 0; }
+
+.hero__text { padding-right: 36px; min-width: 0; }
+
+.hero h1 {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: clamp(36px, 3vw, 56px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin: 0;
+  max-width: 12ch;
+}
+.hero h1 .dot { color: var(--red); }
+
+.hero__sub {
+  margin: 14px 0 0;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  max-width: 34ch;
+}
+
+.hero__cta { margin-top: 20px; padding: 12px 21px; font-size: 15px; }
+.hero__arrow { flex: none; }
+
+.hero__facts {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.hero__facts:empty { display: none; }
+
+.hero__img {
+  align-self: stretch;
+  width: 100%;
+  height: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  object-position: 60% center;
+  clip-path: polygon(16% 0, 100% 0, 100% 100%, 0 100%);
+  background: var(--sunk);
+}
+
+/* On a wide screen the hero takes its whole budget. */
+@media (min-width: 1600px) {
+  .hero { height: 340px; }
+  .hero__img { max-height: 340px; }
+}
+
+/* ------------------------------------------------------------- route line */
+
+.route {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 4px;
+  height: 24px;
   margin: 0 0 22px;
 }
-.lede__img {
+.route__end {
   flex: none;
-  width: 212px;
-  height: 134px;
-  object-fit: cover;
-  object-position: 38% center;
-  border-radius: var(--radius);
-  border: 1px solid var(--line);
-  background: var(--sunk);
-}
-.lede__text { min-width: 0; }
-.lede h1 {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-stretch: 112%;
-  font-size: clamp(23px, 1.9vw, 28px);
-  line-height: 1.16;
-  letter-spacing: -0.022em;
-  margin: 0;
-  max-width: 38ch;
-}
-.lede__facts { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
-
-/* --------------------------------------------------------------- panels */
-
-.panel {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 18px;
-}
-.panel[hidden] { display: none; }
-.panel__intro { margin: 0 0 12px; font-size: 15px; line-height: 1.55; color: var(--ink-soft); max-width: 74ch; }
-.fineprint { margin: 12px 0 0; font-size: 13px; color: var(--muted); max-width: 74ch; }
-
-/* ---------------------------------------------------------------- tables */
-
-table.grid { width: 100%; border-collapse: collapse; }
-table.grid th,
-table.grid td { text-align: left; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
-table.grid thead th { font-size: 12.5px; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--line); }
-table.grid tbody tr:last-child td { border-bottom: 0; }
-table.grid td.num,
-table.grid th.num { text-align: right; white-space: nowrap; padding-right: 0; }
-table.grid td.num { font-family: var(--font-mono); font-size: 13.5px; font-variant-numeric: tabular-nums; }
-table.grid .name { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.015em; }
-table.grid .covers { font-family: var(--font-sans); color: var(--ink-soft); font-size: 14px; }
-table.grid td.num .covers { font-size: 12.5px; color: var(--muted); }
-table.grid .price--express { color: var(--signal); }
-table.grid .tid { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
-table.grid .tid + .covers { font-size: 13.5px; margin-top: 2px; }
-
-.status {
-  display: inline-block;
-  font-size: 13px;
-  padding: 2px 9px;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--red);
   border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--sunk);
-  color: var(--ink-soft);
-  white-space: nowrap;
 }
-.status--out { border-color: var(--signal); color: var(--signal); background: var(--signal-wash); }
-.status--delivered { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); background: transparent; }
-
-/* A row that was booked on this page during this visit arrives once. */
-@keyframes row-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: none; }
+.route__solid { flex: 1; height: 2px; background: var(--red); }
+.route__dots {
+  flex: 1;
+  height: 2px;
+  background: repeating-linear-gradient(to right, var(--red) 0 5px, transparent 5px 11px);
 }
-tr.row--new { animation: row-in 200ms cubic-bezier(0.23, 1, 0.32, 1); }
 
-/* ------------------------------- step 1: the rate card and what it priced */
+/* -------------------------------------------------------------- the steps
 
-.split {
+   The mockup's services strip: three yellow discs with a navy line icon, the
+   label beside it, vertical hairlines between them and a hairline underneath.
+   The shell's step rules are unlayered, so every one of these is scoped. */
+
+.main .steps {
   display: grid;
-  grid-template-columns: minmax(0, 2.05fr) minmax(0, 1fr);
-  gap: 34px;
-  align-items: start;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  align-items: stretch;
+  margin: 0 0 20px;
+  border-bottom: 1px solid var(--line);
 }
-.split__side { min-width: 0; }
-.split__side .fineprint { margin: 0; max-width: none; }
-/* In the side column the quote is the column, so it drops the rule that
-   separates it from a table above and stacks instead of sitting in a row. */
-.split__side .quote {
-  display: block;
-  margin: 0 0 14px;
-  padding-top: 0;
-  border-top: 0;
-}
-.split__side .quote__body { margin-top: 2px; }
-.split__side .quote__fit { display: inline-block; margin-top: 10px; }
 
-/* ------------------------------------------------- the quote on the page */
-
-.quote {
+.main .step {
   display: flex;
   align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-  margin: 16px 0 0;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
+  gap: 13px;
+  margin: 0;
+  padding: 15px 18px 15px 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font-family: var(--font-head);
+  font-size: 15px;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+  transition: color 160ms var(--ease), transform 160ms var(--ease);
+}
+.main .step + .step { border-left: 1px solid var(--line); padding-left: 22px; }
+.main .step:active:not(:disabled) { transform: scale(0.97); }
+.main .step:focus-visible { outline: 2px solid var(--red); outline-offset: -2px; border-radius: 4px; }
+
+/* The number stays in the button text; the strip shows icons, as the mockup does. */
+.main .step__n {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.main .step__label {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.012em;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.main .step__disc {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--sunk);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  transition: background-color 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease);
+}
+.main .step__disc svg { width: 20px; height: 20px; display: block; }
+
+.main .step[aria-current="step"] .step__disc,
+.main .step[data-done] .step__disc {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  color: #1B2140;
+}
+
+/* A finished step keeps its icon and gains a check on the disc. */
+.main .step[data-done]::after { content: none; }
+.main .step[data-done] .step__disc::after {
+  content: "✓";
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  box-shadow: 0 0 0 2px var(--paper);
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* The steps still ahead are quiet: peach disc, hairline, muted word. */
+.main .step:not([aria-current="step"]):not([data-done]) .step__label { color: var(--muted); font-weight: 500; }
+
+/* --------------------------------------------------------------- panels
+
+   The panel is a frame, not a card: the cards inside it sit on the peach page,
+   the way they do in the mockup. The min-height keeps Back and Next still while
+   the steps change. */
+
+.panel {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+.panel[hidden] { display: none; }
+.panel__intro { margin: 0 0 12px; font-size: 15px; line-height: 1.5; color: var(--ink-soft); max-width: 74ch; }
+.fineprint { margin: 14px 0 0; font-size: 13px; color: var(--muted); max-width: 78ch; }
+
+@media (min-width: 960px) {
+  .panel[data-step] { min-height: 390px; }
+  /* The no-WebMCP line costs the page a hero's worth of top edge, so the panel
+     gives some of it back and the screen still holds one view. */
+  .main:has(#no-webmcp:not([hidden])) .panel[data-step] { min-height: 320px; }
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 10px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease), border-color 160ms var(--ease), transform 160ms var(--ease);
+}
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.btn--primary {
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--on-red);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------ step 1: the three zones */
+
+/* The quote takes its own column only once there is a quote to show: until the
+   agent prices the leg the three zone cards have the whole width. */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.split__main { min-width: 0; }
+.split__side { min-width: 0; }
+
+@media (min-width: 1521px) {
+  .split:has(#quote-now:not([hidden])) {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  }
+}
+
+.zones {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.zone {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 19px 20px 18px;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 70%, transparent);
+}
+.zone:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+
+.zone__name {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: -0.018em;
+  line-height: 1.2;
+  color: var(--ink);
+  margin: 0;
+}
+.zone__covers {
+  margin: 6px 0 18px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.zone__prices { margin-top: auto; border-top: 1px solid var(--line-soft); padding-top: 14px; }
+.zone__row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.zone__row + .zone__row { margin-top: 9px; }
+.zone__speed { flex: none; min-width: 62px; }
+.zone__price {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  margin-left: auto;
+}
+.zone__days { flex: none; min-width: 50px; text-align: right; font-size: 12.5px; color: var(--muted); }
+.zone__row--express .zone__price { color: var(--red); }
+
+.zone__cutoff {
+  margin: 15px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------- the quote on the page */
+
+.quote {
+  display: block;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 17px 18px 16px;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 70%, transparent);
 }
 .quote[hidden] { display: none; }
 .quote__total {
-  font-family: var(--font-display);
+  font-family: var(--font-head);
   font-weight: 800;
-  font-stretch: 112%;
-  font-size: 27px;
-  letter-spacing: -0.022em;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
-.quote__body { flex: 1; min-width: 200px; }
-.quote__line { font-size: 15px; }
-.quote__sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.quote__body { margin-top: 6px; }
+.quote__line { font-size: 14.5px; color: var(--ink-soft); }
+.quote__sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
 .quote__fit {
+  display: inline-block;
+  margin-top: 12px;
   font-size: 13px;
   padding: 4px 11px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  white-space: nowrap;
+  color: var(--muted);
 }
 .quote__fit--ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }
 .quote__fit--bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
 
-/* -------------------------------------------------------- pickup windows */
+/* ------------------------------------------- step 2: collection windows */
 
-.windows { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.window { border: 1px solid var(--line); border-radius: var(--radius); padding: 13px 14px; background: var(--card); }
-.window__label { font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
-.window__slots { font-size: 13px; color: var(--muted); margin-top: 4px; }
-.window--open { border-color: color-mix(in srgb, var(--signal) 45%, var(--line)); }
-.window--open .window__slots { color: var(--signal); }
-.window--full { background: var(--sunk); }
+.windows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.window {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 116px;
+  padding: 17px 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 70%, transparent);
+}
+.window__label {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.window__slots { margin-top: auto; font-size: 13.5px; color: var(--muted); }
+
+.window--open { border-color: var(--red); }
+.window--open .window__slots { color: var(--red); }
+.window--full { background: var(--sunk); box-shadow: none; }
 .window--full .window__label { color: var(--muted); }
-.window--closed { border-style: dashed; color: var(--muted); }
-.window--closed .window__label { color: var(--muted); }
+.window--closed { border-style: dashed; background: none; box-shadow: none; }
+.window--closed .window__label,
+.window--closed .window__slots { color: var(--muted); }
+
+/* ------------------------------------------------------ step 3: the board */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 4px 18px;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+table.grid { width: 100%; border-collapse: collapse; }
+table.grid th,
+table.grid td { text-align: left; padding: 11px 14px 11px 0; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+table.grid thead th { font-size: 12.5px; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 9px; }
+table.grid tbody tr:last-child td { border-bottom: 0; }
+table.grid td.num,
+table.grid th.num { text-align: right; white-space: nowrap; padding-right: 0; }
+table.grid td.num { font-family: var(--font-mono); font-size: 13.5px; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+table.grid .tid { font-family: var(--font-mono); font-size: 13px; font-weight: 500; white-space: nowrap; color: var(--ink); }
+table.grid .covers { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+.board .track-col { width: 34%; min-width: 250px; }
+
+.status {
+  display: inline-block;
+  font-size: 13px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--sunk);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.status--out { border-color: var(--red); color: var(--red); background: var(--red-wash); }
+.status--delivered { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); background: transparent; }
+
+/* The progress line: four dots in four equal columns joined by a hairline,
+   filled red up to where the parcel actually is. The header row names the four
+   checkpoints once, so no parcel row has to repeat them. */
+.track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  height: 18px;
+}
+.track__rail,
+.track__fill {
+  position: absolute;
+  top: 50%;
+  height: 1.5px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+}
+.track__rail { left: 12.5%; right: 12.5%; background: color-mix(in srgb, var(--muted) 35%, var(--line)); }
+.track__fill { left: 12.5%; background: var(--red); }
+.track[data-on="0"] .track__fill,
+.track[data-on="1"] .track__fill { display: none; }
+.track[data-on="2"] .track__fill { right: 62.5%; }
+.track[data-on="3"] .track__fill { right: 37.5%; }
+.track[data-on="4"] .track__fill { right: 12.5%; }
+
+.track__dot {
+  position: relative;
+  justify-self: center;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--muted) 45%, var(--line));
+}
+.track__dot--on { background: var(--red); box-shadow: none; }
+
+.track--head { height: auto; }
+.track__label {
+  justify-self: center;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* A row booked on this page during this visit arrives once. */
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+tr.row--new { animation: row-in 200ms var(--ease); }
 
 /* ----------------------------------------------------------------- hover */
 
 @media (hover: hover) and (pointer: fine) {
-  a:hover { color: var(--signal-hover); }
+  a:hover { color: var(--red-hover); }
+  .btn:hover:not(:disabled) { border-color: var(--muted); }
+  .btn--primary:hover:not(:disabled) { background: var(--red-hover); border-color: var(--red-hover); }
+  .main .step:hover:not(:disabled) .step__label { color: var(--ink); }
+  .main .step:hover:not([aria-current="step"]):not([data-done]) .step__disc { border-color: var(--muted); }
+  .shell .side__theme:hover { border-color: var(--on-red); }
 }
 
 /* ------------------------------------------------------------ responsive */
 
-/* The rate card and its note only sit side by side when the main column is
-   genuinely wide; below that the table takes the width back. */
 @media (max-width: 1520px) {
-  .split { grid-template-columns: 1fr; gap: 18px; }
-  .split__side .quote { margin: 0 0 12px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .split { gap: 18px; }
 }
 
-@media (max-width: 620px) {
+@media (max-width: 1180px) {
+  .hero { grid-template-columns: minmax(0, 52fr) minmax(0, 48fr); }
+  .main .step { gap: 10px; padding-right: 12px; }
+  .main .step + .step { padding-left: 14px; }
+}
+
+@media (max-width: 959.98px) {
+  .hero { margin-top: 0; height: auto; min-height: 300px; }
+  .board .track-col { min-width: 190px; }
+}
+
+@media (max-width: 760px) {
+  .hero {
+    grid-template-columns: 1fr;
+    margin-right: 0;
+    min-height: 0;
+    gap: 20px;
+  }
+  .hero__text { padding-right: 0; order: 2; }
+  .hero__img {
+    order: 1;
+    height: 220px;
+    max-height: 220px;
+    clip-path: none;
+    border-radius: var(--radius-card);
+  }
+  .main .steps { grid-template-columns: 1fr; }
+  .main .step { padding: 12px 0; }
+  .main .step + .step { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; }
+  .zones,
   .windows { grid-template-columns: 1fr; }
-  /* The zone descriptions are the first thing to go on a phone: the zone name,
-     the cut-off and the two prices are what a rate card is for. */
-  .covers-col { display: none; }
-  table.grid th, table.grid td { padding: 9px 6px 9px 0; }
-  table.grid .tid { font-size: 12.5px; }
-  .status { font-size: 12px; padding: 2px 7px; white-space: normal; }
+  .window { min-height: 0; }
+  /* Stacked, the dots have no header to name them and the status pill already
+     says where the parcel is, so the track stands down. */
+  .board thead { display: none; }
+  .board,
+  .board tbody,
+  .board td { display: block; width: auto; }
+  table.grid.board .track-col { display: none; }
+  .board tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .board tr:last-child { border-bottom: 0; }
+  table.grid.board td { border: 0; padding: 0; }
+  .board td:first-child { grid-column: 1 / -1; }
+  .card { padding: 4px 15px; }
 }
 
-@media (max-width: 560px) {
-  .lede { flex-direction: column; align-items: stretch; gap: 16px; }
-  .lede__img { width: 100%; height: 156px; }
-  .panel { padding: 15px; }
-}
-
-/* ---------------------------------------------------------------- motion */
+/* -------------------------------------------------------- reduced motion */
 
 @media (prefers-reduced-motion: reduce) {
   tr.row--new { animation: none; }
+  .btn,
+  .main .step,
+  .main .step__disc { transition-property: background-color, border-color, color; }
+  .btn:active:not(:disabled),
+  .main .step:active:not(:disabled) { transform: none; }
 }

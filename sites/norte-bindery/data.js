@@ -5,6 +5,7 @@
 export const BINDINGS = [
   {
     id: 'coptic',
+    image: './assets/generated/bind-coptic.webp',
     name: 'Coptic stitch, exposed spine',
     notes: 'Sewn over tapes, opens completely flat. Three signatures.',
     per_copy: 5.25,
@@ -12,6 +13,7 @@ export const BINDINGS = [
   },
   {
     id: 'japanese_stab',
+    image: './assets/generated/bind-japanese-stab.webp',
     name: 'Japanese stab binding',
     notes: 'Side-sewn through four stations, no glue in the spine.',
     per_copy: 4.25,
@@ -19,6 +21,7 @@ export const BINDINGS = [
   },
   {
     id: 'saddle_folio',
+    image: './assets/generated/bind-saddle-folio.webp',
     name: 'Saddle-stitched folio',
     notes: 'Two wire staples on the fold. The fastest thing we do.',
     per_copy: 3.10,
@@ -29,12 +32,14 @@ export const BINDINGS = [
 export const COVERS = [
   {
     id: 'cloth_board',
+    image: './assets/generated/cover-cloth-board.webp',
     name: 'Cloth-wrapped board',
     notes: 'Bookcloth over 2 mm greyboard, turned in by hand.',
     per_copy: 1.25
   },
   {
     id: 'light_card',
+    image: './assets/generated/cover-light-card.webp',
     name: 'Light card wrap',
     notes: '300 gsm card, scored and folded on the bench.',
     per_copy: 0.50
