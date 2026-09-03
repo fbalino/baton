@@ -22,7 +22,7 @@
 </head>
 <body>
 
-<a class="skip" href="#builder">Skip to the order builder</a>
+<a class="skip" href="#main">Skip to the shop</a>
 
 <div class="shell">
 
@@ -43,19 +43,19 @@
 
     <section id="site-tools" class="side__tools" aria-label="Site tools"></section>
 
-    <section class="side__agent" aria-label="For your agent">
-      <h2 class="side__heading">For your agent</h2>
+    <details class="side__agent">
+      <summary class="side__heading">For your agent</summary>
       <p class="side__note">
         If your browser has WebMCP, your agent can use the same tools we use behind the counter: the
         catalogue, the quote, the order and its proof, and the press calendar. Tell it what you want
         printed and it comes back with a price and a press day.
       </p>
       <ul class="prompts" id="prompts"></ul>
-    </section>
+    </details>
 
   </aside>
 
-  <main class="main">
+  <main class="main" id="main" tabindex="-1">
 
     <div class="banner" id="no-webmcp" hidden>
       <b>This browser has no WebMCP.</b>
@@ -73,23 +73,21 @@
       </div>
       <div class="hero__text">
         <h1>We print editions to order on two pigment presses in Ciudad Vieja.</h1>
-        <p class="lede">
-          Twelve printers share the presses off Calle Piedras. We keep six editioned sets on file and
-          print them on four papers, in runs up to 400 sheets. A proof goes out before the press is
-          loaded, and press days are held one at a time.
-        </p>
-        <p class="hero__facts">Presses run Tuesday to Saturday · Epson P9500 and P7570 · Runs to 400 sheets</p>
-        <div class="hero__actions">
-          <a class="btn btn--primary" href="#builder">Build an order</a>
-          <a class="btn" href="#sets">See the six sets</a>
-        </div>
+        <p class="hero__facts">Twelve printers off Calle Piedras · Presses run Tuesday to Saturday · Four papers, three sizes · Runs to 400 sheets</p>
       </div>
     </section>
 
-    <section id="sets" class="block">
-      <div class="block__head">
+    <nav class="steps" aria-label="Steps">
+      <button class="step" data-step="1" aria-current="step">1<span>Choose a set</span></button>
+      <button class="step" data-step="2">2<span>Specification and quote</span></button>
+      <button class="step" data-step="3">3<span>Proof and press day</span></button>
+      <button class="step" data-step="4">4<span>Order</span></button>
+    </nav>
+
+    <section class="panel" data-step="1" aria-label="Choose a set">
+      <div class="panel__head">
         <h2>The six sets</h2>
-        <p class="block__sub">Each set is printed to order from the original files. Editions are counted across all sizes.</p>
+        <p class="panel__sub">Printed to order from the original files. Editions are counted across all sizes.</p>
       </div>
       <div class="filterbar" id="set-filter" hidden>
         <span id="set-filter-text">Showing every set.</span>
@@ -98,10 +96,10 @@
       <div class="sets" id="sets-grid"></div>
     </section>
 
-    <section id="builder" class="block">
-      <div class="block__head">
-        <h2>Order builder</h2>
-        <p class="block__sub">Pick a set and a specification. The price here is the price the tools quote.</p>
+    <section class="panel" data-step="2" aria-label="Specification and quote" hidden>
+      <div class="panel__head">
+        <h2>Specification and quote</h2>
+        <p class="panel__sub">The price shown here is the price the tools quote.</p>
       </div>
 
       <div class="builder">
@@ -150,72 +148,74 @@
       </div>
     </section>
 
-    <section id="order" class="block">
-      <div class="block__head">
-        <h2>Your order</h2>
-        <p class="block__sub">A proof goes out with every order. The press day cannot be held until the proof is approved.</p>
+    <section class="panel" data-step="3" aria-label="Proof and press day" hidden>
+      <div class="panel__head">
+        <h2>Proof and press day</h2>
+        <p class="panel__sub">A press day cannot be held until the proof is approved. Sunday and Monday the bays are cold.</p>
       </div>
+
+      <div class="stage">
+        <div id="proof-card"></div>
+        <div class="press">
+          <div class="calendar" id="press-calendar"></div>
+          <p class="legend">
+            <span class="legend__item"><i class="swatch swatch--open"></i>free</span>
+            <span class="legend__item"><i class="swatch swatch--full"></i>booked</span>
+            <span class="legend__item"><i class="swatch swatch--closed"></i>closed</span>
+            <span class="legend__item"><i class="swatch swatch--held"></i>your slot</span>
+          </p>
+          <p class="fineprint" id="calendar-msg" role="status"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" data-step="4" aria-label="Order" hidden>
+      <div class="panel__head">
+        <h2>Order</h2>
+        <p class="panel__sub">Where the print leg stands, and the numbers behind it.</p>
+      </div>
+
       <div id="order-card"></div>
+
+      <div class="reference">
+        <div class="reference__block">
+          <h3 class="reference__title">Papers and sizes, per sheet</h3>
+          <div class="tablewrap">
+            <table class="catalog">
+              <thead>
+                <tr>
+                  <th scope="col">Paper</th>
+                  <th scope="col">Character</th>
+                  <th scope="col" class="num">20 × 30</th>
+                  <th scope="col" class="num">30 × 40</th>
+                  <th scope="col" class="num">40 × 60</th>
+                </tr>
+              </thead>
+              <tbody id="papers-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="reference__block">
+          <h3 class="reference__title">Finishes</h3>
+          <ul class="finishes" id="finishes-list"></ul>
+        </div>
+      </div>
     </section>
 
-    <section id="calendar" class="block">
-      <div class="block__head">
-        <h2>Press calendar</h2>
-        <p class="block__sub">The next twenty-one days. Sunday and Monday the bays are cold, and we take no same-day work.</p>
-      </div>
-      <div class="calendar" id="press-calendar"></div>
-      <p class="legend">
-        <span class="legend__item"><i class="swatch swatch--open"></i>free</span>
-        <span class="legend__item"><i class="swatch swatch--full"></i>booked</span>
-        <span class="legend__item"><i class="swatch swatch--closed"></i>closed</span>
-        <span class="legend__item"><i class="swatch swatch--held"></i>your slot</span>
-      </p>
-      <p class="fineprint" id="calendar-msg" role="status"></p>
-    </section>
+    <div class="steps__nav"><button class="btn" data-nav="back">Back</button><button class="btn btn--primary" data-nav="next">Next</button></div>
 
-    <section id="papers" class="block">
-      <div class="block__head">
-        <h2>Papers, sizes and finishes</h2>
-        <p class="block__sub">Prices are per sheet. Press setup is <b>$35</b>, waived on runs of 25 sheets or more.</p>
-      </div>
-      <div class="tablewrap">
-        <table class="catalog">
-          <thead>
-            <tr>
-              <th scope="col">Paper</th>
-              <th scope="col">Character</th>
-              <th scope="col" class="num">20 × 30</th>
-              <th scope="col" class="num">30 × 40</th>
-              <th scope="col" class="num">40 × 60</th>
-            </tr>
-          </thead>
-          <tbody id="papers-body"></tbody>
-        </table>
-      </div>
-      <ul class="finishes" id="finishes-list"></ul>
-      <p class="fineprint">
-        Turnaround: 3 days to 20 sheets, 5 days to 60, 9 beyond. A deckled edge adds two days,
-        40 × 60 adds one.
-      </p>
-    </section>
-
-    <section id="terms" class="block">
-      <div class="block__head">
-        <h2>House terms</h2>
-        <p class="block__sub">These apply the same way to an order placed by a person and one placed by an agent.</p>
-      </div>
-      <ul class="terms">
-        <li>Print legs only. We do not bind and we do not deliver.</li>
-        <li>Quantity, size and paper are declared before a press day is held.</li>
-        <li>A proof is approved before the slot, and re-issued if the specification changes.</li>
-        <li>Runs to 400 sheets. Larger jobs are split across two press days.</li>
-        <li>A held slot is released if the leg is not signed within 48 hours.</li>
-      </ul>
-    </section>
-
-    <footer class="foot">
-      <span>Rivera Press · twelve printers · Ciudad Vieja, Montevideo</span>
-      <span class="muted">A fictional business built for a WebMCP demo. The prints and the press room are generated images.</span>
+    <footer class="site-footer">
+      <details class="terms">
+        <summary>Terms</summary>
+        <ul>
+          <li>Print legs only. We do not bind and we do not deliver.</li>
+          <li>Quantity, size and paper are declared before a press day is held.</li>
+          <li>A proof is approved before the slot, and re-issued if the specification changes.</li>
+          <li>Runs to 400 sheets. Larger jobs are split across two press days.</li>
+          <li>A held slot is released if the leg is not signed within 48 hours.</li>
+        </ul>
+      </details>
+      <p>Rivera Press is a fictional co-op built for the Baton demo. Twelve printers, Ciudad Vieja, Montevideo. The prints and the press room are generated images.</p>
     </footer>
 
   </main>

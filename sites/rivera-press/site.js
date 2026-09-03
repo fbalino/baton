@@ -305,6 +305,44 @@ el('theme-toggle').addEventListener('click', () => {
 });
 paintTheme();
 
+/* ------------------------------------------------------------------ steps
+
+   The shop is four steps in one place. Nothing scrolls: a step is shown by
+   unhiding its panel and hiding the other three, so the view stays where it
+   is while the work moves on. The step buttons, the Back and Next buttons and
+   the site tools all go through goToStep, which is why the camera holds still
+   while an agent works. */
+
+const STEP_COUNT = 4;
+let step = 1;
+let stepsSeen = 1;
+
+const stepButtons = Array.from(document.querySelectorAll('.steps .step'));
+const stepPanels = Array.from(document.querySelectorAll('.panel[data-step]'));
+const navBack = document.querySelector('.steps__nav [data-nav="back"]');
+const navNext = document.querySelector('.steps__nav [data-nav="next"]');
+
+function goToStep(n) {
+  const want = Math.min(STEP_COUNT, Math.max(1, Math.trunc(Number(n)) || 1));
+  step = want;
+  if (want > stepsSeen) stepsSeen = want;
+  for (const panel of stepPanels) panel.hidden = panel.dataset.step !== String(want);
+  for (const btn of stepButtons) {
+    const k = Number(btn.dataset.step);
+    if (k === want) btn.setAttribute('aria-current', 'step');
+    else btn.removeAttribute('aria-current');
+    // Anything behind the furthest step reached has been done.
+    if (k !== want && k < stepsSeen) btn.dataset.done = '';
+    else delete btn.dataset.done;
+  }
+  if (navBack) navBack.disabled = want === 1;
+  if (navNext) navNext.disabled = want === STEP_COUNT;
+}
+
+for (const btn of stepButtons) btn.addEventListener('click', () => goToStep(btn.dataset.step));
+if (navBack) navBack.addEventListener('click', () => goToStep(step - 1));
+if (navNext) navNext.addEventListener('click', () => goToStep(step + 1));
+
 /* one-time content */
 
 wirePrints(el('hero-frame'));
@@ -459,19 +497,14 @@ function renderSets() {
   const ids = state.filter ? new Set(state.filter.ids) : null;
   const shown = ids ? SETS.filter((s) => ids.has(s.id)) : SETS;
   el('sets-grid').innerHTML = shown.map((s) => {
-    const paper = findPaper(s.paper);
     const from = quoteRun({ quantity: s.prints, size: '20x30', paper: s.paper, finish: 'matte' });
     return [
       '<article class="setcard' + (state.form.set === s.id ? ' setcard--picked' : '') + '">',
       '  <div class="setcard__art">' + printFrame(s, { className: 'setcard__print' }) + '</div>',
       '  <div class="setcard__body">',
       '    <div class="setcard__name">' + esc(s.name) + '</div>',
-      '    <div class="setcard__meta">' + s.prints + ' prints · edition of ' + s.edition + ' · ' + esc(s.colour) + '</div>',
-      '    <p class="setcard__note">' + esc(s.note) + '</p>',
-      '    <div class="setcard__foot">',
-      '      <span class="setcard__from">Set of ' + s.prints + ' on ' + esc(paper.name.split(' ')[0]) + ' from ' + usd(from.total_usd) + '</span>',
-      '      <button type="button" class="btn btn--small" data-pick="' + s.id + '">Use this set</button>',
-      '    </div>',
+      '    <div class="setcard__meta">' + s.prints + ' prints · edition of ' + s.edition + ' · set from ' + usd(from.total_usd) + '</div>',
+      '    <button type="button" class="btn btn--small" data-pick="' + s.id + '">Use this set</button>',
       '  </div>',
       '</article>'
     ].join('');
@@ -510,18 +543,53 @@ function renderCalendar() {
 
 let lastOrderShown = null;
 
+/* Step 3 — the proof, and the one button that approves it. */
+
+function renderProof() {
+  const order = activeOrder();
+  const box = el('proof-card');
+  if (!order) {
+    box.innerHTML = '<div class="empty">No proof yet. Open an order in step 2 and its proof appears here.</div>';
+    return;
+  }
+  const set = findSet(order.set_id);
+  const approved = !!order.proof.approved_at;
+
+  box.innerHTML = [
+    '<div class="proof">',
+    '  <div class="proof__sheet">',
+    '    <i class="proof__mark proof__mark--tl"></i><i class="proof__mark proof__mark--tr"></i>',
+    '    <i class="proof__mark proof__mark--bl"></i><i class="proof__mark proof__mark--br"></i>',
+         printFrame(set, { className: 'proof__art' }),
+    '  </div>',
+    '  <div class="proof__caption">' + esc(order.proof.id) + ' · ' + esc(SIZE_LABELS[order.size]) + ' · ' +
+         esc(approved ? 'approved' : 'awaiting approval') + '</div>',
+    '</div>',
+    '<div class="proof__foot">',
+    '  <div class="proof__spec"><span class="order__id">' + esc(order.id) + '</span> · ' + order.quantity +
+         ' sheets of ' + esc(order.set) + ' on ' + esc(order.paper) + ', ' + esc(order.finish.toLowerCase()) + '</div>',
+         approved
+           ? '<p class="fineprint">Proof approved. Pick a free press day on the calendar.</p>'
+           : '<button type="button" class="btn btn--primary btn--small" id="approve-proof">Approve the proof</button>',
+    '</div>'
+  ].join('');
+
+  wirePrints(box);
+}
+
+/* Step 4 — where the print leg stands. */
+
 function renderOrder() {
   const order = activeOrder();
   const box = el('order-card');
   if (!order) {
     lastOrderShown = null;
-    box.innerHTML = '<div class="empty">No order open. Build a specification above and create one, ' +
+    box.innerHTML = '<div class="empty">No order open. Build a specification in step 2 and create one, ' +
       'or ask your agent to run <code>create_order</code>.</div>';
     return;
   }
   const st = statusOf(order);
   const set = findSet(order.set_id);
-  const approved = !!order.proof.approved_at;
 
   const others = state.orders.filter((o) => o.id !== order.id);
   const otherRow = others.length
@@ -537,51 +605,37 @@ function renderOrder() {
     '<div class="order' + (arriving ? ' order--new' : '') + '">',
     '  <div class="order__head">',
     '    <div><span class="order__id">' + esc(order.id) + '</span> · ' + esc(order.set) + '</div>',
-    '    <div><span class="status status--' + (st === 'slot_held' ? 'ok' : st === 'proof_approved' ? 'ok' : 'wait') + '">' +
+    '    <div><span class="status status--' + (st === 'quoted' ? 'wait' : 'ok') + '">' +
            esc(STATUS_LABEL[st]) + '</span> <span class="order__price num">' + usd(order.quote.total_usd) + '</span></div>',
     '  </div>',
-    '  <div class="order__grid">',
-    '    <div>',
-    '      <div class="proof">',
-    '        <div class="proof__sheet">',
-    '          <i class="proof__mark proof__mark--tl"></i><i class="proof__mark proof__mark--tr"></i>',
-    '          <i class="proof__mark proof__mark--bl"></i><i class="proof__mark proof__mark--br"></i>',
-             printFrame(set, { className: 'proof__art' }),
-    '        </div>',
-    '        <div class="proof__caption">' + esc(order.proof.id) + ' · ' + esc(SIZE_LABELS[order.size]) + ' · ' +
-             esc(approved ? 'approved ' + order.proof.approved_at.slice(0, 10) : 'awaiting approval') + '</div>',
-    '      </div>',
-    '    </div>',
-    '    <div>',
-    '      <ul class="order__spec">',
-    '        <li><span>Sheets</span>' + order.quantity + ' sheets, set of ' + set.prints + ' prints</li>',
-    '        <li><span>Size</span>' + esc(SIZE_LABELS[order.size]) + '</li>',
-    '        <li><span>Paper</span>' + esc(order.paper) + '</li>',
-    '        <li><span>Finish</span>' + esc(order.finish) + '</li>',
-    '        <li><span>Press</span>' + esc(order.slot ? order.slot.press + ', ' + order.slot.date : 'not held yet') + '</li>',
-    '      </ul>',
-    '      <ol class="timeline">' + timeline(order).map((t) =>
-             '<li class="' + t.state + '"><span class="timeline__dot">' + (t.state === 'done' ? '✓' : '·') + '</span>' +
-             '<span><span class="timeline__name">' + esc(t.name) + '</span><br>' +
-             '<span class="timeline__when">' + esc(t.when) + '</span></span></li>').join('') + '</ol>',
-    '      <div class="order__actions">',
-             approved ? '' : '<button type="button" class="btn btn--primary btn--small" id="approve-proof">Approve the proof</button>',
-    '        <button type="button" class="btn btn--small" id="edit-order">Change the specification</button>',
-    '        <button type="button" class="btn btn--small" id="drop-order">Cancel this order</button>',
-    '      </div>',
+    '  <div class="order__body">',
+    '    <ul class="order__spec">',
+    '      <li><span>Sheets</span>' + order.quantity + ' of a set of ' + set.prints + '</li>',
+    '      <li><span>Size</span>' + esc(SIZE_LABELS[order.size]) + '</li>',
+    '      <li><span>Paper</span>' + esc(order.paper) + '</li>',
+    '      <li><span>Finish</span>' + esc(order.finish) + '</li>',
+    '      <li><span>Proof</span>' + esc(order.proof.id) + (order.proof.approved_at ? ', approved' : ', awaiting approval') + '</li>',
+    '      <li><span>Press</span>' + esc(order.slot ? order.slot.press + ', ' + order.slot.date : 'not held yet') + '</li>',
+    '    </ul>',
+    '    <ol class="timeline">' + timeline(order).map((t) =>
+           '<li class="' + t.state + '"><span class="timeline__dot">' + (t.state === 'done' ? '\u2713' : '·') + '</span>' +
+           '<span><span class="timeline__name">' + esc(t.name) + '</span><br>' +
+           '<span class="timeline__when">' + esc(t.when) + '</span></span></li>').join('') + '</ol>',
+    '    <div class="order__actions">',
+    '      <button type="button" class="btn btn--small" id="edit-order">Change the specification</button>',
+    '      <button type="button" class="btn btn--small" id="drop-order">Cancel this order</button>',
     '    </div>',
     '  </div>',
     '</div>',
     otherRow
   ].join('');
-
-  wirePrints(box);
 }
 
 function renderAll() {
   formToDom();
   renderQuote();
   renderSets();
+  renderProof();
   renderOrder();
   renderCalendar();
 }
@@ -613,12 +667,12 @@ el('order-form').addEventListener('submit', (e) => {
     finish: state.form.finish
   });
   if (!made.ok) { el('form-msg').textContent = made.error; return; }
-  el('form-msg').textContent = 'Order ' + made.order.id + ' opened. Proof ' + made.order.proof.id + ' is ready to review.';
+  el('form-msg').textContent = 'Order ' + made.order.id + ' opened. Proof ' + made.order.proof.id + ' is waiting in step 3.';
   state.message = '';
   renderAll();
   showLegStatus(made.order);
   refreshTools();
-  el('order').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  goToStep(2);
 });
 
 el('sets-grid').addEventListener('click', (e) => {
@@ -629,21 +683,25 @@ el('sets-grid').addEventListener('click', (e) => {
   state.form.paper = s.paper;
   save();
   renderAll();
-  el('builder').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  goToStep(2);
 });
 
 el('set-filter-clear').addEventListener('click', () => { state.filter = null; renderSets(); });
 
+el('proof-card').addEventListener('click', (e) => {
+  const order = activeOrder();
+  if (!order) return;
+  if (!e.target.closest('#approve-proof')) return;
+  approveProof(order);
+  state.message = 'Proof approved. Pick a free press day on the calendar.';
+  renderAll();
+  showLegStatus(order);
+  goToStep(3);
+});
+
 el('order-card').addEventListener('click', (e) => {
   const order = activeOrder();
   if (!order) return;
-  if (e.target.closest('#approve-proof')) {
-    approveProof(order);
-    state.message = 'Proof approved. Pick a free press day below.';
-    renderAll();
-    showLegStatus(order);
-    return;
-  }
   if (e.target.closest('#edit-order')) {
     Object.assign(state.form, {
       set: order.set_id, quantity: order.quantity, qmode: 'total',
@@ -651,7 +709,7 @@ el('order-card').addEventListener('click', (e) => {
     });
     save();
     renderAll();
-    el('builder').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    goToStep(2);
     return;
   }
   if (e.target.closest('#drop-order')) {
@@ -686,6 +744,7 @@ el('press-calendar').addEventListener('click', (e) => {
   state.message = 'Press day ' + date + ' held for ' + order.id + ' (' + order.slot.slot_id + ').';
   renderAll();
   showLegStatus(order);
+  goToStep(3);
 });
 
 /* ------------------------------------------------------------ the baton */
@@ -775,21 +834,24 @@ baton.registerAlways((signal, register) => {
     description: 'The six print sets Rivera Press keeps: how many prints in each, the edition size, the colour, the paper we recommend and what a full set costs at 20x30.',
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     annotations: { readOnlyHint: true },
-    execute: async () => ({
-      ok: true,
-      sets: SETS.map((s) => ({
-        id: s.id,
-        name: s.name,
-        prints: s.prints,
-        edition: s.edition,
-        colour: s.colour,
-        recommended_paper: s.paper,
-        note: s.note,
-        set_price_20x30_matte_usd: quoteRun({ quantity: s.prints, size: '20x30', paper: s.paper, finish: 'matte' }).total_usd
-      })),
-      next: 'Pick a set, then price the run with quote_run using quantity, size and paper.',
-      page: pageNow()
-    })
+    execute: async () => {
+      goToStep(1);
+      return {
+        ok: true,
+        sets: SETS.map((s) => ({
+          id: s.id,
+          name: s.name,
+          prints: s.prints,
+          edition: s.edition,
+          colour: s.colour,
+          recommended_paper: s.paper,
+          note: s.note,
+          set_price_20x30_matte_usd: quoteRun({ quantity: s.prints, size: '20x30', paper: s.paper, finish: 'matte' }).total_usd
+        })),
+        next: 'Pick a set, then price the run with quote_run using quantity, size and paper.',
+        page: pageNow()
+      };
+    }
   }, signal);
 
   register({
@@ -825,6 +887,7 @@ baton.registerAlways((signal, register) => {
       const found = searchCatalog(input.query);
       state.filter = found.sets.length ? { query: String(input.query), ids: found.sets.map((s) => s.id) } : null;
       renderSets();
+      goToStep(1);
       return {
         ok: true,
         query: String(input.query),
@@ -869,6 +932,7 @@ baton.registerAlways((signal, register) => {
       formToDom();
       renderQuote();
       renderSets();
+      goToStep(2);
       return {
         ...q,
         next: activeOrder()
@@ -903,6 +967,7 @@ baton.registerAlways((signal, register) => {
       state.message = '';
       renderAll();
       showLegStatus(made.order);
+      goToStep(2);
       return {
         ok: true,
         order: orderView(made.order),
@@ -935,6 +1000,7 @@ baton.registerAlways((signal, register) => {
           page: pageNow()
         };
       }
+      goToStep(4);
       return {
         ok: true,
         order: orderView(order),
@@ -988,6 +1054,7 @@ baton.registerAlways((signal, register) => {
       state.message = res.slot_released ? 'The press day was released because the specification changed.' : state.message;
       renderAll();
       showLegStatus(order);
+      goToStep(2);
       return {
         ok: true,
         changed: res.changed,
@@ -1028,6 +1095,7 @@ baton.registerAlways((signal, register) => {
         (free[0] ? ' — ' + free[0] + ' is the first free one.' : '.');
 
       if (order.proof.approved_at) {
+        goToStep(3);
         return {
           ok: true, already: true, order: orderView(order), free_days: free,
           next: order.slot
@@ -1041,6 +1109,7 @@ baton.registerAlways((signal, register) => {
       state.message = 'Proof approved. Pick a free press day.';
       renderAll();
       showLegStatus(order);
+      goToStep(3);
       return {
         ok: true,
         approved: true,
@@ -1064,6 +1133,7 @@ baton.registerAlways((signal, register) => {
     execute: async (input) => {
       const all = pressDays();
       const days = input && input.only_free ? all.filter((d) => d.state === 'open') : all;
+      goToStep(3);
       return {
         ok: true,
         from: todayISO(),
@@ -1117,6 +1187,7 @@ baton.registerAlways((signal, register) => {
         const near = nearestFreeDays(input.date);
         state.message = input.date + ' cannot be held. Nearest free: ' + near.join(', ') + '.';
         renderCalendar();
+        goToStep(3);
         return {
           ok: false,
           error: !day
@@ -1146,6 +1217,7 @@ baton.registerAlways((signal, register) => {
       state.message = 'Press day ' + input.date + ' held for ' + order.id + '.';
       renderAll();
       showLegStatus(order);
+      goToStep(3);
       return {
         ok: true,
         held: true,
@@ -1232,6 +1304,7 @@ baton.registerAlways((signal, register) => {
       if (!set.ok) return { ok: false, error: set.reason, next: 'Fix the goal, budget, deadline or quantity and call baton_start again.', page: pageNow() };
       renderAll();
       showLegStatus(order || activeOrder());
+      goToStep(4);
       return {
         ok: true,
         mission: {
@@ -1270,6 +1343,7 @@ baton.registerWhenMissionAboard((signal, register) => {
     execute: async (input) => {
       const order = input && input.order_id ? orderById(input.order_id) : activeOrder();
       if (!order) return { ok: false, error: 'no order is open on the page', next: 'Call create_order first.', page: pageNow() };
+      goToStep(4);
       const evidence = legEvidence(order);
       const check = baton.checkAction({ cost_usd: order.quote.total_usd, date: order.slot ? order.slot.date : undefined });
       const missing = [];
@@ -1295,6 +1369,23 @@ baton.registerWhenMissionAboard((signal, register) => {
 
 /* ------------------------------------------------------------- bootstrap */
 
+/* baton_complete_leg belongs to the library, so the page watches the mission
+   panel instead: the moment a leg signed on this origin appears in the route,
+   the order step comes forward. */
+
+let legSeen = false;
+
+function checkSignedLeg() {
+  const m = baton.mission;
+  const signed = !!(m && Array.isArray(m.legs) && m.legs.some((l) => l.origin === location.origin));
+  if (signed && !legSeen) { legSeen = true; goToStep(4); }
+  if (!signed) legSeen = false;
+}
+
 restore();
 renderAll();
+goToStep(1);
 showLegStatus(activeOrder());
+
+new MutationObserver(checkSignedLeg).observe(el('mission-panel'), { childList: true, subtree: true });
+checkSignedLeg();
