@@ -148,21 +148,23 @@
 /* The operator's standing instructions, written once when the mission starts
    and read at every stop. Quiet on purpose: no rule, no box, no colour — the
    goal above it is the loud line. */
+/* Heading and words at the same size: the operator's standing instructions are
+   one quiet paragraph with a label, not a section. */
 .baton__instructions {
-  margin: 8px 0 9px;
+  margin: 7px 0 8px;
 }
 .baton .baton__instructions-title {
   display: block;
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
-  line-height: 1.3;
+  line-height: 1.35;
   color: var(--baton-muted);
 }
 .baton .baton__instructions-text {
-  margin: 2px 0 0;
-  font-size: 13px;
-  line-height: 1.5;
+  margin: 1px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
   color: var(--baton-muted);
   text-wrap: pretty;
 }
@@ -182,7 +184,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
-  margin: 14px 0 12px;
+  margin: 11px 0 10px;
   background: var(--baton-line);
   border: 1px solid var(--baton-line);
   border-radius: var(--baton-radius);
@@ -190,7 +192,7 @@
 }
 .baton .baton__facts .fact {
   margin: 0;
-  padding: 8px 11px 9px;
+  padding: 6px 11px 7px;
   background: var(--baton-card);
 }
 .baton .baton__facts dt {
@@ -216,7 +218,7 @@
   font-size: 12.5px;
   line-height: 1.45;
   color: var(--baton-muted);
-  margin: 0 0 14px;
+  margin: 0 0 11px;
 }
 .baton .baton__deadline b {
   font-family: var(--font-mono);
@@ -227,7 +229,7 @@
 
 /* ------------------------------------------------------- the chain strip */
 
-.baton__chain { margin: 0 0 13px; }
+.baton__chain { margin: 0 0 11px; }
 
 .strip {
   display: flex;
@@ -262,14 +264,17 @@
    event: the first paint lands on its final state without moving. */
 .baton:not([data-mounted]) .strip__fill { transition-duration: 0ms; }
 
+/* The caption only speaks when something is wrong: a chain that verifies is the
+   strip going green, which needs no sentence under it. */
 .strip__caption {
   font-family: var(--font-sans);
   font-size: 12.5px;
   line-height: 1.45;
-  color: var(--baton-muted);
-  margin: 8px 0 0;
+  color: var(--baton-bad);
+  margin: 7px 0 0;
   text-wrap: pretty;
 }
+.strip__caption:empty { display: none; }
 
 /* -------------------------------------------------------------- the legs */
 
@@ -285,7 +290,7 @@
 .leg {
   display: flex;
   gap: 9px;
-  padding: 8px 10px;
+  padding: 6px 10px;
   border: 1px solid transparent;
   border-radius: var(--baton-radius);
   background: var(--baton-soft);
@@ -321,7 +326,7 @@
   gap: 7px;
   flex-wrap: wrap;
 }
-.leg__role { font-size: 13px; font-weight: 500; }
+.leg__role { font-size: 12.5px; font-weight: 500; }
 .leg__host { font-size: 12px; color: var(--baton-muted); }
 
 .baton .leg__cost {
@@ -338,50 +343,64 @@
   color: var(--baton-muted);
 }
 
+/* One line about the leg and nothing else. Who signed it and when is on the
+   row's title attribute, and the mark and the strip carry the verdict. */
 .leg__summary {
   font-size: 12.5px;
-  line-height: 1.45;
-  margin-top: 2px;
+  line-height: 1.4;
+  margin-top: 1px;
   text-wrap: pretty;
-}
-.leg__meta {
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--baton-muted);
-  margin-top: 2px;
 }
 
 /* What this site has done for its leg so far, while the leg is still unsigned.
    The signed row shows the summary instead. */
 .leg__status {
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 12.5px;
+  line-height: 1.4;
   color: var(--baton-muted);
-  margin-top: 3px;
+  margin-top: 2px;
   text-wrap: pretty;
 }
 
 /* What this site is here to do, printed under its own row: the same sentence
    baton_inspect returns as brief.this_stop_must, for whoever reads the page
    rather than calling the tool. */
+/* Two lines and no more: the label, then as much of the brief as fits. The
+   whole sentence is still in the DOM — baton_inspect returns it in full, and a
+   model reading the page reads all of it — it is only the person's view that
+   stops at two lines. */
 .leg__brief {
-  margin-top: 5px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  margin-top: 4px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--baton-muted);
 }
 .baton .leg__brief-title {
-  display: block;
+  display: inline;
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
-  line-height: 1.3;
+  line-height: inherit;
   color: var(--baton-muted);
 }
+/* The label runs into the sentence rather than sitting on a line of its own,
+   so the whole block is two lines. */
+.baton .leg__brief-title::after {
+  content: " · ";
+  font-weight: 400;
+  color: color-mix(in srgb, var(--baton-muted) 55%, transparent);
+}
 .baton .leg__brief-text {
-  display: block;
-  margin-top: 1px;
+  display: inline;
   font-size: 12.5px;
-  line-height: 1.45;
+  line-height: inherit;
   color: var(--baton-muted);
-  text-wrap: pretty;
 }
 
 /* ---------------------------------------------------------- the declines */
@@ -406,7 +425,7 @@
 
 /* ------------------------------------------------------- the tamper link */
 
-.tamper { margin-top: 11px; }
+.tamper { margin-top: 9px; }
 .tamper__link {
   font-size: 12.5px;
   line-height: 1.45;
@@ -423,7 +442,7 @@
    The one prominent button in the sidebar: full width, accent, and the only
    thing in the column that asks to be pressed. */
 
-.baton__carry { margin-top: 16px; }
+.baton__carry { margin-top: 13px; }
 
 .carry {
   display: block;
@@ -449,13 +468,6 @@
 
 @starting-style {
   .carry { opacity: 0; transform: translateY(4px) scale(0.97); }
-}
-
-.carry__note {
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--baton-muted);
-  margin-top: 6px;
 }
 
 /* -------------------------------------------------------- the confirm card */
@@ -524,96 +536,113 @@
 
 /* --------------------------------------------------------- the debug line */
 
+/* The bottom line of the panel, and only on ?debug=1 — baton.js sets the
+   hidden attribute otherwise, so it costs a person nothing to have it. */
 .baton .baton__debug {
-  margin: 15px 0 0;
-  padding-top: 10px;
+  margin: 12px 0 0;
+  padding-top: 9px;
   border-top: 1px solid var(--baton-line);
   font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 11px;
+  line-height: 1.45;
   color: var(--baton-muted);
   word-break: break-word;
 }
 
-/* ----------------------------------------------------------- the tools box */
+/* ----------------------------------------------------------- the tools box
+
+   Nineteen tools have to fit in a sidebar without becoming nineteen objects.
+   So: one legend line, then the names themselves as running text — mono,
+   middle-dot separated, three to five to a line. Ink is a tool that writes,
+   grey is one that only reads; the legend says so, and every name also carries
+   the word for a screen reader.
+
+     <div class="tools__count">19 site tools · ink = write, grey = read</div>
+     <ul class="tools__list">
+       <li class="tool" data-tool="baton_mint" data-kind="write">…</li>
+     </ul> */
 
 .tools__count {
   font-family: var(--font-sans);
   font-size: 12.5px;
-  line-height: 1.45;
+  line-height: 1.4;
   color: var(--baton-muted);
-  margin: 0 0 9px;
+  margin: 0 0 7px;
 }
 .side__tools .tools__count b,
 .tools .tools__count b {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--baton-ink);
 }
 
+/* Flex, not inline text: adjacent <li>s written by the DOM have no whitespace
+   between them, so an inline run would have nowhere to break. Flex items wrap
+   on their own. */
 .tools__list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  /* A site with nineteen tools would otherwise push everything below it out
-     of a one-viewport sidebar. The list bounds itself instead. */
-  max-height: 34dvh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
+  align-items: baseline;
+  column-gap: 0;
+  row-gap: 2px;
 }
 
-/* A chip enters once, the first time its tool is registered. The lib puts
+/* A name enters once, the first time its tool is registered. The lib puts
    .is-entering and a --enter-delay on new names only, then drops the class on
    the next frame; a re-render of a name already on screen does not move. */
 .tool {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--baton-line);
-  border-radius: 999px;
-  padding: 3px 4px 3px 9px;
-  background: var(--baton-card);
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  letter-spacing: -0.014em;
+  color: var(--baton-ink);
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
   transition:
     opacity 200ms var(--baton-ease) var(--enter-delay, 0ms),
     transform 200ms var(--baton-ease) var(--enter-delay, 0ms);
 }
+.tool[data-kind="read"] { color: var(--baton-muted); }
 .tool.is-entering {
   opacity: 0;
-  transform: translateY(3px) scale(0.97);
+  transform: translateY(2px);
+}
+
+/* The spacer, thin enough to read as punctuation rather than a bullet. */
+.tool:not(:last-child)::after {
+  content: "·";
+  margin: 0 5px;
+  color: color-mix(in srgb, var(--baton-muted) 45%, transparent);
 }
 
 .side__tools .tool__name,
 .tools .tool__name {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: -0.012em;
-  color: var(--baton-ink);
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  color: inherit;
 }
 
-/* Plain sans, because "read" and "write" are words, not data. */
+/* "read" and "write" are carried by the colour and the legend for the eye, and
+   by this word for a screen reader — colour alone is not a label. */
 .side__tools .tool__kind,
 .tools .tool__kind {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  line-height: 1;
-  font-weight: 500;
-  border-radius: 999px;
-  padding: 4px 8px;
-  color: var(--baton-muted);
-  background: var(--baton-soft);
-}
-.side__tools .tool__kind--write,
-.tools .tool__kind--write {
-  color: var(--baton-accent);
-  background: var(--baton-tint);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
 }
 
 /* ----------------------------------------------------------------- hover */

@@ -424,7 +424,7 @@ export function mountBaton(siteConfig) {
     '  <div class="baton__route"></div>',
     '  <div class="baton__carry" hidden></div>',
     '  <div class="baton__confirm" hidden></div>',
-    '  <div class="baton__debug">debug: waiting</div>',
+    '  <div class="baton__debug" hidden>debug: waiting</div>',
     '</div>'
   ].join('\n');
   const root = panel.querySelector('.baton');
@@ -436,6 +436,13 @@ export function mountBaton(siteConfig) {
   const carryEl = panel.querySelector('.baton__carry');
   const confirmEl = panel.querySelector('.baton__confirm');
   const debugEl = panel.querySelector('.baton__debug');
+
+  // The debug line is for whoever is working on the demo, not for whoever is
+  // reading the page: it stays in the DOM — the sites write to it and the
+  // end-to-end run reads it — and shows itself only on ?debug=1.
+  let showDebug = false;
+  try { showDebug = new URLSearchParams(location.search).get('debug') === '1'; } catch (e) { showDebug = false; }
+  debugEl.hidden = !showDebug;
 
   // Set on the frame after the first paint. Until it is there the panel lands
   // on its final state without moving, so arriving at a page with a mission
@@ -591,8 +598,15 @@ export function mountBaton(siteConfig) {
       const mark = !leg ? '·' : v ? (v.ok ? '✓' : '✗') : '…';
       const cls = !leg ? 'leg leg--todo' : v ? (v.ok ? 'leg leg--ok' : 'leg leg--bad') : 'leg leg--pending';
       const hereNow = i === mission.legs.length && stop.role === cfg.role;
+      // Who signed it and when is a fact about the leg, not a line of the
+      // sidebar: it rides on the row itself, where a pointer finds it.
+      const signedTitle = leg
+        ? 'signed by ' + leg.kid + ' · ' + String(leg.completed_at).slice(0, 16).replace('T', ' ') +
+          (v ? ' · ' + (v.ok ? 'signature verified' : v.reason) : ' · checking…')
+        : '';
       return [
-        '<li class="' + cls + (hereNow ? ' leg--here' : '') + '">',
+        '<li class="' + cls + (hereNow ? ' leg--here' : '') + '"' +
+          (signedTitle ? ' title="' + esc(signedTitle) + '"' : '') + '>',
         '  <span class="leg__mark" aria-hidden="true">' + mark + '</span>',
         '  <div class="leg__main">',
         '    <div class="leg__head"><b class="leg__role">' + esc(stop.role) + '</b> <span class="leg__host">' + esc(host(stop.url)) + '</span>' +
@@ -603,11 +617,9 @@ export function mountBaton(siteConfig) {
         // The same sentence baton_inspect hands back as brief.this_stop_must,
         // on the page for whoever reads the page instead of calling the tool.
         !leg && hereNow
-          ? '    <div class="leg__brief"><b class="leg__brief-title">This stop</b>' +
+          ? '    <div class="leg__brief"><b class="leg__brief-title">This stop</b> ' +
             '<span class="leg__brief-text">' + esc(stopBriefText()) + '</span></div>'
           : '',
-        leg ? '    <div class="leg__meta">signed by ' + esc(leg.kid) + ' · ' + esc(String(leg.completed_at).slice(0, 16).replace('T', ' ')) +
-              (v ? ' · ' + esc(v.ok ? 'signature verified' : v.reason) : ' · checking…') + '</div>' : '',
         '  </div>',
         '</li>'
       ].join('');
@@ -639,11 +651,12 @@ export function mountBaton(siteConfig) {
 
     chainEl.hidden = false;
     syncStrip();
-    captionEl.textContent = chain
-      ? (mission.legs.length === 0 ? 'No legs signed yet.'
-        : chain.ok ? 'Every signed leg checks out against the site that signed it.'
-        : 'Chain broken — ' + (chain.legs.find((l) => !l.ok)?.reason || 'spent total does not match the legs') + '.')
-      : 'Checking signatures…';
+    // The caption is the alarm, not the commentary: a chain that verifies says
+    // nothing, because the strip already went green. The element stays in place
+    // either way, so nothing under it moves when a leg breaks.
+    captionEl.textContent = chain && !chain.ok && mission.legs.length > 0
+      ? 'Chain broken — ' + (chain.legs.find((l) => !l.ok)?.reason || 'spent total does not match the legs') + '.'
+      : '';
 
     routeEl.innerHTML = [
       '<ol class="legs">' + rows + '</ol>',
@@ -658,8 +671,7 @@ export function mountBaton(siteConfig) {
       if (carryEl.dataset.url !== carryLink.url) {
         carryEl.dataset.url = carryLink.url;
         carryEl.innerHTML =
-          '<a class="carry" href="' + esc(carryLink.url) + '">Carry this to ' + esc(carryLink.label) + ' →</a>' +
-          '<div class="carry__note">Opens ' + esc(host(carryLink.url)) + ' with the mission in the link.</div>';
+          '<a class="carry" href="' + esc(carryLink.url) + '">Carry this to ' + esc(carryLink.label) + ' →</a>';
       }
     } else {
       carryEl.hidden = true;
@@ -975,15 +987,17 @@ export function mountBaton(siteConfig) {
     return toolsQueued;
   }
 
+  // A tool is its name. Ink if it writes, grey if it only reads — the legend
+  // above the list says which, and the word itself is here for a screen reader.
   function toolChip(name, kind, enterIndex) {
     const li = document.createElement('li');
     li.className = enterIndex === null ? 'tool' : 'tool is-entering';
     li.dataset.tool = name;
     li.dataset.kind = kind;
-    // 24ms between chips: enough to read as a sequence, too short to wait for.
+    // 24ms between names: enough to read as a sequence, too short to wait for.
     if (enterIndex !== null) li.style.setProperty('--enter-delay', enterIndex * 24 + 'ms');
     li.innerHTML = '<code class="tool__name">' + esc(name) + '</code>' +
-      '<span class="tool__kind tool__kind--' + kind + '">' + kind + '</span>';
+      '<span class="tool__kind">, ' + kind + '</span>';
     return li;
   }
 
@@ -1010,7 +1024,8 @@ export function mountBaton(siteConfig) {
       list = toolsBox.querySelector('.tools__list');
     }
     toolsBox.querySelector('.tools__count').innerHTML =
-      '<b>' + tools.length + '</b> site tool' + (tools.length === 1 ? '' : 's') + ' registered right now';
+      '<b>' + tools.length + '</b> site tool' + (tools.length === 1 ? '' : 's') +
+      ' · ink = write, grey = read';
 
     const want = new Map(tools
       .slice()

@@ -10,15 +10,26 @@
            <div class="side__brand">…</div>
            <section id="mission-panel" class="side__mission"></section>
            <section id="site-tools"    class="side__tools"></section>
-           <section class="side__agent">…</section>
+           <details class="side__agent">
+             <summary class="side__heading">For your agent</summary>
+             …
+           </details>
          </aside>
          <main class="main">…</main>
        </div>
      </body>
 
-   The sidebar is always visible: it sticks to the top of the viewport, is one
-   viewport tall, and scrolls on its own. The business content lives in .main
-   and is the site's own business — this file only gives it a width and padding.
+   The sidebar is always visible: it sticks to the top of the viewport and is
+   one viewport tall. It is sized so a mission and nineteen tools fit inside a
+   1080-tall window without scrolling — the column has its own scrollbar only as
+   a safety valve on short screens, because a sidebar that scrolls while the
+   page scrolls moves the camera twice.
+
+   Sidebar order is fixed: brand, mission, tools, then the agent note, which is
+   a <details> closed by default.
+
+   The main column grows with the window up to --main-max, so a 1920 screen is
+   used rather than framed.
 
    Link it after the site's own stylesheet and next to baton-panel.css:
 
@@ -26,8 +37,10 @@
      <link rel="stylesheet" href="./baton-panel.css">
      <link rel="stylesheet" href="./baton-shell.css">
 
-   Everything here sits in the same cascade layer baton-panel.css uses, so any
-   value a site sets on :root wins whatever order the files load in.
+   Most rules here are unlayered, so they beat the site's own stylesheet on a
+   tie. The three things a site is expected to own — :root geometry, and the
+   .btn look — sit in the baton-defaults layer instead, where any unlayered
+   site rule wins whatever the order.
 
    Colour and type come from the --baton-*, --font-sans and --font-mono
    properties declared in baton-panel.css; the two files always travel together. */
@@ -36,21 +49,63 @@
 
   :root {
     /* Geometry a site may tune. */
-    --side-width: 372px;
-    --side-pad: 22px;
-    --side-gap: 18px;
+    --side-width: 400px;
+    --side-pad: 18px;
+    --side-gap: 13px;
     --side-bg: var(--baton-card);
 
-    --main-max: 1040px;
-    --main-pad-x: 44px;
-    --main-pad-y: 40px;
+    /* The main column is capped, not fixed: it fills whatever the sidebar
+       leaves until it reaches --main-max, and its padding grows with the
+       window so a wide screen does not read as a narrow page with margins. */
+    --main-max: 1520px;
+    --main-pad-x: clamp(24px, 3vw, 56px);
+    --main-pad-y: clamp(28px, 2.2vw, 44px);
 
     /* The single-column breakpoint is 960px. Media queries cannot read a
        custom property, so it is written out below rather than tokenised. */
   }
 
+  /* Below 1400 the sidebar gives 20px back to the page. */
+  @media (max-width: 1399.98px) {
+    :root { --side-width: 380px; }
+  }
+
   html { scrollbar-gutter: stable; }
   body { margin: 0; }
+
+  /* Two of the three sites have no button of their own, so the step bar would
+     ship unstyled there. This is a floor, not a look: it lives in the layer, so
+     a site that defines .btn — Rivera Press does — wins every property. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+    padding: 10px 17px;
+    border: 1px solid var(--baton-line);
+    border-radius: var(--baton-radius);
+    background: var(--baton-card);
+    color: var(--baton-ink);
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background-color 160ms var(--baton-ease),
+      border-color 160ms var(--baton-ease),
+      transform 160ms var(--baton-ease);
+  }
+  .btn:active:not(:disabled) { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn:focus-visible { outline: 2px solid var(--baton-accent); outline-offset: 2px; }
+  .btn--primary {
+    background: var(--baton-accent);
+    border-color: var(--baton-accent);
+    color: var(--baton-on-accent);
+    font-weight: 600;
+  }
 
 }
 
@@ -110,13 +165,13 @@
 
 .side__heading {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.35;
   letter-spacing: 0;
   text-transform: none;
   color: var(--baton-muted);
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 
 /* ----------------------------------------------------------------- brand */
@@ -124,7 +179,7 @@
 .side__brand {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .side__name {
@@ -140,7 +195,7 @@
 
 .side__place {
   font-size: 12.5px;
-  line-height: 1.45;
+  line-height: 1.4;
   color: var(--baton-muted);
 }
 
@@ -149,7 +204,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .side__host {
@@ -159,7 +214,7 @@
   color: var(--baton-muted);
   border: 1px solid var(--baton-line);
   border-radius: 999px;
-  padding: 3px 9px;
+  padding: 2px 9px;
   white-space: nowrap;
 }
 
@@ -172,7 +227,7 @@
   background: transparent;
   border: 1px solid var(--baton-line);
   border-radius: 999px;
-  padding: 6px 11px;
+  padding: 5px 11px;
   margin-left: auto;
   cursor: pointer;
   transition:
@@ -198,7 +253,50 @@
 .side__banner b { color: var(--baton-ink); font-weight: 600; }
 .side__banner code { font-family: var(--font-mono); font-size: 12px; }
 
-/* ------------------------------------------------------- for your agent */
+/* ------------------------------------------------------- for your agent
+
+   The note is for the handful of people who want to drive the page with an
+   agent, so it is a <details> closed by default: one line in the column until
+   somebody opens it. The rules below only bind when the section is a <details>,
+   so the older <section class="side__agent"> markup still renders as it did. */
+
+details.side__agent > summary.side__heading,
+details.side__agent > summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  list-style: none;
+  cursor: pointer;
+  color: var(--baton-muted);
+  transition: color 160ms var(--baton-ease), transform 120ms var(--baton-ease);
+}
+details.side__agent > summary::-webkit-details-marker { display: none; }
+details.side__agent > summary::marker { content: ""; }
+
+/* The disclosure chevron: a 6px corner rotated, so it needs no asset and takes
+   the summary's own colour. */
+details.side__agent > summary::after {
+  content: "";
+  flex: none;
+  width: 5px;
+  height: 5px;
+  margin-top: -1px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 160ms var(--baton-ease);
+}
+details.side__agent[open] > summary::after { transform: rotate(45deg); }
+
+details.side__agent > summary:active { transform: scale(0.98); transform-origin: left center; }
+details.side__agent > summary:focus-visible { outline: 2px solid var(--baton-accent); outline-offset: 3px; border-radius: 4px; }
+details.side__agent[open] > summary { margin-bottom: 10px; }
 
 .side__note {
   font-size: 12.5px;
@@ -261,12 +359,197 @@
   border-color: color-mix(in srgb, var(--baton-ok) 40%, var(--baton-line));
 }
 
+/* ------------------------------------------------------------- the steps
+
+   The main column's own wizard. The site owns the JS; this owns the look.
+
+     <nav class="steps" aria-label="Steps">
+       <button class="step" data-step="1" aria-current="step">1<span>Choose a set</span></button>
+       <button class="step" data-step="2" data-done>2<span>Proof</span></button>
+     </nav>
+     <section class="panel" data-step="1">…</section>
+     <section class="panel" data-step="2" hidden>…</section>
+     <div class="steps__nav">
+       <button class="btn" data-nav="back">Back</button>
+       <button class="btn btn--primary" data-nav="next">Next</button>
+     </div>
+
+   The current step carries aria-current="step"; a finished one carries
+   data-done (or .is-done). The site hides every panel but the current one with
+   the hidden attribute — .panel is a card class two of the sites already own,
+   so everything here is scoped to .panel[data-step] and never touches it. */
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 2px 20px;
+  margin: 0 0 20px;
+  border-bottom: 1px solid var(--baton-line);
+}
+
+.step {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  /* The number is data; the label is a word. */
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: var(--baton-muted);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 0 1px 10px;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition:
+    color 160ms var(--baton-ease),
+    border-color 160ms var(--baton-ease),
+    transform 120ms var(--baton-ease);
+}
+
+.step > span {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.006em;
+}
+
+.step[aria-current="step"] {
+  color: var(--baton-ink);
+  border-bottom-color: var(--baton-accent);
+}
+
+.step[data-done]::after,
+.step.is-done::after {
+  content: "✓";
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  line-height: 1;
+  color: var(--baton-ok);
+}
+
+.step:active:not(:disabled) { transform: scale(0.98); }
+.step:disabled { opacity: 0.45; cursor: default; }
+.step:focus-visible { outline: 2px solid var(--baton-accent); outline-offset: 3px; border-radius: 4px; }
+
+/* Only the current panel is on the page, and it arrives by fading: an
+   animation rather than a transition, because an element coming back from
+   display:none has no previous value to transition from. Opacity only — the
+   step bar above it must not move while the content under it changes. */
+.panel[data-step] {
+  animation: baton-step-in 160ms var(--baton-ease) both;
+}
+.panel[data-step][hidden] { display: none; }
+
+@keyframes baton-step-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.steps__nav {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ------------------------------------------------------------ the footer */
+
+.site-footer {
+  margin-top: 44px;
+  padding-top: 18px;
+  border-top: 1px solid var(--baton-line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--baton-muted);
+}
+.site-footer p { margin: 0; max-width: 80ch; }
+.site-footer a { color: inherit; }
+
+/* Scoped to details.terms: two of the sites already use .terms for a plain
+   list of house terms in the page, and that list is not this. */
+.site-footer details.terms,
+details.terms {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--baton-muted);
+}
+
+details.terms > summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  font-weight: 500;
+  color: var(--baton-muted);
+  list-style: none;
+  cursor: pointer;
+  transition: color 160ms var(--baton-ease), transform 120ms var(--baton-ease);
+}
+details.terms > summary::-webkit-details-marker { display: none; }
+details.terms > summary::marker { content: ""; }
+details.terms > summary::after {
+  content: "";
+  flex: none;
+  width: 5px;
+  height: 5px;
+  margin-top: -1px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 160ms var(--baton-ease);
+}
+details.terms[open] > summary::after { transform: rotate(45deg); }
+details.terms > summary:active { transform: scale(0.98); transform-origin: left center; }
+details.terms > summary:focus-visible { outline: 2px solid var(--baton-accent); outline-offset: 3px; border-radius: 4px; }
+details.terms[open] > summary { margin-bottom: 9px; }
+
+details.terms ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 80ch;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--baton-muted);
+}
+details.terms li {
+  margin: 0;
+  padding: 0 0 0 13px;
+  border: 0;
+  position: relative;
+}
+details.terms li + li { margin-top: 4px; border: 0; }
+details.terms li::before {
+  content: "·";
+  position: absolute;
+  left: 2px;
+  top: 0;
+  color: var(--baton-muted);
+}
+details.terms p { margin: 9px 0 0; max-width: 80ch; }
+
 /* ----------------------------------------------------------------- hover */
 
 @media (hover: hover) and (pointer: fine) {
   .side__theme:hover { border-color: var(--baton-muted); }
   .prompt__copy:hover { color: var(--baton-ink); border-color: var(--baton-muted); }
   .prompt__copy[data-copied]:hover { color: var(--baton-ok); }
+  details.side__agent > summary:hover { color: var(--baton-ink); }
+  details.terms > summary:hover { color: var(--baton-ink); }
+  .step:hover:not(:disabled) { color: var(--baton-ink); }
 }
 
 /* ------------------------------------------------------------ one column */
@@ -280,7 +563,7 @@
     overflow: visible;
     border-right: 0;
     border-bottom: 1px solid var(--baton-line);
-    padding: 24px var(--side-pad) 30px;
+    padding: 22px var(--side-pad) 26px;
   }
 
   /* The panel is drawn for a column. Stacked, it keeps that column rather
@@ -297,21 +580,28 @@
     padding: 28px 20px 44px;
   }
 
-  /* Stacked, the column already scrolls with the page. */
-  .tools__list { max-height: none; overflow: visible; }
+  .steps { gap: 2px 16px; }
 }
 
 @media (max-width: 560px) {
   .side { padding: 18px 16px; }
+  .steps__nav .btn { flex: 1; }
 }
 
 /* -------------------------------------------------------- reduced motion */
 
 @media (prefers-reduced-motion: reduce) {
   .side__theme,
-  .prompt__copy {
+  .prompt__copy,
+  .step {
     transition-property: color, border-color, background-color;
   }
   .side__theme:active,
-  .prompt__copy:active { transform: none; }
+  .prompt__copy:active,
+  .step:active:not(:disabled) { transform: none; }
+  details.side__agent > summary:active,
+  details.terms > summary:active { transform: none; }
+  details.side__agent > summary::after,
+  details.terms > summary::after { transition: none; }
+  .panel[data-step] { animation: none; }
 }
