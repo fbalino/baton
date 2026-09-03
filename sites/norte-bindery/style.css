@@ -303,17 +303,6 @@ table.catalog .how { color: var(--ink-soft); font-size: 14px; }
 .sheet__note { margin: 16px 0 0; font-size: 14px; color: var(--muted); max-width: 76ch; }
 .sheet__note--signed { color: var(--ok); }
 
-/* ---------------------------------------- one screen, footer at the foot */
-
-@media (min-width: 960px) {
-  .main {
-    display: flex;
-    flex-direction: column;
-    min-height: 100dvh;
-  }
-  .main > .site-footer { margin-top: auto; }
-}
-
 /* ----------------------------------------------------------------- hover */
 
 @media (hover: hover) and (pointer: fine) {

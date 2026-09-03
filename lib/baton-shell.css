@@ -476,6 +476,20 @@ details.side__agent[open] > summary { margin-bottom: 10px; }
 .site-footer p { margin: 0; max-width: 80ch; }
 .site-footer a { color: inherit; }
 
+/* The footer sits at the foot of the screen rather than floating under a short
+   step panel. Two columns wide only: stacked, the page is a scroll and the
+   footer belongs at the end of it, not pinned. Making .main a flex column stops
+   its children's margins collapsing — measured on all three sites, and the only
+   box that moves is the footer itself. */
+@media (min-width: 960px) {
+  .main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+  .main > .site-footer { margin-top: auto; }
+}
+
 /* Scoped to details.terms: two of the sites already use .terms for a plain
    list of house terms in the page, and that list is not this. */
 .site-footer details.terms,
