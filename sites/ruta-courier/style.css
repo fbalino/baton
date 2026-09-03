@@ -5,8 +5,10 @@
    the tools list. This file hands both of them the depot's colours and type
    through --baton-* / --font-*, and then styles the business in .main.
 
-   High contrast, and one orange that only ever marks something: express, an
-   open window, a parcel on the road. No left accent borders anywhere. */
+   The main column is one screen, not a scroll: a compact hero row, a step bar,
+   one panel at a time, a footer. High contrast, and one orange that only ever
+   marks something: express, an open window, a parcel on the road. No left
+   accent borders anywhere. */
 
 html { scrollbar-gutter: stable; }
 
@@ -138,93 +140,68 @@ h1, h2, h3 { text-wrap: balance; }
   border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line));
   background: var(--card);
   border-radius: var(--radius);
-  padding: 15px 17px;
-  margin: 0 0 24px;
+  padding: 13px 16px;
+  margin: 0 0 18px;
   color: var(--ink-soft);
+  font-size: 14px;
 }
 .banner b { display: block; margin-bottom: 3px; color: var(--ink); }
 
-/* ------------------------------------------------------------------ hero */
+/* -------------------------------------------------------------- hero row */
 
-.hero {
-  margin: 0 0 30px;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  border-radius: var(--radius);
-  background: var(--sunk);
-  border: 1px solid var(--line);
+.lede {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 0 0 22px;
 }
-.hero[hidden] { display: none; }
-.hero__img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 38% center; }
-
-/* ----------------------------------------------------------------- intro */
-
-.intro { margin: 0 0 36px; }
-
-.intro h1 {
+.lede__img {
+  flex: none;
+  width: 212px;
+  height: 134px;
+  object-fit: cover;
+  object-position: 38% center;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--sunk);
+}
+.lede__text { min-width: 0; }
+.lede h1 {
   font-family: var(--font-display);
   font-weight: 800;
   font-stretch: 112%;
-  font-size: clamp(25px, 2.7vw, 32px);
+  font-size: clamp(23px, 1.9vw, 28px);
   line-height: 1.16;
   letter-spacing: -0.022em;
   margin: 0;
-  max-width: 26ch;
+  max-width: 38ch;
 }
+.lede__facts { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
 
-.figures {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px 34px;
-  margin: 22px 0 0;
-  padding-top: 20px;
-  border-top: 1px solid var(--line);
-}
-.figures div { margin: 0; }
-.figures dt { font-size: 13px; color: var(--muted); }
-.figures dd {
-  margin: 2px 0 0;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 21px;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-}
-
-/* -------------------------------------------------------------- sections */
-
-.stack { margin: 0 0 36px; }
-
-.head {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 20px;
-  letter-spacing: -0.02em;
-  margin: 0 0 12px;
-}
+/* --------------------------------------------------------------- panels */
 
 .panel {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 18px;
-  overflow-x: auto;
 }
-.panel__intro { margin: 0 0 14px; font-size: 16px; line-height: 1.6; color: var(--ink-soft); max-width: 62ch; }
-.fineprint { margin: 14px 0 0; font-size: 13px; color: var(--muted); max-width: 66ch; }
+.panel[hidden] { display: none; }
+.panel__intro { margin: 0 0 12px; font-size: 15px; line-height: 1.55; color: var(--ink-soft); max-width: 74ch; }
+.fineprint { margin: 12px 0 0; font-size: 13px; color: var(--muted); max-width: 74ch; }
 
 /* ---------------------------------------------------------------- tables */
 
-table.grid { width: 100%; border-collapse: collapse; min-width: 460px; }
+table.grid { width: 100%; border-collapse: collapse; }
 table.grid th,
-table.grid td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
-table.grid thead th { font-size: 13px; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--line); }
+table.grid td { text-align: left; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+table.grid thead th { font-size: 12.5px; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--line); }
 table.grid tbody tr:last-child td { border-bottom: 0; }
 table.grid td.num,
-table.grid th.num { text-align: right; white-space: nowrap; }
+table.grid th.num { text-align: right; white-space: nowrap; padding-right: 0; }
 table.grid td.num { font-family: var(--font-mono); font-size: 13.5px; font-variant-numeric: tabular-nums; }
 table.grid .name { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.015em; }
-table.grid .covers { font-family: var(--font-sans); color: var(--ink-soft); }
+table.grid .covers { font-family: var(--font-sans); color: var(--ink-soft); font-size: 14px; }
 table.grid td.num .covers { font-size: 12.5px; color: var(--muted); }
 table.grid .price--express { color: var(--signal); }
 table.grid .tid { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
@@ -250,6 +227,60 @@ table.grid .tid + .covers { font-size: 13.5px; margin-top: 2px; }
 }
 tr.row--new { animation: row-in 200ms cubic-bezier(0.23, 1, 0.32, 1); }
 
+/* ------------------------------- step 1: the rate card and what it priced */
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 2.05fr) minmax(0, 1fr);
+  gap: 34px;
+  align-items: start;
+}
+.split__side { min-width: 0; }
+.split__side .fineprint { margin: 0; max-width: none; }
+/* In the side column the quote is the column, so it drops the rule that
+   separates it from a table above and stacks instead of sitting in a row. */
+.split__side .quote {
+  display: block;
+  margin: 0 0 14px;
+  padding-top: 0;
+  border-top: 0;
+}
+.split__side .quote__body { margin-top: 2px; }
+.split__side .quote__fit { display: inline-block; margin-top: 10px; }
+
+/* ------------------------------------------------- the quote on the page */
+
+.quote {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.quote[hidden] { display: none; }
+.quote__total {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: 27px;
+  letter-spacing: -0.022em;
+  font-variant-numeric: tabular-nums;
+}
+.quote__body { flex: 1; min-width: 200px; }
+.quote__line { font-size: 15px; }
+.quote__sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.quote__fit {
+  font-size: 13px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+.quote__fit--ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }
+.quote__fit--bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+
 /* -------------------------------------------------------- pickup windows */
 
 .windows { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
@@ -263,21 +294,16 @@ tr.row--new { animation: row-in 200ms cubic-bezier(0.23, 1, 0.32, 1); }
 .window--closed { border-style: dashed; color: var(--muted); }
 .window--closed .window__label { color: var(--muted); }
 
-/* ----------------------------------------------------------------- terms */
+/* ---------------------------------------- one screen, footer at the foot */
 
-.terms { list-style: none; margin: 0; padding: 0; color: var(--ink-soft); font-size: 16px; line-height: 1.6; }
-.terms li { padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
-.terms li:first-child { padding-top: 0; }
-.terms li:last-child { border-bottom: 0; padding-bottom: 0; }
-
-.aside { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
-.aside h3 { font-family: var(--font-display); font-weight: 700; font-size: 17px; margin: 0 0 6px; letter-spacing: -0.015em; }
-.aside p { margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-soft); max-width: 62ch; }
-
-/* ------------------------------------------------------------------ foot */
-
-.foot { border-top: 1px solid var(--line); padding-top: 18px; font-size: 13px; color: var(--muted); }
-.foot p { margin: 0; max-width: 62ch; }
+@media (min-width: 960px) {
+  .main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+  .main > .site-footer { margin-top: auto; }
+}
 
 /* ----------------------------------------------------------------- hover */
 
@@ -287,26 +313,30 @@ tr.row--new { animation: row-in 200ms cubic-bezier(0.23, 1, 0.32, 1); }
 
 /* ------------------------------------------------------------ responsive */
 
+/* The rate card and its note only sit side by side when the main column is
+   genuinely wide; below that the table takes the width back. */
+@media (max-width: 1520px) {
+  .split { grid-template-columns: 1fr; gap: 18px; }
+  .split__side .quote { margin: 0 0 12px; padding-top: 14px; border-top: 1px solid var(--line); }
+}
+
 @media (max-width: 620px) {
   .windows { grid-template-columns: 1fr; }
   /* The zone descriptions are the first thing to go on a phone: the zone name,
      the cut-off and the two prices are what a rate card is for. */
   .covers-col { display: none; }
-  table.grid { min-width: 0; }
-  table.grid th, table.grid td { padding: 9px 6px; }
+  table.grid th, table.grid td { padding: 9px 6px 9px 0; }
   table.grid .tid { font-size: 12.5px; }
   .status { font-size: 12px; padding: 2px 7px; white-space: normal; }
 }
 
 @media (max-width: 560px) {
-  .hero { aspect-ratio: 3 / 2; margin-bottom: 22px; }
+  .lede { flex-direction: column; align-items: stretch; gap: 16px; }
+  .lede__img { width: 100%; height: 156px; }
   .panel { padding: 15px; }
-  .figures { gap: 12px 24px; }
 }
 
 /* ---------------------------------------------------------------- motion */
-
-
 
 @media (prefers-reduced-motion: reduce) {
   tr.row--new { animation: none; }

@@ -38,8 +38,8 @@
 
     <section id="site-tools" class="side__tools"></section>
 
-    <section class="side__agent">
-      <h2 class="side__heading">For your agent</h2>
+    <details class="side__agent">
+      <summary class="side__heading">For your agent</summary>
       <p class="side__note">
         On an ordinary visit this page hands your agent two tools. Bring a baton that already
         carries a signed print leg and the quoting, diary and booking tools appear with it.
@@ -54,7 +54,7 @@
           <button type="button" class="prompt__copy">Copy</button>
         </li>
       </ul>
-    </section>
+    </details>
 
   </aside>
 
@@ -67,75 +67,80 @@
       <code>chrome://flags/#enable-webmcp-testing</code> turned on.
     </div>
 
-    <figure class="hero" id="hero">
-      <img class="hero__img" src="./assets/generated/bindery-hero.webp" width="1600" height="1067"
+    <div class="lede">
+      <img class="lede__img" src="./assets/generated/bindery-hero.webp" width="1600" height="1067"
            alt="A sewn text block clamped in a wooden finishing press, with bookcloth and grey board on the bench beside it."
-           onerror="var h=document.getElementById('hero'); if (h) h.hidden = true;">
-    </figure>
-
-    <header class="intro">
-      <h1>Norte Bindery sews and cases in books that other people print.</h1>
-      <dl class="figures" id="figures"></dl>
-    </header>
-
-    <section class="stack" aria-labelledby="h-bindings">
-      <h2 class="head" id="h-bindings">Bindings</h2>
-      <div class="panel">
-        <table class="catalog">
-          <thead><tr><th scope="col">Style</th><th scope="col">How it is made</th><th scope="col" class="num">Per copy</th></tr></thead>
-          <tbody id="bindings"></tbody>
-        </table>
+           onerror="this.remove()">
+      <div class="lede__text">
+        <h1>Norte Bindery sews and cases in books that other people print.</h1>
+        <p class="lede__facts" id="facts"></p>
       </div>
+    </div>
 
-      <h2 class="head">Covers</h2>
-      <div class="panel">
-        <table class="catalog">
-          <thead><tr><th scope="col">Cover</th><th scope="col">How it is made</th><th scope="col" class="num">Per copy</th></tr></thead>
-          <tbody id="covers"></tbody>
-        </table>
-        <p class="fineprint">A quote is one binding plus one cover, times the number of copies. There is no third line.</p>
+    <nav class="steps" aria-label="Steps">
+      <button type="button" class="step" data-step="1" aria-current="step">1<span>Bindings and covers</span></button>
+      <button type="button" class="step" data-step="2">2<span>Bench day</span></button>
+      <button type="button" class="step" data-step="3">3<span>Leg</span></button>
+    </nav>
+
+    <section class="panel" data-step="1" aria-label="Bindings and covers">
+      <div class="pair">
+        <div class="pair__col">
+          <h2 class="pair__head">Bindings</h2>
+          <table class="catalog">
+            <thead><tr><th scope="col">Style</th><th scope="col">How it is made</th><th scope="col" class="num">Per copy</th></tr></thead>
+            <tbody id="bindings"></tbody>
+          </table>
+        </div>
+        <div class="pair__col">
+          <h2 class="pair__head">Covers</h2>
+          <table class="catalog">
+            <thead><tr><th scope="col">Cover</th><th scope="col">How it is made</th><th scope="col" class="num">Per copy</th></tr></thead>
+            <tbody id="covers"></tbody>
+          </table>
+          <p class="fineprint">A quote is one binding plus one cover, times the copies on the baton.</p>
+        </div>
       </div>
+      <div class="quote" id="quote-now" hidden></div>
     </section>
 
-    <section class="stack" aria-labelledby="h-bench">
-      <h2 class="head" id="h-bench">Bench diary</h2>
-      <div class="panel">
-        <p class="panel__intro">
-          Three weeks ahead, two benches a day, closed Sundays. When a day is taken we name the
-          closest free ones instead of moving your booking.
-        </p>
-        <ol class="diary" id="bench-diary"></ol>
-        <ul class="key">
-          <li><span class="dot dot--free"></span>Both benches free</li>
-          <li><span class="dot dot--half"></span>One bench left</li>
-          <li><span class="dot dot--full"></span>Taken</li>
-          <li><span class="dot dot--closed"></span>Closed</li>
-        </ul>
-      </div>
+    <section class="panel" data-step="2" aria-label="Bench day" hidden>
+      <p class="panel__intro">
+        Three weeks ahead, two benches a day, closed Sundays. When a day is taken we name the
+        closest free ones instead of moving your booking.
+      </p>
+      <ol class="diary" id="bench-diary"></ol>
+      <ul class="key">
+        <li><span class="dot dot--free"></span>Both benches free</li>
+        <li><span class="dot dot--half"></span>One bench left</li>
+        <li><span class="dot dot--full"></span>Taken</li>
+        <li><span class="dot dot--closed"></span>Closed</li>
+      </ul>
     </section>
 
-    <section class="stack" aria-labelledby="h-terms">
-      <h2 class="head" id="h-terms">House terms</h2>
-      <div class="panel">
-        <ul class="terms">
+    <section class="panel" data-step="3" aria-label="Leg" hidden>
+      <dl class="sheet" id="leg-sheet"></dl>
+      <p class="sheet__note" id="leg-note"></p>
+    </section>
+
+    <div class="steps__nav">
+      <button type="button" class="btn" data-nav="back">Back</button>
+      <button type="button" class="btn btn--primary" data-nav="next">Next</button>
+    </div>
+
+    <footer class="site-footer">
+      <details class="terms">
+        <summary>Terms</summary>
+        <ul>
           <li>Binding legs only. We do not print and we do not deliver.</li>
           <li>The mission has to carry a signed print leg before we will quote.</li>
           <li>Ten copies minimum, five hundred maximum per booking.</li>
           <li>A bench day is held against a quoted job, not against an empty date.</li>
         </ul>
-        <div class="aside">
-          <h3>What we do with a baton</h3>
-          <p>
-            We read the copy count off the print leg, so nobody is asked for it twice. We price the
-            binding against it, check the total against the money left, and sign our leg with our
-            own key. The printer's signature stays on the baton beside ours, and the courier can
-            check both.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <footer class="foot">
+        <p>What we do with a baton: we read the copy count off the print leg, price the binding
+        against it, check the total against the money left, and sign our leg with our own key. The
+        printer's signature stays on the baton beside ours, and the courier can check both.</p>
+      </details>
       <p>Norte Bindery is a fictional workshop built for the Baton demo. The prices are invented.
       The signatures are real.</p>
     </footer>

@@ -1,5 +1,9 @@
 // Norte Bindery — the binding leg of a mission that arrives with a baton.
 //
+// The page is three steps in one screen, not a long scroll: bindings and
+// covers, the bench diary, the leg. The agent's tools move the step, and so do
+// the buttons, so the view stays where the work is without the page moving.
+//
 // Signing happens on this origin's server (the library POSTs /api/sign); no
 // private key ships to the browser any more.
 
@@ -13,6 +17,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const usd = (n) => '$' + round2(n).toFixed(2);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /* ------------------------------------------------------------------ theme */
 
@@ -41,12 +46,12 @@ paintThemeButton();
 
 $('host-label').textContent = location.host || 'file://';
 
-$('figures').innerHTML = [
-  ['Benches', WORKSHOP.benches],
-  ['Bindings', BINDINGS.length],
-  ['Copies a booking', WORKSHOP.min_quantity + ' to ' + WORKSHOP.max_quantity],
-  ['Working since', WORKSHOP.founded]
-].map(([k, v]) => '<div><dt>' + k + '</dt><dd>' + v + '</dd></div>').join('');
+$('facts').textContent = [
+  WORKSHOP.benches + ' benches',
+  BINDINGS.length + ' bindings',
+  WORKSHOP.min_quantity + ' to ' + WORKSHOP.max_quantity + ' copies a booking',
+  'working since ' + WORKSHOP.founded
+].join(' · ');
 
 $('bindings').innerHTML = BINDINGS.map((b) =>
   '<tr><td class="name">' + b.name + '</td><td class="how">' + b.notes + '</td>' +
@@ -58,9 +63,17 @@ $('covers').innerHTML = COVERS.map((c) =>
   '<td class="num">' + usd(c.per_copy) + '</td></tr>'
 ).join('');
 
-// Bench days this page has held during this visit, so the diary shows the
-// booking the agent just made.
-const heldDays = new Set();
+/* ------------------------------------------------------- what this visit did */
+
+let lastQuote = null;      // what reserve_press_slot books a bench against
+let heldDate = null;       // the bench day held during this visit
+const heldDays = new Set(); // days this page has held, so the diary shows them
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const shortDay = (iso) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso));
+  return m ? Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1] : String(iso);
+};
 
 function drawDiary() {
   const today = todayISO();
@@ -80,6 +93,151 @@ function drawDiary() {
   $('bench-diary').innerHTML = rows.join('');
 }
 drawDiary();
+
+/* ------------------------------------------------------------------ steps */
+
+const stepBtns = [...document.querySelectorAll('.steps .step')];
+const stepPanels = [...document.querySelectorAll('.panel[data-step]')];
+const backBtn = document.querySelector('[data-nav="back"]');
+const nextBtn = document.querySelector('[data-nav="next"]');
+const LAST_STEP = stepBtns.length;
+
+let currentStep = 1;
+const finished = new Set(); // steps whose work is actually done
+
+// Moves the view without moving the page: panels are shown and hidden in
+// place, so nothing scrolls and the reader's eye stays where it was.
+function goToStep(n) {
+  const want = Math.min(LAST_STEP, Math.max(1, Math.trunc(Number(n)) || 1));
+  currentStep = want;
+  for (const p of stepPanels) p.hidden = Number(p.dataset.step) !== want;
+  for (const b of stepBtns) {
+    const i = Number(b.dataset.step);
+    if (i === want) b.setAttribute('aria-current', 'step');
+    else b.removeAttribute('aria-current');
+    if (i !== want && (finished.has(i) || i < want)) b.dataset.done = 'yes';
+    else delete b.dataset.done;
+  }
+  backBtn.disabled = want === 1;
+  nextBtn.disabled = want === LAST_STEP;
+}
+
+const markFinished = (n) => { finished.add(Number(n)); goToStep(currentStep); };
+
+for (const b of stepBtns) b.addEventListener('click', () => goToStep(b.dataset.step));
+backBtn.addEventListener('click', () => goToStep(currentStep - 1));
+nextBtn.addEventListener('click', () => goToStep(currentStep + 1));
+
+/* ---- the agent's tools move the same steps the buttons do ---------------
+   Wrapping registerTool means the library's own tools count too: the page
+   turns to the leg the moment baton_complete_leg asks for the tap, so the
+   operator is looking at what they are about to sign. */
+
+const TOOL_STEP = {
+  list_bindings: 1,
+  quote_binding_for_mission: 1,
+  bench_availability: 2,
+  reserve_press_slot: 2,
+  baton_complete_leg: 3
+};
+
+const TOOL_FINISHES = {
+  quote_binding_for_mission: 1,
+  reserve_press_slot: 2,
+  baton_complete_leg: 3
+};
+
+try {
+  const mc = document.modelContext;
+  if (mc && typeof mc.registerTool === 'function' && !mc.__norteSteps) {
+    const registerTool = mc.registerTool.bind(mc);
+    mc.registerTool = function (definition, options) {
+      const target = definition && TOOL_STEP[definition.name];
+      if (!target || typeof definition.execute !== 'function') return registerTool(definition, options);
+      const name = definition.name;
+      const run = definition.execute;
+      const wrapped = {
+        ...definition,
+        execute: async (input, client) => {
+          goToStep(target);
+          const out = await run(input, client);
+          if (out && out.ok === true && TOOL_FINISHES[name]) markFinished(TOOL_FINISHES[name]);
+          drawQuote();
+          drawLeg();
+          return out;
+        }
+      };
+      return registerTool(wrapped, options);
+    };
+    mc.__norteSteps = true;
+  }
+} catch { /* an ordinary browser has no modelContext; the buttons still work */ }
+
+/* ------------------------------------------------ step 1: the live quote */
+
+function drawQuote() {
+  const box = $('quote-now');
+  if (!lastQuote) { box.hidden = true; box.innerHTML = ''; return; }
+  const q = lastQuote;
+  box.hidden = false;
+  box.innerHTML =
+    '<div class="quote__total">' + usd(q.cost_usd) + '</div>' +
+    '<div class="quote__body">' +
+      '<div class="quote__line">' + q.copies + ' copies · ' + esc(q.binding_name.toLowerCase()) +
+        ' with a ' + esc(q.cover_name.toLowerCase()) + '</div>' +
+      '<div class="quote__sub">' + usd(q.per_copy_usd) + ' a copy · ' + q.bench_days +
+        ' bench days · ' + esc(q.bench) + '</div>' +
+    '</div>' +
+    '<div class="quote__fit quote__fit--' + (q.fits ? 'ok' : 'bad') + '">' +
+      (q.fits ? 'fits the money left' : 'over the money left') + '</div>';
+}
+
+/* ------------------------------------------------- step 3: what gets signed */
+
+function signedLeg() {
+  try {
+    return baton.mission?.legs?.find((l) => l.origin === location.origin) || null;
+  } catch { return null; }
+}
+
+function drawLeg() {
+  const leg = signedLeg();
+  const ev = (leg && leg.evidence) || {};
+  const q = lastQuote;
+  const dash = '—';
+
+  const bindingName = ev.binding ? (findBinding(ev.binding)?.name || ev.binding) : q ? q.binding_name : null;
+  const coverName = ev.cover ? (findCover(ev.cover)?.name || ev.cover) : q ? q.cover_name : null;
+  let copies = ev.copies ?? q?.copies ?? null;
+  if (copies == null) { try { copies = baton.mission?.constraints?.quantity ?? null; } catch { copies = null; } }
+  const date = ev.bench_date || heldDate;
+  const cost = leg ? leg.cost_usd : q?.cost_usd;
+
+  const rows = [
+    ['Binding', bindingName || dash],
+    ['Cover', coverName || dash],
+    ['Copies', copies == null ? dash : String(copies)],
+    ['Bench day', date ? weekdayName(date) + ' ' + shortDay(date) : dash],
+    ['Cost', cost == null ? dash : usd(cost)]
+  ];
+  $('leg-sheet').innerHTML = rows.map(([k, v]) =>
+    '<div class="sheet__row"><dt>' + k + '</dt><dd>' + esc(v) + '</dd></div>').join('');
+
+  const note = $('leg-note');
+  if (leg) {
+    note.className = 'sheet__note sheet__note--signed';
+    note.textContent = 'Signed. ' + leg.summary + ' Signed by ' + leg.kid + '.';
+  } else if (date) {
+    note.className = 'sheet__note';
+    note.textContent = 'The bench is held until the leg is signed. The operator taps Confirm once.';
+  } else if (q) {
+    note.className = 'sheet__note';
+    note.textContent = 'Hold a bench day on step 2, then the leg can be signed.';
+  } else {
+    note.className = 'sheet__note';
+    note.textContent = 'Nothing is quoted yet. This is where the binding leg is signed.';
+  }
+}
 
 /* ------------------------------------------------- copy an example prompt */
 
@@ -138,6 +296,26 @@ const baton = mountBaton({
 
 if (!baton.hasWebMCP) $('no-webmcp').hidden = false;
 
+drawQuote();
+drawLeg();
+goToStep(1);
+
+// The signature is the library's tool, not this site's, and the confirm card is
+// the library's too. Watching the panel keeps the page on the leg while the
+// operator answers, and again once the leg is signed.
+try {
+  const panel = $('mission-panel');
+  let jumped = false;
+  new MutationObserver(() => {
+    drawLeg();
+    const asking = !!panel.querySelector('.baton__confirm:not([hidden]) .confirm');
+    const signed = !!signedLeg();
+    if (signed) markFinished(3);
+    if ((asking || signed) && !jumped) { jumped = true; goToStep(3); }
+    if (!asking && !signed) jumped = false;
+  }).observe(panel, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+} catch { /* no panel: the buttons still work */ }
+
 /* ---- confirmation policy — one tap at Norte -----------------------------
    The operator taps Confirm once, for baton_complete_leg: the signature, which
    is also the money. Holding a bench applies as soon as the agent asks for it
@@ -145,12 +323,6 @@ if (!baton.hasWebMCP) $('no-webmcp').hidden = false;
    one run instead of stopping at every step. */
 
 /* The line the mission panel shows under Norte's row while the leg is built. */
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const shortDay = (iso) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso));
-  return m ? Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1] : String(iso);
-};
 
 function showLegStatus(line) {
   try {
@@ -187,8 +359,6 @@ baton.registerAlways((signal, register) => {
 });
 
 /* -------------------------------------- only while a mission is on the page */
-
-let lastQuote = null; // what reserve_press_slot books a bench against
 
 baton.registerWhenMissionAboard((signal, register) => {
   register({
@@ -247,8 +417,10 @@ baton.registerWhenMissionAboard((signal, register) => {
 
       lastQuote = {
         binding: b.id, binding_name: b.name, cover: c.id, cover_name: c.name,
-        copies, per_copy_usd, cost_usd, bench_days, bench: b.bench
+        copies, per_copy_usd, cost_usd, bench_days, bench: b.bench, fits: check.allowed
       };
+      drawQuote();
+      drawLeg();
 
       showLegStatus(copies + ' copies · ' + b.name.toLowerCase() + ', ' + c.name.toLowerCase() +
         ' · ' + usd(cost_usd) + (check.allowed ? ' · bench day to hold' : ' · over the budget'));
@@ -368,7 +540,9 @@ baton.registerWhenMissionAboard((signal, register) => {
 
       const q = lastQuote;
       heldDays.add(date);
+      heldDate = date;
       drawDiary();
+      drawLeg();
       baton.debug('bench held on ' + date + ' for ' + q.copies + ' copies — until the leg is signed');
       showLegStatus(q.copies + ' copies · ' + q.binding_name.toLowerCase() + ', ' + q.cover_name.toLowerCase() +
         ' · bench ' + shortDay(date) + ' held until the leg is signed · ready to sign');

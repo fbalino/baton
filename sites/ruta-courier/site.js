@@ -1,5 +1,9 @@
 // Ruta Courier — the delivery leg, usually the last one on the baton.
 //
+// The page is three steps in one screen, not a long scroll: zones and rates,
+// the collection windows, the road. The agent's tools move the step, and so do
+// the buttons, so the view stays where the work is without the page moving.
+//
 // Signing happens on this origin's server (the library POSTs /api/sign); no
 // private key ships to the browser any more.
 
@@ -13,6 +17,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 const usd = (n) => '$' + round2(n).toFixed(2);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SAMPLE_COPIES = 40; // the parcel the published rate card is priced for
 
 /* ------------------------------------------------------------------ theme */
@@ -46,13 +51,12 @@ const standard = findSpeed('standard');
 const express = findSpeed('express');
 const sampleWeight = priceDelivery({ speed: standard, zone: ZONES[0], copies: SAMPLE_COPIES }).est_weight_kg;
 
-$('figures').innerHTML = [
-  ['Vans', DEPOT.vans],
-  ['Bikes', DEPOT.bikes],
-  ['Zones', ZONES.length],
-  ['Speeds', SPEEDS.length],
-  ['Parcel limit', DEPOT.max_parcel_kg + ' kg']
-].map(([k, v]) => '<div><dt>' + k + '</dt><dd>' + v + '</dd></div>').join('');
+$('facts').textContent = [
+  DEPOT.vans + ' vans and ' + DEPOT.bikes + ' bike',
+  ZONES.length + ' zones',
+  SPEEDS.length + ' speeds',
+  'parcels to ' + DEPOT.max_parcel_kg + ' kg'
+].join(' · ');
 
 $('rates').innerHTML = ZONES.map((z) => {
   const s = priceDelivery({ speed: standard, zone: z, copies: SAMPLE_COPIES });
@@ -102,6 +106,114 @@ function drawBoard() {
       '</tr>';
   });
   $('board').innerHTML = rows.join('');
+}
+
+/* ------------------------------------------------------------------ steps */
+
+const stepBtns = [...document.querySelectorAll('.steps .step')];
+const stepPanels = [...document.querySelectorAll('.panel[data-step]')];
+const backBtn = document.querySelector('[data-nav="back"]');
+const nextBtn = document.querySelector('[data-nav="next"]');
+const LAST_STEP = stepBtns.length;
+
+let currentStep = 1;
+const finished = new Set(); // steps whose work is actually done
+
+// Moves the view without moving the page: panels are shown and hidden in
+// place, so nothing scrolls and the reader's eye stays where it was.
+function goToStep(n) {
+  const want = Math.min(LAST_STEP, Math.max(1, Math.trunc(Number(n)) || 1));
+  currentStep = want;
+  for (const p of stepPanels) p.hidden = Number(p.dataset.step) !== want;
+  for (const b of stepBtns) {
+    const i = Number(b.dataset.step);
+    if (i === want) b.setAttribute('aria-current', 'step');
+    else b.removeAttribute('aria-current');
+    if (i !== want && (finished.has(i) || i < want)) b.dataset.done = 'yes';
+    else delete b.dataset.done;
+  }
+  backBtn.disabled = want === 1;
+  nextBtn.disabled = want === LAST_STEP;
+}
+
+const markFinished = (n) => { finished.add(Number(n)); goToStep(currentStep); };
+
+for (const b of stepBtns) b.addEventListener('click', () => goToStep(b.dataset.step));
+backBtn.addEventListener('click', () => goToStep(currentStep - 1));
+nextBtn.addEventListener('click', () => goToStep(currentStep + 1));
+
+/* ---- the agent's tools move the same steps the buttons do ---------------
+   Wrapping registerTool means the library's own tools count too: the page
+   turns to the road for the signature and the check, so the operator is
+   looking at what they are about to sign. */
+
+const TOOL_STEP = {
+  service_areas: 1,
+  quote_delivery_for_mission: 1,
+  pickup_windows: 2,
+  book_collection: 2,
+  track_parcel: 3,
+  baton_complete_leg: 3,
+  baton_verify: 3
+};
+
+const TOOL_FINISHES = {
+  quote_delivery_for_mission: 1,
+  book_collection: 2,
+  baton_complete_leg: 3
+};
+
+try {
+  const mc = document.modelContext;
+  if (mc && typeof mc.registerTool === 'function' && !mc.__rutaSteps) {
+    const registerTool = mc.registerTool.bind(mc);
+    mc.registerTool = function (definition, options) {
+      const target = definition && TOOL_STEP[definition.name];
+      if (!target || typeof definition.execute !== 'function') return registerTool(definition, options);
+      const name = definition.name;
+      const run = definition.execute;
+      const wrapped = {
+        ...definition,
+        execute: async (input, client) => {
+          goToStep(target);
+          const out = await run(input, client);
+          if (out && out.ok === true && TOOL_FINISHES[name]) markFinished(TOOL_FINISHES[name]);
+          drawQuote();
+          return out;
+        }
+      };
+      return registerTool(wrapped, options);
+    };
+    mc.__rutaSteps = true;
+  }
+} catch { /* an ordinary browser has no modelContext; the buttons still work */ }
+
+/* ------------------------------------------------ step 1: the live quote */
+
+let lastQuote = null; // what book_collection books against
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const shortDay = (iso) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso));
+  return m ? Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1] : String(iso);
+};
+
+function drawQuote() {
+  const box = $('quote-now');
+  if (!lastQuote) { box.hidden = true; box.innerHTML = ''; return; }
+  const q = lastQuote;
+  box.hidden = false;
+  box.innerHTML =
+    '<div class="quote__total">' + usd(q.cost_usd) + '</div>' +
+    '<div class="quote__body">' +
+      '<div class="quote__line">' + q.copies + ' copies · ' + esc(q.speed) + ' to the ' +
+        esc(q.zone) + ' zone</div>' +
+      '<div class="quote__sub">' + q.est_weight_kg + ' kg in ' + q.parcels +
+        (q.parcels === 1 ? ' parcel' : ' parcels') + ' · collect ' + shortDay(q.pickup_date) +
+        ' · lands ' + shortDay(q.delivery_date) + '</div>' +
+    '</div>' +
+    '<div class="quote__fit quote__fit--' + (q.fits ? 'ok' : 'bad') + '">' +
+      (q.fits ? 'fits the money left and the deadline' : 'outside the mission constraints') + '</div>';
 }
 
 /* ------------------------------------------------- copy an example prompt */
@@ -181,6 +293,29 @@ function defaultPickupDate() {
 
 drawWindows(defaultPickupDate());
 drawBoard();
+drawQuote();
+goToStep(1);
+
+// The signature is the library's tool, not this site's, and the confirm card is
+// the library's too. Watching the panel keeps the page on the road while the
+// operator answers, and again once the leg is signed.
+function signedLeg() {
+  try {
+    return baton.mission?.legs?.find((l) => l.origin === location.origin) || null;
+  } catch { return null; }
+}
+
+try {
+  const panel = $('mission-panel');
+  let jumped = false;
+  new MutationObserver(() => {
+    const asking = !!panel.querySelector('.baton__confirm:not([hidden]) .confirm');
+    const signed = !!signedLeg();
+    if (signed) markFinished(3);
+    if ((asking || signed) && !jumped) { jumped = true; goToStep(3); }
+    if (!asking && !signed) jumped = false;
+  }).observe(panel, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+} catch { /* no panel: the buttons still work */ }
 
 /* ---- confirmation policy — one tap at Ruta ------------------------------
    The operator taps Confirm once, for baton_complete_leg: the signature, which
@@ -189,12 +324,6 @@ drawBoard();
    signed in one run. */
 
 /* The line the mission panel shows under Ruta's row while the leg is built. */
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const shortDay = (iso) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso));
-  return m ? Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1] : String(iso);
-};
 
 function showLegStatus(line) {
   try {
@@ -231,8 +360,6 @@ baton.registerAlways((signal, register) => {
 
 /* -------------------------------------- only while a mission is on the page */
 
-let lastQuote = null; // what book_collection books against
-
 baton.registerWhenMissionAboard((signal, register) => {
   register({
     name: 'quote_delivery_for_mission',
@@ -266,8 +393,10 @@ baton.registerWhenMissionAboard((signal, register) => {
 
       lastQuote = {
         speed: speed.id, zone: zone.id, copies, pickup_date, delivery_date,
-        cost_usd: priced.cost_usd, parcels: priced.parcels, est_weight_kg: priced.est_weight_kg
+        cost_usd: priced.cost_usd, parcels: priced.parcels, est_weight_kg: priced.est_weight_kg,
+        fits: check.allowed
       };
+      drawQuote();
 
       showLegStatus(copies + ' copies · ' + speed.id + ' to the ' + zone.name.toLowerCase() +
         ' zone · ' + usd(priced.cost_usd) + ' · collection ' + shortDay(pickup_date) +
@@ -317,6 +446,7 @@ baton.registerWhenMissionAboard((signal, register) => {
       }
       const windows = pickupWindows(date);
       const open = windows.filter((w) => w.state === 'open');
+      drawWindows(date);
       return {
         ok: true,
         date,

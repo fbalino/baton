@@ -38,8 +38,8 @@
 
     <section id="site-tools" class="side__tools"></section>
 
-    <section class="side__agent">
-      <h2 class="side__heading">For your agent</h2>
+    <details class="side__agent">
+      <summary class="side__heading">For your agent</summary>
       <p class="side__note">
         On an ordinary visit this page hands your agent two tools. Bring a baton that already
         carries a signed print leg and the quoting, window, booking and tracking tools appear
@@ -55,7 +55,7 @@
           <button type="button" class="prompt__copy">Copy</button>
         </li>
       </ul>
-    </section>
+    </details>
 
   </aside>
 
@@ -68,20 +68,24 @@
       <code>chrome://flags/#enable-webmcp-testing</code> turned on.
     </div>
 
-    <figure class="hero" id="hero">
-      <img class="hero__img" src="./assets/generated/courier-hero.webp" width="1600" height="1067"
+    <div class="lede">
+      <img class="lede__img" src="./assets/generated/courier-hero.webp" width="1600" height="1067"
            alt="A small white delivery van parked on a cobbled Montevideo street at dawn, with a parcel on the kerb."
-           onerror="var h=document.getElementById('hero'); if (h) h.hidden = true;">
-    </figure>
+           onerror="this.remove()">
+      <div class="lede__text">
+        <h1>Ruta Courier collects finished print work and delivers it to whoever ordered it.</h1>
+        <p class="lede__facts" id="facts"></p>
+      </div>
+    </div>
 
-    <header class="intro">
-      <h1>Ruta Courier collects finished print work and delivers it to whoever ordered it.</h1>
-      <dl class="figures" id="figures"></dl>
-    </header>
+    <nav class="steps" aria-label="Steps">
+      <button type="button" class="step" data-step="1" aria-current="step">1<span>Zones and rates</span></button>
+      <button type="button" class="step" data-step="2">2<span>Collection</span></button>
+      <button type="button" class="step" data-step="3">3<span>On the road</span></button>
+    </nav>
 
-    <section class="stack" aria-labelledby="h-rates">
-      <h2 class="head" id="h-rates">Zones and rates</h2>
-      <div class="panel">
+    <section class="panel" data-step="1" aria-label="Zones and rates">
+      <div class="split">
         <table class="grid">
           <thead>
             <tr>
@@ -94,57 +98,50 @@
           </thead>
           <tbody id="rates"></tbody>
         </table>
-        <p class="fineprint" id="rates-note"></p>
+        <div class="split__side">
+          <div class="quote" id="quote-now" hidden></div>
+          <p class="fineprint" id="rates-note"></p>
+        </div>
       </div>
     </section>
 
-    <section class="stack" aria-labelledby="h-windows">
-      <h2 class="head" id="h-windows">Collection windows</h2>
-      <div class="panel">
-        <p class="panel__intro" id="windows-intro"></p>
-        <ul class="windows" id="windows"></ul>
-        <p class="fineprint">Book at least one working day ahead. When a window is full we say so instead of sending a van that is not there.</p>
-      </div>
+    <section class="panel" data-step="2" aria-label="Collection" hidden>
+      <p class="panel__intro" id="windows-intro"></p>
+      <ul class="windows" id="windows"></ul>
+      <p class="fineprint">Book at least one working day ahead. When a window is full we say so instead of sending a van that is not there.</p>
     </section>
 
-    <section class="stack" aria-labelledby="h-board">
-      <h2 class="head" id="h-board">On the road</h2>
-      <div class="panel">
-        <table class="grid">
-          <thead>
-            <tr>
-              <th scope="col">Parcel</th>
-              <th scope="col">Status</th>
-              <th scope="col" class="num">Due</th>
-            </tr>
-          </thead>
-          <tbody id="board"></tbody>
-        </table>
-      </div>
+    <section class="panel" data-step="3" aria-label="On the road" hidden>
+      <table class="grid">
+        <thead>
+          <tr>
+            <th scope="col">Parcel</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="num">Due</th>
+          </tr>
+        </thead>
+        <tbody id="board"></tbody>
+      </table>
     </section>
 
-    <section class="stack" aria-labelledby="h-terms">
-      <h2 class="head" id="h-terms">House terms</h2>
-      <div class="panel">
-        <ul class="terms">
+    <div class="steps__nav">
+      <button type="button" class="btn" data-nav="back">Back</button>
+      <button type="button" class="btn btn--primary" data-nav="next">Next</button>
+    </div>
+
+    <footer class="site-footer">
+      <details class="terms">
+        <summary>Terms</summary>
+        <ul>
           <li>Delivery legs only. We move finished work and we do not make it.</li>
           <li>The mission has to carry a signed print leg and a delivery zone.</li>
           <li>One parcel under 25 kg. Heavier jobs are split and priced per parcel.</li>
           <li>Collection is booked at least one working day ahead. We do not collect on Sundays.</li>
         </ul>
-        <div class="aside">
-          <h3>What we do with a baton</h3>
-          <p>
-            We read the copy count off the legs already signed and work out the weight, the number
-            of parcels and the day it lands. We check that against the money left and the deadline
-            before taking the job, sign our leg with our own key, and hand back a tracking id that
-            outlives the link.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <footer class="foot">
+        <p>What we do with a baton: we read the copy count off the legs already signed and work out
+        the weight, the parcels and the day it lands. We check that against the money left and the
+        deadline, sign our leg with our own key, and hand back a tracking id that outlives the link.</p>
+      </details>
       <p>Ruta Courier is a fictional depot built for the Baton demo. The vans are invented.
       The signatures are real.</p>
     </footer>
